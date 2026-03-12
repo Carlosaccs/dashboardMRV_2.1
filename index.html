@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MRV SP - Carregando...</title>
+    <script>
+        function redirecionar() {
+            // Se a tela for menor que 1024px, assume que é mobile/tablet
+            if (window.innerWidth < 1024) {
+                window.location.href = "mobile.html";
+            } else {
+                window.location.href = "desktop.html";
+            }
+        }
+        window.onload = redirecionar;
+    </script>
+</head>
+<body style="background:#065e03; display:flex; align-items:center; justify-content:center; height:100vh; color:white; font-family:sans-serif;">
+    <p>Detectando dispositivo...</p>
+</body>
+</html>
