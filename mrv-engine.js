@@ -113,7 +113,7 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
     
     let html = `<div class="vitrine-topo">MRV EM ${nomeRegiao.toUpperCase()}</div>`;
     
-    // Renderiza botões superiores com Complexos no topo
+    // Lista de botões acima
     html += `<div style="margin-bottom:10px;">${listaSuperior.map(item => {
                 const classe = item.tipo === 'N' ? 'separador-complexo-btn' : 'btRes';
                 return `<button class="${classe}" onclick="navegarVitrine('${item.nome}', '${nomeRegiao}')"><strong>${item.nome}</strong> ${item.tipo === 'R' ? obterHtmlEstoque(item.estoque, item.tipo) : ''}</button>`;
@@ -122,16 +122,16 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
     html += `<hr style="border:0; border-top:1px solid #ddd; margin:15px 0 20px 0;">`;
 
     if (selecionado.tipo === 'R') {
-        // --- NOVO: LAYOUT RESIDENCIAL SELECIONADO ---
-        html += `<div class="separador-complexo-btn" style="width:100% !important; margin:0 !important; border-radius:4px; cursor:default; height:36px !important; background-color: var(--mrv-laranja) !important; color: #333 !important; text-shadow: none !important; border:none !important;">RES. ${selecionado.nome.toUpperCase()}</div>`;
+        // --- FAIXA LARANJA COM ESTILO REFORÇADO ---
+        html += `<div style="width:100%; margin:0; border-radius:4px; height:36px; background-color: #ff8c00; color: #333; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.8rem; text-transform: uppercase; border: none;">RES. ${selecionado.nome}</div>`;
         
+        // Endereço e Botão MAPS
         html += `<div style="padding: 10px 0;">
                     <p style="font-size:0.65rem; color:#444; display:flex; justify-content:space-between; align-items:center;">
                         <span>📍 ${selecionado.endereco}</span>
                         <a href="${urlMaps}" target="_blank" class="btn-maps">MAPS</a>
                     </p>
                  </div>`;
-        // Paramos aqui conforme solicitado para validação
     } else {
         // --- LAYOUT COMPLEXO SELECIONADO ---
         html += `<div class="separador-complexo-btn" style="width:100% !important; margin:0 !important; border-radius:4px 4px 0 0; cursor:default; height:36px !important; pointer-events:none;">${selecionado.nomeFull}</div>`;
