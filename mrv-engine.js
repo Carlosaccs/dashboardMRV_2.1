@@ -6,7 +6,7 @@ let mapaAtivo = 'GSP';
 const COL = {
     ID: 0, CATEGORIA: 1, ORDEM: 2, NOME: 3, NOME_FULL: 4, 
     ESTOQUE: 5, END: 6, 
-    TIPOLOGIAS_H: 7, // Dados: TIPO, PRECO, CAIXA
+    TIPOLOGIAS_H: 7, // Coluna H (Dados complexos: TIPO, PRECO, CAIXA)
     ENTREGA: 8, P_DE: 9, P_ATE: 10, OBRA: 11, LIMITADOR: 12, 
     REGIAO: 13, CASA_PAULISTA: 14, 
     CAMPANHA: 15, // Coluna P
@@ -79,14 +79,14 @@ function processarCSV(texto) {
 function obterHtmlEstoque(valor, tipo) {
     if (tipo === 'N') return "";
     const clean = valor ? valor.toString().toUpperCase().trim() : "";
-    if (clean === "" || clean === "CONSULTAR") return `<span style="color:#666; font-size: 0.6rem;">CONSULTAR</span>`;
-    if (clean === "VENDIDO" || clean === "0") return `<span style="color:#999; text-decoration: line-through; font-size: 0.6rem;">VENDIDO</span>`;
+    if (clean === "" || clean === "CONSULTAR") return `<span style="color:#666">CONSULTAR</span>`;
+    if (clean === "VENDIDO" || clean === "0") return `<span style="color:#999; text-decoration: line-through;">VENDIDO</span>`;
     const num = parseInt(clean);
     if (!isNaN(num)) {
         const cor = num < 6 ? "#e31010" : "#666";
-        return `<span style="color:${cor}; font-size: 0.6rem;">RESTAM ${num} UN.</span>`;
+        return `<span style="color:${cor}">RESTAM ${num} UN.</span>`;
     }
-    return `<span style="color:#666; font-size: 0.6rem;">${clean}</span>`;
+    return `<span style="color:#666">${clean}</span>`;
 }
 
 function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
@@ -103,12 +103,13 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
                 return `<button class="${classe}" onclick="navegarVitrine('${item.nome}', '${nomeRegiao}')"><strong>${item.nome}</strong> ${obterHtmlEstoque(item.estoque, item.tipo)}</button>`;
             }).join('')}</div>`;
 
-    html += `<hr style="border:0; border-top:1px solid #ddd; margin:15px 0 15px 0;">`;
+    html += `<hr style="border:0; border-top:1px solid #ddd; margin:15px 0 20px 0;">`;
 
     if (selecionado.tipo === 'R') {
         html += `<div style="width:100%; border-radius:4px; height:36px; background-color: #ff8c00; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.8rem; text-transform: uppercase;">RES. ${selecionado.nome}</div>`;
         html += `<div style="padding: 10px 0;"><p style="font-size:0.65rem; color:#444; display:flex; justify-content:space-between; align-items:center;"><span>📍 ${selecionado.endereco}</span><a href="${urlMaps}" target="_blank" class="btn-maps">MAPS</a></p></div>`;
 
+        // FILEIRAS DE INFORMAÇÃO
         const boxStyle = `flex: 1; background: #f2f2f2; padding: 4px 6px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #e5e5e5;`;
         const labelStyle = `color: #00713a; font-weight: bold; font-size: 0.55rem; text-transform: uppercase;`;
         const valorStyle = `font-size: 0.7rem; color: #333; font-weight: 700;`;
@@ -129,20 +130,22 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
                     <div style="${boxStyle}"><span style="${labelStyle}">Casa Paulista</span><span style="${valorStyle}">${selecionado.casa_paulista}</span></div>
                 </div>`;
 
-        if (selecionado.campanha && selecionado.campanha.trim() !== "") {
+        // CAMPANHA
+        if (selecionado.campanha) {
             html += `<div style="width: 100%; background: #fff1f1; padding: 8px; border-radius: 4px; text-align: center; border: 1px solid #ffdada; margin: 5px 0;">
                         <span style="color: #e31010; font-weight: 800; font-size: 0.75rem; text-transform: uppercase;">${selecionado.campanha}</span>
                      </div>`;
         }
 
+        // TABELA DE TIPOLOGIAS (COLUNA H)
         if (selecionado.dadosTipologia) {
             const linhas = selecionado.dadosTipologia.split(';');
-            html += `<table style="width:100%; border-collapse: collapse; background: #f9f9f9; border-radius: 4px; overflow: hidden; margin-top:5px; font-size: 0.75rem; border: 1px solid #ddd;">
+            html += `<table style="width:100%; border-collapse: collapse; background: #f9f9f9; border-radius: 4px; overflow: hidden; margin-top:5px; font-size: 0.75rem;">
                 <thead>
-                    <tr style="background: #f0f0f0; color: #111; font-weight: bold; text-transform: uppercase; font-size: 0.55rem; border-bottom: 1px solid #ccc;">
-                        <th style="padding: 8px; width: 33%;">Tipologia</th>
-                        <th style="padding: 8px; background: #ffbc00; width: 34%;">Menor Preço</th>
-                        <th style="padding: 8px; width: 33%;">Avaliação Caixa</th>
+                    <tr style="background: #f0f0f0; color: #111; font-weight: bold; text-transform: uppercase; font-size: 0.65rem;">
+                        <th style="padding: 8px; border-bottom: 2px solid #ccc;">Tipologia</th>
+                        <th style="padding: 8px; background: #ffbc00; border-bottom: 2px solid #ccc;">Menor Preço</th>
+                        <th style="padding: 8px; border-bottom: 2px solid #ccc;">Avaliação Caixa</th>
                     </tr>
                 </thead>
                 <tbody>`;
@@ -150,9 +153,9 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
             linhas.forEach(l => {
                 const dados = l.split(',');
                 if(dados.length >= 3) {
-                    html += `<tr style="border-bottom: 1px solid #eee; text-align: center; font-weight: 600; color: #333;">
+                    html += `<tr style="border-bottom: 1px solid #eee; text-align: center; font-weight: 600;">
                         <td style="padding: 6px;">${dados[0]}</td>
-                        <td style="padding: 6px; background: #ffcc00; border-left: 1px solid #ddd; border-right: 1px solid #ddd;">${dados[1]}</td>
+                        <td style="padding: 6px; background: #ffcc00;">${dados[1]}</td>
                         <td style="padding: 6px;">${dados[2]}</td>
                     </tr>`;
                 }
@@ -176,32 +179,23 @@ function comandoSelecao(idPath, nomePath, fonte) {
         const sel = (fonte && fonte.nome) ? fonte : imoveis[0];
         nomeSelecionado = nomePath || sel.cidade;
         
+        // CORREÇÃO DO MAPA:
         if (pathSelecionado) pathSelecionado.classList.remove('path-ativo');
-        const listaPath = document.querySelectorAll(`path`);
-        listaPath.forEach(p => {
-            if(p.id.split('-').pop() === idBusca) {
-                p.classList.add('path-ativo');
-                pathSelecionado = p;
-            }
-        });
+        const novoPath = document.querySelector(`[id$="-${idBusca}"]`);
+        if (novoPath) { novoPath.classList.add('path-ativo'); pathSelecionado = novoPath; }
 
         const tit = document.getElementById('cidade-titulo');
         if(tit) tit.innerText = nomeSelecionado;
-        montarVitrine(sel, imoveis, nomeRegiaoInterna(idBusca));
+        montarVitrine(sel, imoveis, nomeSelecionado);
     }
-}
-
-function nomeRegiaointerna(id) {
-    const p = [...MAPA_GSP.paths, ...MAPA_INTERIOR.paths].find(x => x.id.toLowerCase().replace(/\s/g, '') === id);
-    return p ? p.name : "";
 }
 
 function renderizarNoContainer(id, dados, interativo) {
     const container = document.getElementById(id);
     if (!container || !dados) return;
     const pathsHtml = dados.paths.map(p => {
-        const idLimpo = p.id.toLowerCase().replace(/\s/g, '');
-        const temMRV = DADOS_PLANILHA.some(d => d.id_path === idLimpo);
+        const idBusca = p.id.toLowerCase().replace(/\s/g, '');
+        const temMRV = DADOS_PLANILHA.some(d => d.id_path === idBusca);
         const isGSP = p.id.toLowerCase() === "grandesaopaulo";
         const clique = interativo ? (isGSP ? `onclick="trocarMapas()"` : `onclick="cliqueNoMapa('${p.id}', '${p.name}', ${temMRV})"`) : "";
         const hover = interativo ? `onmouseover="hoverNoMapa('${p.name}')" onmouseout="resetTitulo()"` : "";
@@ -224,7 +218,6 @@ function cliqueNoMapa(id, nome, tem) { if (tem) comandoSelecao(id, nome); }
 function hoverNoMapa(nome) { const t = document.getElementById('cidade-titulo'); if(t) t.innerText = nome; }
 function resetTitulo() { const t = document.getElementById('cidade-titulo'); if(t) t.innerText = nomeSelecionado || "Selecione uma região"; }
 function trocarMapas() { mapaAtivo = (mapaAtivo === 'GSP') ? 'INTERIOR' : 'GSP'; desenharMapas(); limparInterface(); }
-
 function limparInterface() {
     nomeSelecionado = ""; if(pathSelecionado) pathSelecionado.classList.remove('path-ativo'); pathSelecionado = null;
     document.getElementById('cidade-titulo').innerText = "Selecione uma região";
