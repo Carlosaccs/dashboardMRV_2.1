@@ -17,7 +17,7 @@ body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; b
 
 .wrapper { display: flex; flex: 1; height: calc(100vh - 60px); overflow: hidden; }
 
-/* Lateral Esquerda - Lista */
+/* Lateral Esquerda */
 .sidebar-esq { width: 280px; border-right: 1px solid #ddd; overflow-y: auto; padding: 10px 0; background: #f8f9fa; flex-shrink: 0; }
 .btRes, .separador-complexo-btn {
     width: 92% !important; margin: 3px auto !important; min-height: 28px;
@@ -39,19 +39,11 @@ path { fill: #777; stroke: #fff; stroke-width: 0.8; transition: 0.2s; }
 path.commrv { fill: var(--mrv-verde) !important; cursor: pointer; }
 path.commrv:hover, path.ativo { fill: var(--mrv-laranja) !important; stroke: #000 !important; stroke-width: 1.2px !important; }
 
-/* Lateral Direita - Vitrine (Onde a mágica acontece) */
-.sidebar-dir { 
-    width: 480px; 
-    border-left: 1px solid #ddd; 
-    overflow-y: auto; /* Rolagem liberada aqui */
-    padding: 10px; 
-    flex-shrink: 0; 
-    display: block; /* Garante fluxo vertical */
-}
-
+/* Lateral Direita - Vitrine */
+.sidebar-dir { width: 480px; border-left: 1px solid #ddd; overflow-y: auto; padding: 10px; flex-shrink: 0; }
 .vitrine-topo { background: var(--mrv-verde); color: white; padding: 8px; text-align: center; font-weight: bold; border-radius: 4px; margin-bottom: 8px; font-size: 0.85rem; text-transform: uppercase; }
 
-/* Títulos da Vitrine */
+/* Faixas de Título */
 .titulo-vitrine-faixa {
     width: 100%; height: 32px; display: flex; align-items: center; justify-content: center; 
     font-weight: bold; font-size: 0.85rem; border-radius: 4px; text-transform: uppercase; color: #fff;
@@ -71,14 +63,24 @@ path.commrv:hover, path.ativo { fill: var(--mrv-laranja) !important; stroke: #00
 .box-argumento label { font-size: 0.55rem; font-weight: bold; text-transform: uppercase; color: var(--mrv-verde); }
 .box-argumento strong { font-size: 0.72rem; color: #333; }
 
-/* Box do Complexo - Sem limite de altura */
+/* Box do Complexo com BARRA DE ROLAGEM */
 .box-complexo-full {
     width: 100%; padding: 15px; background: #f9f9f9; 
     border-left: 4px solid var(--mrv-preto); border-radius: 4px; margin-top: 5px;
 }
-.box-complexo-full p {
-    margin-top: 10px; font-size: 0.8rem; color: #444; line-height: 1.6; 
+.scroll-texto-complexo {
+    margin-top: 10px;
+    max-height: 350px; /* Limita a altura da caixa */
+    overflow-y: auto;  /* Adiciona a barra de rolagem se o texto passar da altura */
+    padding-right: 10px; /* Espaço para a barra não cobrir o texto */
+}
+.scroll-texto-complexo p {
+    font-size: 0.8rem; color: #444; line-height: 1.6; 
     text-align: justify; word-wrap: break-word;
 }
+
+/* Personalização da barra de rolagem para ficar elegante */
+.scroll-texto-complexo::-webkit-scrollbar { width: 6px; }
+.scroll-texto-complexo::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
 
 .btn-maps { background: #4285F4; color: white !important; text-decoration: none; padding: 3px 7px; border-radius: 4px; font-size: 0.6rem; font-weight: bold; }
