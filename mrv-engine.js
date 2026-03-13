@@ -10,14 +10,12 @@ const COL = {
     REGIAO: 13, CASA_PAULISTA: 14, CAMPANHA: 15, DESC_LONGA: 17
 };
 
-// --- INICIALIZAÇÃO ---
 async function iniciarApp() {
     try {
         await carregarPlanilha();
     } catch (err) { console.error("Erro ao iniciar:", err); }
 }
 
-// --- CARREGAMENTO E FILTRO ANTI-INVASOR ---
 async function carregarPlanilha() {
     const SHEET_ID = "15V194P2JPGCCPpCTKJsib8sJuCZPgtbNb-rtgNaLS7E";
     const URL_CSV = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0&v=${new Date().getTime()}`;
@@ -42,7 +40,6 @@ async function carregarPlanilha() {
             const nomeValido = colunas[COL.NOME] && colunas[COL.NOME].length > 2;
             const numOrdem = parseInt(colunas[COL.ORDEM]);
 
-            // Descarta linhas sem ordem numérica ou categorias inválidas (limpa invasores)
             if (!nomeValido || isNaN(numOrdem) || (!categoria.includes("RESIDENCIAL") && !categoria.includes("COMPLEXO"))) {
                 return null;
             }
@@ -74,7 +71,6 @@ async function carregarPlanilha() {
     } catch (e) { console.error("Erro CSV:", e); }
 }
 
-// --- AUXILIARES DE INTERFACE (NOMES E ESTOQUE) ---
 function buscarNomeNoMapa(idPath) {
     const idNorm = idPath.toLowerCase().replace(/\s/g, '');
     const localGSP = MAPA_GSP.paths.find(p => p.id.toLowerCase().replace(/\s/g, '') === idNorm);
@@ -87,87 +83,58 @@ function buscarNomeNoMapa(idPath) {
 function obterHtmlEstoque(valor, tipo) {
     if (tipo === 'N') return "";
     const clean = valor ? valor.toString().toUpperCase().trim() : "";
-    
-    if (clean === "VENDIDO" || clean === "0") {
-        return `<span class="badge-estoque" style="color:#999; text-decoration: line-through; font-size:9px;">VENDIDO</span>`;
-    }
-    if (clean === "" || clean === "CONSULTAR") {
-        return `<span class="badge-estoque" style="color:#666; font-size:9px;">CONSULTAR</span>`;
-    }
+    if (clean === "VENDIDO" || clean === "0") return `<span class="badge-estoque" style="color:#999; text-decoration: line-through;">VENDIDO</span>`;
+    if (clean === "" || clean === "CONSULTAR") return `<span class="badge-estoque" style="color:#666">CONSULTAR</span>`;
     
     const num = parseInt(clean);
     if (!isNaN(num)) {
         const cor = num < 6 ? '#e31010' : '#666';
-        return `<span class="badge-estoque" style="color:${cor}; font-size:9px; font-weight:bold;">RESTAM ${num} UN.</span>`;
+        return `<span class="badge-estoque" style="color:${cor}">RESTAM ${num} UN.</span>`;
     }
-    return `<span class="badge-estoque" style="color:#666; font-size:9px;">${clean}</span>`;
+    return `<span class="badge-estoque" style="color:#666">${clean}</span>`;
 }
 
-// --- NAVEGAÇÃO E SELEÇÃO ---
 function navegarVitrine(nome, nomeRegiao) { 
     const imovel = DADOS_PLANILHA.find(i => i.nome === nome); 
     if (!imovel) return;
-
     const idAlvo = imovel.id_path.toLowerCase().replace(/\s/g, '');
     const mapaContexto = (mapaAtivo === 'GSP') ? MAPA_GSP : MAPA_INTERIOR;
     const existeNoMapaAtual = mapaContexto.paths.some(p => p.id.toLowerCase().replace(/\s/g, '') === idAlvo);
-
     if (!existeNoMapaAtual) { trocarMapas(false); }
-    
-    const nomeRealDoMapa = buscarNomeNoMapa(imovel.id_path);
-    comandoSelecao(imovel.id_path, nomeRealDoMapa, imovel); 
+    comandoSelecao(imovel.id_path, buscarNomeNoMapa(imovel.id_path), imovel); 
 }
 
 function comandoSelecao(idPath, nomePath, fonte) {
     const idBusca = idPath.toLowerCase().replace(/\s/g, '');
     const imoveis = DADOS_PLANILHA.filter(d => d.id_path === idBusca);
-    
     if (imoveis.length > 0) {
         const selecionado = (fonte && fonte.nome) ? fonte : imoveis[0];
         pathAtivo = idBusca;
         imovelAtivo = selecionado.nome;
-
         document.querySelectorAll('.ativo').forEach(el => el.classList.remove('ativo'));
-        
         const elMapa = document.getElementById(`caixa-a-${idBusca}`);
         if (elMapa) elMapa.classList.add('ativo');
-
         const idBtn = `btn-list-${selecionado.nome.replace(/[^a-zA-Z0-9]/g, '-')}`;
         const elLista = document.getElementById(idBtn);
         if (elLista) elLista.classList.add('ativo');
-
-        const nomeOficial = buscarNomeNoMapa(idBusca);
-        document.getElementById('cidade-titulo').innerText = nomeOficial.toUpperCase();
-        montarVitrine(selecionado, imoveis, nomeOficial);
+        document.getElementById('cidade-titulo').innerText = buscarNomeNoMapa(idBusca).toUpperCase();
+        montarVitrine(selecionado, imoveis, buscarNomeNoMapa(idBusca));
     }
 }
 
-// --- RENDERIZAÇÃO ---
 function renderizarNoContainer(id, dados, interativo) {
     const container = document.getElementById(id);
     if (!container || !dados) return;
-
-    if (!interativo) {
-        container.onclick = () => trocarMapas(true);
-        container.style.cursor = "pointer";
-    } else {
-        container.onclick = null;
-        container.style.cursor = "default";
-    }
-    
     const pathsHtml = dados.paths.map(p => {
         const idPathNorm = p.id.toLowerCase().replace(/\s/g, '');
         const temMRV = DADOS_PLANILHA.some(d => d.id_path === idPathNorm);
         const ativo = (pathAtivo === idPathNorm && interativo) ? 'ativo' : '';
         const isGSP = idPathNorm === "grandesaopaulo";
         const classe = (temMRV || isGSP) && interativo ? `commrv ${ativo}` : '';
-        
         const clique = interativo ? (isGSP ? `onclick="trocarMapas(true)"` : `onclick="cliqueNoMapa('${p.id}', '${p.name}', ${temMRV})"`) : "";
         const hover = interativo ? `onmouseover="hoverNoMapa('${p.name}')" onmouseout="resetTitulo()"` : "";
-        
         return `<path id="${id}-${idPathNorm}" name="${p.name}" d="${p.d}" class="${classe}" ${clique} ${hover}></path>`;
     }).join('');
-    
     container.innerHTML = `<svg viewBox="${dados.viewBox}" style="width:100%; height:100%;"><g transform="${dados.transform || ''}">${pathsHtml}</g></svg>`;
 }
 
@@ -176,27 +143,15 @@ function desenharMapas() {
     renderizarNoContainer('caixa-b', (mapaAtivo === 'GSP') ? MAPA_INTERIOR : MAPA_GSP, false);
 }
 
-// --- HOVER E EVENTOS ---
-function hoverNoMapa(nome) {
-    document.getElementById('cidade-titulo').innerText = nome.toUpperCase();
-}
-
+function hoverNoMapa(nome) { document.getElementById('cidade-titulo').innerText = nome.toUpperCase(); }
 function resetTitulo() { 
-    if (pathAtivo) {
-        const nomeOficial = buscarNomeNoMapa(pathAtivo);
-        document.getElementById('cidade-titulo').innerText = nomeOficial.toUpperCase();
-    } else {
-        document.getElementById('cidade-titulo').innerText = "SELECIONE UMA REGIÃO NO MAPA";
-    }
+    const texto = pathAtivo ? buscarNomeNoMapa(pathAtivo) : "SELECIONE UMA REGIÃO NO MAPA";
+    document.getElementById('cidade-titulo').innerText = texto.toUpperCase();
 }
 
 function trocarMapas(completo = true) { 
     mapaAtivo = (mapaAtivo === 'GSP') ? 'INTERIOR' : 'GSP'; 
-    if (completo) {
-        pathAtivo = null; imovelAtivo = null;
-        document.getElementById('cidade-titulo').innerText = "SELECIONE UMA REGIÃO NO MAPA";
-        document.getElementById('ficha-tecnica').innerHTML = `<div style="text-align:center; color:#ccc; margin-top:100px;"><p style="font-size: 30px;">📍</p><p>Clique em algum Residencial ou em alguma região verde do mapa</p></div>`;
-    }
+    if (completo) { pathAtivo = null; imovelAtivo = null; }
     desenharMapas(); 
     gerarListaLateral(); 
 }
@@ -211,8 +166,7 @@ function gerarListaLateral() {
         const ativo = item.nome === imovelAtivo ? 'ativo' : '';
         const idBtn = `btn-list-${item.nome.replace(/[^a-zA-Z0-9]/g, '-')}`;
         return `<div id="${idBtn}" class="${classeBase} ${ativo}" onclick="navegarVitrine('${item.nome}', '${item.regiao}')">
-                    <strong>${item.nome}</strong>
-                    ${obterHtmlEstoque(item.estoque, item.tipo)}
+                    <strong>${item.nome}</strong> ${obterHtmlEstoque(item.estoque, item.tipo)}
                 </div>`;
     }).join('');
 }
@@ -233,17 +187,22 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
     }
 
     if (selecionado.tipo === 'R') {
-        html += `<div style="width:100%; border-radius:4px; height:36px; background-color: #ff8c00; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.8rem; text-transform: uppercase;">RES. ${selecionado.nome}</div>`;
-        html += `<div style="padding: 10px 0;"><p style="font-size:0.65rem; color:#444; display:flex; justify-content:space-between; align-items:center;"><span>📍 ${selecionado.endereco}</span><a href="${urlMaps}" target="_blank" class="btn-maps">MAPS</a></p></div>`;
-        html += `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
-            <div class="box-argumento" style="margin:0; padding:5px;"><label>Entrega</label><strong>${selecionado.entrega}</strong></div>
-            <div class="box-argumento" style="margin:0; padding:5px;"><label>Obra</label><strong>${selecionado.obra}%</strong></div>
-            <div class="box-argumento" style="margin:0; padding:5px;"><label>Plantas</label><strong>${selecionado.p_de} - ${selecionado.p_ate}</strong></div>
-            <div class="box-argumento" style="margin:0; padding:5px;"><label>Limitador</label><strong>${selecionado.limitador}</strong></div>
+        html += `<div style="width:100%; border-radius:4px; height:36px; background-color: #ff8c00; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.8rem; text-transform: uppercase; margin-bottom:10px;">RES. ${selecionado.nome}</div>`;
+        html += `<div style="padding: 5px 0 10px 0;"><p style="font-size:0.65rem; color:#444; display:flex; justify-content:space-between; align-items:center;"><span>📍 ${selecionado.endereco}</span><a href="${urlMaps}" target="_blank" class="btn-maps">MAPS</a></p></div>`;
+        
+        html += `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div class="info-row"><span class="label">Entrega:</span> <span class="value">${selecionado.entrega}</span></div>
+            <div class="info-row"><span class="label">Obra:</span> <span class="value">${selecionado.obra}%</span></div>
+            <div class="info-row"><span class="label">Plantas:</span> <span class="value">${selecionado.p_de} - ${selecionado.p_ate}</span></div>
+            <div class="info-row"><span class="label">Limitador:</span> <span class="value">${selecionado.limitador}</span></div>
         </div>`;
+        
+        if(selecionado.campanha) {
+            html += `<div style="background:#fff1f1; border:1px solid #ffdada; padding:8px; border-radius:4px; text-align:center; color:#e31010; font-weight:800; font-size:0.75rem; margin-top:10px;">${selecionado.campanha}</div>`;
+        }
     } else {
-        html += `<div class="separador-complexo-btn" style="width:100%; cursor:default;">${selecionado.nomeFull}</div>`;
-        html += `<div class="box-argumento"><label>Sobre o Complexo</label><p>${selecionado.descLonga}</p></div>`;
+        html += `<div class="separador-complexo-btn" style="width:100%; cursor:default; margin-bottom:10px;">${selecionado.nomeFull}</div>`;
+        html += `<div class="box-argumento"><label>Sobre o Complexo</label><p style="font-size:0.75rem; line-height:1.4;">${selecionado.descLonga}</p></div>`;
     }
     painel.innerHTML = html;
 }
