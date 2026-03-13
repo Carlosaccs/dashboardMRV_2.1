@@ -83,23 +83,21 @@ function buscarNomeNoMapa(idPath) {
 function obterHtmlEstoque(valor, tipo) {
     if (tipo === 'N') return "";
     const clean = valor ? valor.toString().toUpperCase().trim() : "";
-    if (clean === "VENDIDO" || clean === "0") return `<span class="badge-estoque" style="color:#999; text-decoration: line-through;">VENDIDO</span>`;
-    if (clean === "" || clean === "CONSULTAR") return `<span class="badge-estoque" style="color:#666">CONSULTAR</span>`;
-    
+    if (clean === "VENDIDO" || clean === "0") return `<span class="badge-estoque" style="color:#999; text-decoration: line-through; font-size:9px;">VENDIDO</span>`;
+    if (clean === "" || clean === "CONSULTAR") return `<span class="badge-estoque" style="color:#666; font-size:9px;">CONSULTAR</span>`;
     const num = parseInt(clean);
     if (!isNaN(num)) {
         const cor = num < 6 ? '#e31010' : '#666';
-        return `<span class="badge-estoque" style="color:${cor}">RESTAM ${num} UN.</span>`;
+        return `<span class="badge-estoque" style="color:${cor}; font-size:9px; font-weight:bold;">RESTAM ${num} UN.</span>`;
     }
-    return `<span class="badge-estoque" style="color:#666">${clean}</span>`;
+    return `<span class="badge-estoque" style="color:#666; font-size:9px;">${clean}</span>`;
 }
 
 function navegarVitrine(nome, nomeRegiao) { 
     const imovel = DADOS_PLANILHA.find(i => i.nome === nome); 
     if (!imovel) return;
     const idAlvo = imovel.id_path.toLowerCase().replace(/\s/g, '');
-    const mapaContexto = (mapaAtivo === 'GSP') ? MAPA_GSP : MAPA_INTERIOR;
-    const existeNoMapaAtual = mapaContexto.paths.some(p => p.id.toLowerCase().replace(/\s/g, '') === idAlvo);
+    const existeNoMapaAtual = ((mapaAtivo === 'GSP') ? MAPA_GSP : MAPA_INTERIOR).paths.some(p => p.id.toLowerCase().replace(/\s/g, '') === idAlvo);
     if (!existeNoMapaAtual) { trocarMapas(false); }
     comandoSelecao(imovel.id_path, buscarNomeNoMapa(imovel.id_path), imovel); 
 }
@@ -165,9 +163,7 @@ function gerarListaLateral() {
         const classeBase = item.tipo === 'N' ? 'separador-complexo-btn' : 'btRes';
         const ativo = item.nome === imovelAtivo ? 'ativo' : '';
         const idBtn = `btn-list-${item.nome.replace(/[^a-zA-Z0-9]/g, '-')}`;
-        return `<div id="${idBtn}" class="${classeBase} ${ativo}" onclick="navegarVitrine('${item.nome}', '${item.regiao}')">
-                    <strong>${item.nome}</strong> ${obterHtmlEstoque(item.estoque, item.tipo)}
-                </div>`;
+        return `<div id="${idBtn}" class="${classeBase} ${ativo}" onclick="navegarVitrine('${item.nome}', '${item.regiao}')"><strong>${item.nome}</strong> ${obterHtmlEstoque(item.estoque, item.tipo)}</div>`;
     }).join('');
 }
 
@@ -176,7 +172,6 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
     if(!painel) return;
     const listaSuperior = listaDaCidade.filter(i => i.nome !== selecionado.nome);
     const urlMaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selecionado.endereco)}`;
-    
     let html = `<div class="vitrine-topo">MRV EM ${nomeRegiao}</div>`;
     
     if(listaSuperior.length > 0) {
@@ -187,22 +182,17 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
     }
 
     if (selecionado.tipo === 'R') {
-        html += `<div style="width:100%; border-radius:4px; height:36px; background-color: #ff8c00; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.8rem; text-transform: uppercase; margin-bottom:10px;">RES. ${selecionado.nome}</div>`;
-        html += `<div style="padding: 5px 0 10px 0;"><p style="font-size:0.65rem; color:#444; display:flex; justify-content:space-between; align-items:center;"><span>📍 ${selecionado.endereco}</span><a href="${urlMaps}" target="_blank" class="btn-maps">MAPS</a></p></div>`;
-        
-        html += `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-            <div class="info-row"><span class="label">Entrega:</span> <span class="value">${selecionado.entrega}</span></div>
-            <div class="info-row"><span class="label">Obra:</span> <span class="value">${selecionado.obra}%</span></div>
-            <div class="info-row"><span class="label">Plantas:</span> <span class="value">${selecionado.p_de} - ${selecionado.p_ate}</span></div>
-            <div class="info-row"><span class="label">Limitador:</span> <span class="value">${selecionado.limitador}</span></div>
+        html += `<div style="width:100%; border-radius:4px; height:36px; background-color: #ff8c00; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.8rem; text-transform: uppercase;">RES. ${selecionado.nome}</div>`;
+        html += `<div style="padding: 10px 0;"><p style="font-size:0.65rem; color:#444; display:flex; justify-content:space-between; align-items:center;"><span>📍 ${selecionado.endereco}</span><a href="${urlMaps}" target="_blank" class="btn-maps">MAPS</a></p></div>`;
+        html += `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+            <div class="box-argumento"><label>Entrega</label><strong>${selecionado.entrega}</strong></div>
+            <div class="box-argumento"><label>Obra</label><strong>${selecionado.obra}%</strong></div>
+            <div class="box-argumento"><label>Plantas</label><strong>${selecionado.p_de} - ${selecionado.p_ate}</strong></div>
+            <div class="box-argumento"><label>Limitador</label><strong>${selecionado.limitador}</strong></div>
         </div>`;
-        
-        if(selecionado.campanha) {
-            html += `<div style="background:#fff1f1; border:1px solid #ffdada; padding:8px; border-radius:4px; text-align:center; color:#e31010; font-weight:800; font-size:0.75rem; margin-top:10px;">${selecionado.campanha}</div>`;
-        }
     } else {
-        html += `<div class="separador-complexo-btn" style="width:100%; cursor:default; margin-bottom:10px;">${selecionado.nomeFull}</div>`;
-        html += `<div class="box-argumento"><label>Sobre o Complexo</label><p style="font-size:0.75rem; line-height:1.4;">${selecionado.descLonga}</p></div>`;
+        html += `<div class="separador-complexo-btn" style="width:100%; cursor:default;">${selecionado.nomeFull}</div>`;
+        html += `<div class="box-argumento"><label>Sobre o Complexo</label><p>${selecionado.descLonga}</p></div>`;
     }
     painel.innerHTML = html;
 }
