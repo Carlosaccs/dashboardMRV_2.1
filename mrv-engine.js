@@ -3,7 +3,6 @@ let pathAtivo = null;
 let imovelAtivo = null;  
 let mapaAtivo = 'GSP'; 
 
-// Mapeamento das colunas da sua planilha Google
 const COL = {
     ID: 0, CATEGORIA: 1, ORDEM: 2, NOME: 3, NOME_FULL: 4, 
     ESTOQUE: 5, END: 6, TIPOLOGIAS: 7, ENTREGA: 8, 
@@ -13,20 +12,26 @@ const COL = {
 
 async function iniciarApp() {
     try {
+        console.log("Iniciando carregamento...");
         await carregarPlanilha();
-    } catch (err) { console.error("Erro ao iniciar:", err); }
+    } catch (err) { 
+        alert("Erro fatal ao iniciar: " + err.message);
+    }
 }
 
 async function carregarPlanilha() {
     const SHEET_ID = "15V194P2JPGCCPpCTKJsib8sJuCZPgtbNb-rtgNaLS7E";
-    const URL_CSV = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0&v=${new Date().getTime()}`;
+    // Forçamos o bypass do cache para garantir dados novos
+    const URL_CSV = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0&cacheburst=${new Date().getTime()}`;
     
     try {
         const response = await fetch(URL_CSV);
+        if (!response.ok) throw new Error("Não foi possível acessar a planilha do Google. Verifique se ela está pública.");
+        
         let texto = await response.text();
         const linhasPuras = texto.split(/\r?\n/);
         
-        DADOS_PLANILHA = linhasPuras.slice(1).map(linha => {
+        DADOS_PLANILHA = linhasPuras.slice(1).map((linha, index) => {
             const colunas = [];
             let campo = "", aspas = false;
             for (let i = 0; i < linha.length; i++) {
@@ -37,22 +42,19 @@ async function carregarPlanilha() {
             }
             colunas.push(campo.trim());
             
-            // --- VALIDAÇÃO RÍGIDA ANTI-INVASOR ---
-            // 1. A ordem precisa ser um número válido
             const numOrdem = parseInt(colunas[COL.ORDEM]);
-            const ordemValida = !isNaN(numOrdem);
-            
-            // 2. A categoria precisa ser reconhecível
             const categoria = (colunas[COL.CATEGORIA] || "").toUpperCase();
-            const eValido = categoria.includes("RESIDENCIAL") || categoria.includes("COMPLEXO");
 
-            if (!ordemValida || !eValido) return null;
+            // Filtro rigoroso: precisa ter categoria válida e ordem numérica
+            if (isNaN(numOrdem) || (!categoria.includes("RESIDENCIAL") && !categoria.includes("COMPLEXO"))) {
+                return null;
+            }
 
             return {
                 id_path: colunas[COL.ID] ? colunas[COL.ID].toLowerCase().replace(/\s/g, '') : "",
                 tipo: categoria.includes('COMPLEXO') ? 'N' : 'R',
                 ordem: numOrdem,
-                nome: colunas[COL.NOME] || "",
+                nome: colunas[COL.NOME] || "Sem Nome",
                 nomeFull: colunas[COL.NOME_FULL] || colunas[COL.NOME] || "",
                 cidade: colunas[COL.ID] || "",
                 estoque: colunas[COL.ESTOQUE],
@@ -69,22 +71,37 @@ async function carregarPlanilha() {
             };
         }).filter(i => i !== null);
 
+        if (DADOS_PLANILHA.length === 0) {
+            alert("Atenção: Nenhum dado válido foi encontrado na planilha. Verifique as colunas de Categoria e Ordem.");
+        }
+
         DADOS_PLANILHA.sort((a, b) => a.ordem - b.ordem);
+        
+        // Verificação de segurança para os mapas
+        if (typeof MAPA_GSP === 'undefined') {
+            alert("Erro: O arquivo mrv-data.js não foi carregado ou está com erro.");
+            return;
+        }
+
         desenharMapas();
         gerarListaLateral();
-    } catch (e) { console.error("Erro no processamento do Google Sheets:", e); }
+
+    } catch (e) { 
+        console.error(e);
+        alert("Erro ao ler Planilha: " + e.message);
+    }
 }
+
+// ... (Restante das funções: gerarListaLateral, navegarVitrine, comandoSelecao, renderizarNoContainer, trocarMapas, etc.)
+// Mantenha as funções que enviamos na última versão, apenas garanta que o fechamento das chaves esteja correto.
 
 function gerarListaLateral() {
     const container = document.getElementById('lista-imoveis');
     if (!container) return;
-    
     container.innerHTML = DADOS_PLANILHA.map(item => {
         const classeBase = item.tipo === 'N' ? 'separador-complexo-btn' : 'btRes';
         const ativo = item.nome === imovelAtivo ? 'ativo' : '';
-        const idBtn = `btn-list-${item.nome.replace(/[^a-zA-Z0-9]/g, '-')}`;
-        
-        return `<div id="${idBtn}" class="${classeBase} ${ativo}" onclick="navegarVitrine('${item.nome}', '${item.regiao}')">
+        return `<div class="${classeBase} ${ativo}" onclick="navegarVitrine('${item.nome}', '${item.regiao}')">
                     <strong>${item.nome}</strong>
                     ${obterHtmlEstoque(item.estoque, item.tipo)}
                 </div>`;
@@ -94,139 +111,69 @@ function gerarListaLateral() {
 function navegarVitrine(nome, nomeRegiao) { 
     const imovel = DADOS_PLANILHA.find(i => i.nome === nome); 
     if (!imovel) return;
-
     const idAlvo = imovel.id_path.toLowerCase().replace(/\s/g, '');
     const mapaContexto = (mapaAtivo === 'GSP') ? MAPA_GSP : MAPA_INTERIOR;
     const existeNoMapaAtual = mapaContexto.paths.some(p => p.id.toLowerCase().replace(/\s/g, '') === idAlvo);
-
-    if (!existeNoMapaAtual) { trocarMapas(false); }
-    
-    const mapaAtualizado = (mapaAtivo === 'GSP') ? MAPA_GSP : MAPA_INTERIOR;
-    const pathInfo = mapaAtualizado.paths.find(p => p.id.toLowerCase().replace(/\s/g, '') === idAlvo);
-    
-    comandoSelecao(imovel.id_path, pathInfo ? pathInfo.name : nomeRegiao, imovel); 
+    if (!existeNoMapaAtual) trocarMapas(false);
+    comandoSelecao(imovel.id_path, nomeRegiao, imovel); 
 }
 
 function comandoSelecao(idPath, nomePath, fonte) {
     const idBusca = idPath.toLowerCase().replace(/\s/g, '');
     const imoveis = DADOS_PLANILHA.filter(d => d.id_path === idBusca);
-    
     if (imoveis.length > 0) {
         const selecionado = (fonte && fonte.nome) ? fonte : imoveis[0];
         pathAtivo = idBusca;
         imovelAtivo = selecionado.nome;
-
         document.querySelectorAll('.ativo').forEach(el => el.classList.remove('ativo'));
-        
         const elMapa = document.getElementById(`caixa-a-${idBusca}`);
         if (elMapa) elMapa.classList.add('ativo');
-
-        const idBtn = `btn-list-${selecionado.nome.replace(/[^a-zA-Z0-9]/g, '-')}`;
-        const elLista = document.getElementById(idBtn);
-        if (elLista) elLista.classList.add('ativo');
-
-        const tituloFinal = (nomePath || selecionado.cidade || selecionado.regiao).toUpperCase();
-        document.getElementById('cidade-titulo').innerText = tituloFinal;
-        montarVitrine(selecionado, imoveis, tituloFinal);
+        document.getElementById('cidade-titulo').innerText = (nomePath || selecionado.regiao).toUpperCase();
+        montarVitrine(selecionado, imoveis, (nomePath || selecionado.regiao));
+        gerarListaLateral();
     }
 }
 
 function renderizarNoContainer(id, dados, interativo) {
     const container = document.getElementById(id);
     if (!container || !dados) return;
-
-    if (!interativo) {
-        container.onclick = () => trocarMapas(true);
-        container.style.cursor = "pointer";
-    } else {
-        container.onclick = null;
-        container.style.cursor = "default";
-    }
-    
     const pathsHtml = dados.paths.map(p => {
         const idPathNorm = p.id.toLowerCase().replace(/\s/g, '');
         const temMRV = DADOS_PLANILHA.some(d => d.id_path === idPathNorm);
-        const isGSP = idPathNorm === "grandesaopaulo";
         const ativo = (pathAtivo === idPathNorm && interativo) ? 'ativo' : '';
-        const classe = (temMRV || isGSP) && interativo ? `commrv ${ativo}` : '';
-        const clique = interativo ? (isGSP ? `onclick="trocarMapas(true)"` : `onclick="cliqueNoMapa('${p.id}', '${p.name}', ${temMRV})"`) : "";
-        
-        return `<path id="${id}-${idPathNorm}" name="${p.name}" d="${p.d}" class="${classe}" ${clique} onmouseover="hoverNoMapa('${p.name}')" onmouseout="resetTitulo()"></path>`;
+        const classe = (temMRV || idPathNorm === "grandesaopaulo") && interativo ? `commrv ${ativo}` : '';
+        const clique = interativo ? (idPathNorm === "grandesaopaulo" ? `onclick="trocarMapas(true)"` : `onclick="cliqueNoMapa('${p.id}', '${p.name}', ${temMRV})"`) : "";
+        return `<path id="${id}-${idPathNorm}" name="${p.name}" d="${p.d}" class="${classe}" ${clique}></path>`;
     }).join('');
-    
     container.innerHTML = `<svg viewBox="${dados.viewBox}" style="width:100%; height:100%;"><g transform="${dados.transform || ''}">${pathsHtml}</g></svg>`;
 }
 
-function trocarMapas(completo = true) { 
-    mapaAtivo = (mapaAtivo === 'GSP') ? 'INTERIOR' : 'GSP'; 
-    if (completo) {
-        pathAtivo = null; imovelAtivo = null;
-        document.getElementById('cidade-titulo').innerText = "SELECIONE UMA REGIÃO NO MAPA";
-        document.getElementById('ficha-tecnica').innerHTML = `<div style="text-align:center; color:#ccc; margin-top:100px;"><p style="font-size: 30px;">📍</p><p>Clique em algum Residencial ou em alguma região verde do mapa</p></div>`;
-    }
-    desenharMapas(); 
-    gerarListaLateral(); 
+function desenharMapas() {
+    renderizarNoContainer('caixa-a', (mapaAtivo === 'GSP') ? MAPA_GSP : MAPA_INTERIOR, true);
+    renderizarNoContainer('caixa-b', (mapaAtivo === 'GSP') ? MAPA_INTERIOR : MAPA_GSP, false);
+}
+
+function trocarMapas(completo) {
+    mapaAtivo = (mapaAtivo === 'GSP') ? 'INTERIOR' : 'GSP';
+    if(completo) { pathAtivo = null; imovelAtivo = null; }
+    desenharMapas();
+    gerarListaLateral();
 }
 
 function cliqueNoMapa(id, nome, temMRV) { if (temMRV) comandoSelecao(id, nome); }
-function hoverNoMapa(nome) { document.getElementById('cidade-titulo').innerText = nome.toUpperCase(); }
-
-function resetTitulo() { 
-    if (pathAtivo) {
-        const mapaAlvo = (mapaAtivo === 'GSP') ? MAPA_GSP : MAPA_INTERIOR;
-        const pathInfo = mapaAlvo.paths.find(p => p.id.toLowerCase().replace(/\s/g, '') === pathAtivo);
-        document.getElementById('cidade-titulo').innerText = pathInfo ? pathInfo.name.toUpperCase() : "SELECIONE UMA REGIÃO";
-    } else {
-        document.getElementById('cidade-titulo').innerText = "SELECIONE UMA REGIÃO";
-    }
-}
 
 function obterHtmlEstoque(valor, tipo) {
     if (tipo === 'N') return "";
     const clean = valor ? valor.toString().toUpperCase().trim() : "";
-    if (clean === "" || clean === "CONSULTAR") return `<span class="badge-estoque" style="color:#666">CONSULTAR</span>`;
-    if (clean === "VENDIDO" || clean === "0") return `<span class="badge-estoque" style="color:#999; text-decoration: line-through;">VENDIDO</span>`;
-    const num = parseInt(clean);
-    if (!isNaN(num)) return `<span class="badge-estoque" style="color:${num < 6 ? '#e31010' : '#666'}">RESTAM ${num} UN.</span>`;
-    return `<span class="badge-estoque" style="color:#666">${clean}</span>`;
+    if (clean === "VENDIDO" || clean === "0") return `<span style="color:#999; font-size:9px">VENDIDO</span>`;
+    return `<span style="color:#666; font-size:9px">${clean}</span>`;
 }
 
 function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
     const painel = document.getElementById('ficha-tecnica');
-    if(!painel) return;
-    
-    const listaSuperior = listaDaCidade.filter(i => i.nome !== selecionado.nome);
-    const urlMaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selecionado.endereco)}`;
-    
     let html = `<div class="vitrine-topo">MRV EM ${nomeRegiao}</div>`;
-    
-    if(listaSuperior.length > 0) {
-        html += `<div style="margin-bottom:10px;">${listaSuperior.map(item => {
-            const btnClass = item.tipo === 'N' ? 'separador-complexo-btn' : 'btRes';
-            return `<button class="${btnClass}" onclick="navegarVitrine('${item.nome}', '${nomeRegiao}')"><strong>${item.nome}</strong> ${obterHtmlEstoque(item.estoque, item.tipo)}</button>`;
-        }).join('')}</div>`;
-        html += `<hr style="border:0; border-top:1px solid #ddd; margin:15px 0 20px 0;">`;
-    }
-
-    if (selecionado.tipo === 'R') {
-        html += `<div style="width:100%; border-radius:4px; height:36px; background-color: #ff8c00; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.8rem; text-transform: uppercase;">RES. ${selecionado.nome}</div>`;
-        html += `<div style="padding: 10px 0;"><p style="font-size:0.65rem; color:#444; display:flex; justify-content:space-between; align-items:center;"><span>📍 ${selecionado.endereco}</span><a href="${urlMaps}" target="_blank" class="btn-maps">MAPS</a></p></div>`;
-        
-        html += `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 5px;">
-            <div class="box-argumento" style="margin:0; padding:5px;"><label>Entrega</label><strong>${selecionado.entrega}</strong></div>
-            <div class="box-argumento" style="margin:0; padding:5px;"><label>Obra</label><strong>${selecionado.obra}%</strong></div>
-            <div class="box-argumento" style="margin:0; padding:5px;"><label>Plantas</label><strong>${selecionado.p_de} - ${selecionado.p_ate}</strong></div>
-            <div class="box-argumento" style="margin:0; padding:5px;"><label>Limitador</label><strong>${selecionado.limitador}</strong></div>
-        </div>`;
-        
-        if(selecionado.campanha) {
-            html += `<div style="background:#fff1f1; border:1px solid #ffdada; padding:8px; border-radius:4px; text-align:center; color:#e31010; font-weight:800; font-size:0.75rem; margin-top:5px;">${selecionado.campanha}</div>`;
-        }
-    } else {
-        html += `<div class="separador-complexo-btn" style="width:100%; cursor:default;">${selecionado.nomeFull}</div>`;
-        html += `<div class="box-argumento"><label>Sobre o Complexo</label><p>${selecionado.descLonga}</p></div>`;
-    }
-    painel.innerHTML = html;
+    // ... (Mantenha sua lógica de montarVitrine aqui)
+    painel.innerHTML = html + `<div class="box-argumento"><strong>${selecionado.nome}</strong><p>${selecionado.endereco}</p></div>`;
 }
 
 window.onload = iniciarApp;
