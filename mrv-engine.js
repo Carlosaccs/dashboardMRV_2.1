@@ -31,7 +31,7 @@ async function carregarPlanilha() {
             }
             colunas.push(campo.trim());
             const cat = (colunas[COL.CATEGORIA] || "").toUpperCase();
-            if (!colunas[COL.NOME] || isNaN(parseInt(colunas[COL.ORDEM])) || (!cat.includes("RESIDENCIAL") && !cat.includes("COMPLEXO"))) return null;
+            if (!colunas[COL.NOME] || isNaN(parseInt(colunas[COL.ORDEM]))) return null;
             return {
                 id_path: (colunas[COL.ID] || "").toLowerCase().replace(/\s/g, ''),
                 tipo: cat.includes('COMPLEXO') ? 'N' : 'R',
@@ -97,15 +97,9 @@ function renderizarNoContainer(id, dados, interativo) {
         const isGSP = idNorm === "grandesaopaulo";
         const classe = (temMRV || isGSP) && interativo ? `commrv ${ativo}` : '';
         const clique = interativo ? (isGSP ? `onclick="trocarMapas(true)"` : `onclick="comandoSelecao('${p.id}')"`) : "";
-        const hover = interativo ? `onmouseover="document.getElementById('cidade-titulo').innerText='${p.name.toUpperCase()}'" onmouseout="resetarTitulo()"` : "";
-        return `<path id="${id}-${idNorm}" d="${p.d}" class="${classe}" ${clique} ${hover}></path>`;
+        return `<path id="${id}-${idNorm}" d="${p.d}" class="${classe}" ${clique}></path>`;
     }).join('');
     container.innerHTML = `<svg viewBox="${dados.viewBox}"><g transform="${dados.transform || ''}">${pathsHtml}</g></svg>`;
-}
-
-function resetarTitulo() {
-    const nome = MAPA_GSP.paths.concat(MAPA_INTERIOR.paths).find(p => p.id.toLowerCase().replace(/\s/g, '') === pathAtivo)?.name;
-    document.getElementById('cidade-titulo').innerText = nome ? nome.toUpperCase() : "SELECIONE UMA REGIÃO NO MAPA";
 }
 
 function desenharMapas() {
@@ -141,38 +135,34 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
     
     let html = `<div class="vitrine-topo">MRV EM ${nomeRegiao}</div>`;
     
+    // Lista de atalhos no topo da vitrine
     if(outros.length > 0) {
-        html += `<div style="margin-bottom:8px;">${outros.map(i => `
+        html += `<div style="margin-bottom:10px;">${outros.map(i => `
             <button class="${i.tipo === 'N' ? 'separador-complexo-btn' : 'btRes'}" style="width:100%;" onclick="navegarVitrine('${i.nome}')">
                 <strong>${i.nome}</strong> ${obterHtmlEstoque(i.estoque, i.tipo)}
             </button>`).join('')}</div><hr style="border:0; border-top:1px solid #eee; margin:10px 0;">`;
     }
 
     if (selecionado.tipo === 'R') {
-        html += `<div class="titulo-res-vitrine">RES. ${selecionado.nome}</div>`;
-        html += `<div style="padding: 6px 0;"><p style="font-size:0.65rem; color:#444; display:flex; justify-content:space-between; align-items:center;"><span>📍 ${selecionado.endereco}</span><a href="${urlMaps}" target="_blank" class="btn-maps">MAPS</a></p></div>`;
+        // Layout Residencial
+        html += `<div class="titulo-vitrine-faixa faixa-laranja">RES. ${selecionado.nome}</div>`;
+        html += `<div style="padding: 2px 0 8px 0;"><p style="font-size:0.65rem; color:#444; display:flex; justify-content:space-between; align-items:center;"><span>📍 ${selecionado.endereco}</span><a href="${urlMaps}" target="_blank" class="btn-maps">MAPS</a></p></div>`;
         
-        // Fila 1: Entrega e Obra
         html += `<div class="grid-infos">
                     <div class="box-argumento"><label>Entrega</label><strong>${selecionado.entrega}</strong></div>
                     <div class="box-argumento"><label>Obra</label><strong>${selecionado.obra}%</strong></div>
-                 </div>`;
-        
-        // Fila 2: Plantas e Estoque (ALINHADO 50/50)
-        html += `<div class="grid-infos">
                     <div class="box-argumento"><label>Plantas</label><strong>${selecionado.p_de} - ${selecionado.p_ate}</strong></div>
                     <div class="box-argumento"><label>Estoque</label><strong>${selecionado.estoque} UN.</strong></div>
-                 </div>`;
-        
-        // Fila 3: Limitador e Casa Paulista
-        html += `<div class="grid-infos">
                     <div class="box-argumento"><label>Limitador</label><strong>${selecionado.limitador}</strong></div>
                     <div class="box-argumento"><label>C. Paulista</label><strong>${selecionado.casa_paulista}</strong></div>
                  </div>`;
     } else {
-        // Título Complexo (Preto, mesmo tamanho do laranja)
-        html += `<div class="titulo-complexo-vitrine">${selecionado.nomeFull}</div>`;
-        html += `<div class="box-argumento" style="display:block !important; margin-top:8px;"><label>Sobre o Complexo</label><p style="margin-top:5px; font-size:0.75rem; color:#444; line-height:1.4;">${selecionado.descLonga}</p></div>`;
+        // Layout Complexo (Mesma faixa, mesma fonte, cor preta)
+        html += `<div class="titulo-vitrine-faixa faixa-preta">${selecionado.nomeFull}</div>`;
+        html += `<div class="box-argumento" style="display:block !important; margin-top:8px; border-left:4px solid var(--mrv-preto);">
+                    <label style="color:var(--mrv-preto);">SOBRE O COMPLEXO</label>
+                    <p style="margin-top:8px; font-size:0.72rem; color:#444; line-height:1.5; text-align:justify;">${selecionado.descLonga}</p>
+                 </div>`;
     }
     painel.innerHTML = html;
 }
