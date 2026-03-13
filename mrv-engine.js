@@ -36,11 +36,18 @@ async function carregarPlanilha() {
             }
             colunas.push(campo.trim());
             
-            if (!colunas[COL.NOME] || colunas[COL.NOME].length < 2) return null;
+            // --- FILTRO ANTI-INVASOR ---
+            const categoria = (colunas[COL.CATEGORIA] || "").toUpperCase();
+            const nomeValido = colunas[COL.NOME] && colunas[COL.NOME].length > 2;
+            
+            // Só aceita se tiver nome e se a categoria for estritamente Residencial ou Complexo
+            if (!nomeValido || (!categoria.includes("RESIDENCIAL") && !categoria.includes("COMPLEXO"))) {
+                return null;
+            }
 
             return {
                 id_path: colunas[COL.ID] ? colunas[COL.ID].toLowerCase().replace(/\s/g, '') : "",
-                tipo: (colunas[COL.CATEGORIA] || "").toUpperCase().includes('COMPLEXO') ? 'N' : 'R',
+                tipo: categoria.includes('COMPLEXO') ? 'N' : 'R',
                 ordem: parseInt(colunas[COL.ORDEM]) || 999,
                 nome: colunas[COL.NOME] || "",
                 nomeFull: colunas[COL.NOME_FULL] || colunas[COL.NOME] || "",
@@ -91,7 +98,7 @@ function navegarVitrine(nome, nomeRegiao) {
     const existeNoMapaAtual = mapaContexto.paths.some(p => p.id.toLowerCase().replace(/\s/g, '') === idAlvo);
 
     if (!existeNoMapaAtual) { 
-        trocarMapas(false); // Troca mas sem resetar tudo, pois vamos selecionar logo abaixo
+        trocarMapas(false); 
     }
     
     const mapaAtualizado = (mapaAtivo === 'GSP') ? MAPA_GSP : MAPA_INTERIOR;
@@ -129,7 +136,7 @@ function renderizarNoContainer(id, dados, interativo) {
     if (!container || !dados) return;
 
     if (!interativo) {
-        container.onclick = () => trocarMapas(true); // Se clicado manualmente, reseta tudo
+        container.onclick = () => trocarMapas(true);
         container.style.cursor = "pointer";
     } else {
         container.onclick = null;
@@ -155,7 +162,6 @@ function desenharMapas() {
     renderizarNoContainer('caixa-b', (mapaAtivo === 'GSP') ? MAPA_INTERIOR : MAPA_GSP, false);
 }
 
-// CORREÇÃO: Função de troca agora limpa os destaques e a vitrine
 function trocarMapas(completo = true) { 
     mapaAtivo = (mapaAtivo === 'GSP') ? 'INTERIOR' : 'GSP'; 
     
