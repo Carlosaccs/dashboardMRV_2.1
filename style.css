@@ -43,7 +43,7 @@ path.commrv:hover, path.ativo { fill: var(--mrv-laranja) !important; stroke: #00
 .sidebar-dir { width: 480px; border-left: 1px solid #ddd; overflow-y: auto; padding: 10px; flex-shrink: 0; }
 .vitrine-topo { background: var(--mrv-verde); color: white; padding: 8px; text-align: center; font-weight: bold; border-radius: 4px; margin-bottom: 8px; font-size: 0.85rem; text-transform: uppercase; }
 
-/* Ajuste das Faixas de Título (RESIDENCIAL E COMPLEXO) */
+/* Faixas de Título Unificadas */
 .titulo-vitrine-faixa {
     width: 100%; 
     height: 32px; 
@@ -55,14 +55,12 @@ path.commrv:hover, path.ativo { fill: var(--mrv-laranja) !important; stroke: #00
     border-radius: 4px; 
     text-transform: uppercase; 
     color: #fff;
-    margin-bottom: 5px;
+    margin-bottom: 8px;
 }
 .faixa-laranja { background: var(--mrv-laranja); }
 .faixa-preta { background: var(--mrv-preto); }
 
-.btn-maps { background: #4285F4; color: white !important; text-decoration: none; padding: 3px 7px; border-radius: 4px; font-size: 0.6rem; font-weight: bold; }
-
-/* Grid de Informações - ALINHAMENTO FIXO 50/50 */
+/* Grid de Informações 50/50 */
 .grid-infos { 
     display: grid; 
     grid-template-columns: 1fr 1fr; 
@@ -78,7 +76,20 @@ path.commrv:hover, path.ativo { fill: var(--mrv-laranja) !important; stroke: #00
     display: flex; 
     justify-content: space-between; 
     align-items: center;
-    min-height: 35px;
+    min-height: 38px;
 }
-.box-argumento label { font-size: 0.55rem; font-weight: bold; text-transform: uppercase; color: var(--mrv-verde); margin-right: 5px; }
+
+/* Estilo específico para o texto do Complexo */
+.box-complexo-info {
+    display: block !important;
+    width: 100%;
+    padding: 12px;
+    background: #f9f9f9;
+    border-left: 4px solid var(--mrv-preto);
+    border-radius: 4px;
+    margin-top: 5px;
+}
+
+.box-argumento label { font-size: 0.55rem; font-weight: bold; text-transform: uppercase; color: var(--mrv-verde); }
 .box-argumento strong { font-size: 0.7rem; color: #333; text-align: right; }
+.btn-maps { background: #4285F4; color: white !important; text-decoration: none; padding: 3px 7px; border-radius: 4px; font-size: 0.6rem; font-weight: bold; }
