@@ -3,10 +3,15 @@ let pathSelecionado = null;
 let nomeSelecionado = ""; 
 let mapaAtivo = 'GSP'; 
 
+// MAPEAMENTO ATUALIZADO (A=0, B=1...)
 const COL = {
     ID: 0, CATEGORIA: 1, ORDEM: 2, NOME: 3, NOME_FULL: 4, 
-    ESTOQUE: 5, END: 6, TIPOLOGIAS: 7, ENTREGA: 8, 
-    P_DE: 9, P_ATE: 10, OBRA: 11, DOCUMENTOS: 15, 
+    ESTOQUE: 5, END: 6, TIPOLOGIAS: 7, 
+    ENTREGA: 8,   // Coluna I
+    P_DE: 9, P_ATE: 10, 
+    OBRA: 11,     // Coluna L
+    REGIAO: 13,   // Coluna N
+    DOCUMENTOS: 15, 
     DICA: 16, DESC_LONGA: 17, BK_CLI: 24
 };
 
@@ -48,6 +53,7 @@ async function carregarPlanilha() {
             }
             colunas.push(campo.trim());
             const catLimpa = colunas[COL.CATEGORIA] ? colunas[COL.CATEGORIA].toUpperCase() : "";
+            
             return {
                 id_path: colunas[COL.ID] ? colunas[COL.ID].toLowerCase().replace(/\s/g, '') : "",
                 tipo: catLimpa.includes('COMPLEXO') ? 'N' : 'R',
@@ -57,10 +63,11 @@ async function carregarPlanilha() {
                 cidade: colunas[COL.ID] || "",
                 estoque: colunas[COL.ESTOQUE] || "",
                 endereco: colunas[COL.END] || "",
-                entrega: colunas[COL.ENTREGA] || "",
+                entrega: colunas[COL.ENTREGA] || "---",
+                obra: colunas[COL.OBRA] || "0",
+                regiao: colunas[COL.REGIAO] || "---",
                 preco: colunas[COL.P_DE] || "Consulte",
                 p_de: colunas[COL.P_DE] || "-",
-                obra: colunas[COL.OBRA] || "0",
                 documentos: colunas[COL.DOCUMENTOS] || "",
                 dica: colunas[COL.DICA] || "",
                 descLonga: colunas[COL.DESC_LONGA] || "",
@@ -106,14 +113,12 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
     const painel = document.getElementById('ficha-tecnica');
     if(!painel) return;
     
-    // REGRA: Complexos (tipo 'N') sobem para o topo da lista de botões
     const listaOrdenada = [...listaDaCidade].sort((a, b) => (a.tipo === 'N' ? -1 : 1));
     const listaSuperior = listaOrdenada.filter(i => i.nome !== selecionado.nome);
     const urlMaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selecionado.endereco)}`;
     
     let html = `<div class="vitrine-topo">MRV EM ${nomeRegiao.toUpperCase()}</div>`;
     
-    // Lista de botões acima
     html += `<div style="margin-bottom:10px;">${listaSuperior.map(item => {
                 const classe = item.tipo === 'N' ? 'separador-complexo-btn' : 'btRes';
                 return `<button class="${classe}" onclick="navegarVitrine('${item.nome}', '${nomeRegiao}')"><strong>${item.nome}</strong> ${item.tipo === 'R' ? obterHtmlEstoque(item.estoque, item.tipo) : ''}</button>`;
@@ -122,18 +127,35 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
     html += `<hr style="border:0; border-top:1px solid #ddd; margin:15px 0 20px 0;">`;
 
     if (selecionado.tipo === 'R') {
-        // --- FAIXA LARANJA COM ESTILO REFORÇADO ---
+        // FAIXA LARANJA
         html += `<div style="width:100%; margin:0; border-radius:4px; height:36px; background-color: #ff8c00; color: #333; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.8rem; text-transform: uppercase; border: none;">RES. ${selecionado.nome}</div>`;
         
-        // Endereço e Botão MAPS
+        // ENDEREÇO E MAPS
         html += `<div style="padding: 10px 0;">
                     <p style="font-size:0.65rem; color:#444; display:flex; justify-content:space-between; align-items:center;">
                         <span>📍 ${selecionado.endereco}</span>
                         <a href="${urlMaps}" target="_blank" class="btn-maps">MAPS</a>
                     </p>
                  </div>`;
+
+        // FILEIRA HORIZONTAL: REGIÃO | ENTREGA | OBRA
+        html += `<div style="display: flex; gap: 5px; margin-bottom: 10px;">
+                    <div style="flex: 1; background: #f2f2f2; padding: 6px; border-radius: 4px; text-align: center; border: 1px solid #e5e5e5;">
+                        <span style="display: block; color: #00713a; font-weight: bold; font-size: 0.55rem; text-transform: uppercase; margin-bottom: 2px;">Região</span>
+                        <span style="font-size: 0.7rem; color: #333; font-weight: 700;">${selecionado.regiao}</span>
+                    </div>
+                    <div style="flex: 1; background: #f2f2f2; padding: 6px; border-radius: 4px; text-align: center; border: 1px solid #e5e5e5;">
+                        <span style="display: block; color: #00713a; font-weight: bold; font-size: 0.55rem; text-transform: uppercase; margin-bottom: 2px;">Entrega</span>
+                        <span style="font-size: 0.7rem; color: #333; font-weight: 700;">${selecionado.entrega}</span>
+                    </div>
+                    <div style="flex: 1; background: #f2f2f2; padding: 6px; border-radius: 4px; text-align: center; border: 1px solid #e5e5e5;">
+                        <span style="display: block; color: #00713a; font-weight: bold; font-size: 0.55rem; text-transform: uppercase; margin-bottom: 2px;">Obra</span>
+                        <span style="font-size: 0.7rem; color: #333; font-weight: 700;">${selecionado.obra}${isNaN(selecionado.obra) ? '' : '%'}</span>
+                    </div>
+                </div>`;
+                
     } else {
-        // --- LAYOUT COMPLEXO SELECIONADO ---
+        // LAYOUT COMPLEXO
         html += `<div class="separador-complexo-btn" style="width:100% !important; margin:0 !important; border-radius:4px 4px 0 0; cursor:default; height:36px !important; pointer-events:none;">${selecionado.nomeFull}</div>`;
         html += `<div style="padding: 10px 0;"><p style="font-size:0.65rem; color:#444; display:flex; justify-content:space-between; align-items:center;"><span>📍 ${selecionado.endereco}</span><a href="${urlMaps}" target="_blank" class="btn-maps">MAPS</a></p></div>`;
         const desc = (selecionado.descLonga || "").split('\n').map(p => `<p style="margin-bottom:8px;">${p.trim()}</p>`).join('');
