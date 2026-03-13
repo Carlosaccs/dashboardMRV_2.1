@@ -97,8 +97,8 @@ function navegarVitrine(nome, nomeRegiao) {
     const imovel = DADOS_PLANILHA.find(i => i.nome === nome); 
     if (!imovel) return;
     const idAlvo = imovel.id_path.toLowerCase().replace(/\s/g, '');
-    const existeNoMapaAtual = ((mapaAtivo === 'GSP') ? MAPA_GSP : MAPA_INTERIOR).paths.some(p => p.id.toLowerCase().replace(/\s/g, '') === idAlvo);
-    if (!existeNoMapaAtual) { trocarMapas(false); }
+    const mapaContexto = (mapaAtivo === 'GSP') ? MAPA_GSP : MAPA_INTERIOR;
+    if (!mapaContexto.paths.some(p => p.id.toLowerCase().replace(/\s/g, '') === idAlvo)) { trocarMapas(false); }
     comandoSelecao(imovel.id_path, buscarNomeNoMapa(imovel.id_path), imovel); 
 }
 
@@ -107,8 +107,7 @@ function comandoSelecao(idPath, nomePath, fonte) {
     const imoveis = DADOS_PLANILHA.filter(d => d.id_path === idBusca);
     if (imoveis.length > 0) {
         const selecionado = (fonte && fonte.nome) ? fonte : imoveis[0];
-        pathAtivo = idBusca;
-        imovelAtivo = selecionado.nome;
+        pathAtivo = idBusca; imovelAtivo = selecionado.nome;
         document.querySelectorAll('.ativo').forEach(el => el.classList.remove('ativo'));
         const elMapa = document.getElementById(`caixa-a-${idBusca}`);
         if (elMapa) elMapa.classList.add('ativo');
@@ -124,14 +123,14 @@ function renderizarNoContainer(id, dados, interativo) {
     const container = document.getElementById(id);
     if (!container || !dados) return;
     const pathsHtml = dados.paths.map(p => {
-        const idPathNorm = p.id.toLowerCase().replace(/\s/g, '');
-        const temMRV = DADOS_PLANILHA.some(d => d.id_path === idPathNorm);
-        const ativo = (pathAtivo === idPathNorm && interativo) ? 'ativo' : '';
-        const isGSP = idPathNorm === "grandesaopaulo";
+        const idNorm = p.id.toLowerCase().replace(/\s/g, '');
+        const temMRV = DADOS_PLANILHA.some(d => d.id_path === idNorm);
+        const ativo = (pathAtivo === idNorm && interativo) ? 'ativo' : '';
+        const isGSP = idNorm === "grandesaopaulo";
         const classe = (temMRV || isGSP) && interativo ? `commrv ${ativo}` : '';
         const clique = interativo ? (isGSP ? `onclick="trocarMapas(true)"` : `onclick="cliqueNoMapa('${p.id}', '${p.name}', ${temMRV})"`) : "";
         const hover = interativo ? `onmouseover="hoverNoMapa('${p.name}')" onmouseout="resetTitulo()"` : "";
-        return `<path id="${id}-${idPathNorm}" name="${p.name}" d="${p.d}" class="${classe}" ${clique} ${hover}></path>`;
+        return `<path id="${id}-${idNorm}" name="${p.name}" d="${p.d}" class="${classe}" ${clique} ${hover}></path>`;
     }).join('');
     container.innerHTML = `<svg viewBox="${dados.viewBox}" style="width:100%; height:100%;"><g transform="${dados.transform || ''}">${pathsHtml}</g></svg>`;
 }
@@ -143,15 +142,14 @@ function desenharMapas() {
 
 function hoverNoMapa(nome) { document.getElementById('cidade-titulo').innerText = nome.toUpperCase(); }
 function resetTitulo() { 
-    const texto = pathAtivo ? buscarNomeNoMapa(pathAtivo) : "SELECIONE UMA REGIÃO NO MAPA";
-    document.getElementById('cidade-titulo').innerText = texto.toUpperCase();
+    const txt = pathAtivo ? buscarNomeNoMapa(pathAtivo) : "SELECIONE UMA REGIÃO NO MAPA";
+    document.getElementById('cidade-titulo').innerText = txt.toUpperCase();
 }
 
 function trocarMapas(completo = true) { 
     mapaAtivo = (mapaAtivo === 'GSP') ? 'INTERIOR' : 'GSP'; 
     if (completo) { pathAtivo = null; imovelAtivo = null; }
-    desenharMapas(); 
-    gerarListaLateral(); 
+    desenharMapas(); gerarListaLateral(); 
 }
 
 function cliqueNoMapa(id, nome, temMRV) { if (temMRV) comandoSelecao(id, nome); }
@@ -184,12 +182,22 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
     if (selecionado.tipo === 'R') {
         html += `<div style="width:100%; border-radius:4px; height:36px; background-color: #ff8c00; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.8rem; text-transform: uppercase;">RES. ${selecionado.nome}</div>`;
         html += `<div style="padding: 10px 0;"><p style="font-size:0.65rem; color:#444; display:flex; justify-content:space-between; align-items:center;"><span>📍 ${selecionado.endereco}</span><a href="${urlMaps}" target="_blank" class="btn-maps">MAPS</a></p></div>`;
+        
+        // Estrutura das Caixas Cinzas
         html += `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
             <div class="box-argumento"><label>Entrega</label><strong>${selecionado.entrega}</strong></div>
             <div class="box-argumento"><label>Obra</label><strong>${selecionado.obra}%</strong></div>
-            <div class="box-argumento"><label>Plantas</label><strong>${selecionado.p_de} - ${selecionado.p_ate}</strong></div>
-            <div class="box-argumento"><label>Limitador</label><strong>${selecionado.limitador}</strong></div>
         </div>`;
+        
+        // Plantas em linha única (costuma ser texto longo)
+        html += `<div class="box-argumento" style="margin-top:5px;"><label>Plantas</label><strong>${selecionado.p_de} - ${selecionado.p_ate}</strong></div>`;
+        
+        // Nova linha solicitada
+        html += `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top:5px;">
+            <div class="box-argumento"><label>Limitador</label><strong>${selecionado.limitador}</strong></div>
+            <div class="box-argumento"><label>C. Paulista</label><strong>${selecionado.casa_paulista}</strong></div>
+        </div>`;
+        
     } else {
         html += `<div class="separador-complexo-btn" style="width:100%; cursor:default;">${selecionado.nomeFull}</div>`;
         html += `<div class="box-argumento"><label>Sobre o Complexo</label><p>${selecionado.descLonga}</p></div>`;
