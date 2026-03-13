@@ -23,7 +23,6 @@ async function carregarPlanilha() {
     try {
         const response = await fetch(URL_CSV);
         let texto = await response.text();
-        
         const linhasPuras = texto.split(/\r?\n/);
         
         DADOS_PLANILHA = linhasPuras.slice(1).map(linha => {
@@ -37,7 +36,6 @@ async function carregarPlanilha() {
             }
             colunas.push(campo.trim());
             
-            // Só processa se a coluna NOME tiver conteúdo real
             if (!colunas[COL.NOME] || colunas[COL.NOME].length < 2) return null;
 
             return {
@@ -59,7 +57,7 @@ async function carregarPlanilha() {
                 campanha: colunas[COL.CAMPANHA] || "",
                 descLonga: colunas[COL.DESC_LONGA] || ""
             };
-        }).filter(i => i !== null); // Remove as linhas de "lixo"
+        }).filter(i => i !== null);
 
         DADOS_PLANILHA.sort((a, b) => a.ordem - b.ordem);
         desenharMapas();
@@ -75,8 +73,6 @@ function gerarListaLateral() {
         const classeBase = item.tipo === 'N' ? 'separador-complexo-btn' : 'btRes';
         const ativo = item.nome === imovelAtivo ? 'ativo' : '';
         const idBtn = `btn-list-${item.nome.replace(/[^a-zA-Z0-9]/g, '-')}`;
-        
-        // Se for tipo N (Complexo), não tem clique de vitrine individual, apenas visual
         const clique = item.tipo === 'N' ? '' : `onclick="navegarVitrine('${item.nome}', '${item.regiao}')"`;
         
         return `<div id="${idBtn}" class="${classeBase} ${ativo}" ${clique}>
@@ -94,9 +90,10 @@ function navegarVitrine(nome, nomeRegiao) {
     const mapaContexto = (mapaAtivo === 'GSP') ? MAPA_GSP : MAPA_INTERIOR;
     const existeNoMapaAtual = mapaContexto.paths.some(p => p.id.toLowerCase().replace(/\s/g, '') === idAlvo);
 
-    if (!existeNoMapaAtual) { trocarMapas(); }
+    if (!existeNoMapaAtual) { 
+        trocarMapas(false); // Troca mas sem resetar tudo, pois vamos selecionar logo abaixo
+    }
     
-    // Busca o nome real da região no mrv-data.js para o título
     const mapaAtualizado = (mapaAtivo === 'GSP') ? MAPA_GSP : MAPA_INTERIOR;
     const pathInfo = mapaAtualizado.paths.find(p => p.id.toLowerCase().replace(/\s/g, '') === idAlvo);
     
@@ -114,11 +111,9 @@ function comandoSelecao(idPath, nomePath, fonte) {
 
         document.querySelectorAll('.ativo').forEach(el => el.classList.remove('ativo'));
         
-        // Destaque no mapa
         const elMapa = document.getElementById(`caixa-a-${idBusca}`);
         if (elMapa) elMapa.classList.add('ativo');
 
-        // Destaque na lista
         const idBtn = `btn-list-${selecionado.nome.replace(/[^a-zA-Z0-9]/g, '-')}`;
         const elLista = document.getElementById(idBtn);
         if (elLista) elLista.classList.add('ativo');
@@ -134,7 +129,7 @@ function renderizarNoContainer(id, dados, interativo) {
     if (!container || !dados) return;
 
     if (!interativo) {
-        container.onclick = trocarMapas;
+        container.onclick = () => trocarMapas(true); // Se clicado manualmente, reseta tudo
         container.style.cursor = "pointer";
     } else {
         container.onclick = null;
@@ -147,7 +142,7 @@ function renderizarNoContainer(id, dados, interativo) {
         const isGSP = idPathNorm === "grandesaopaulo";
         const ativo = (pathAtivo === idPathNorm && interativo) ? 'ativo' : '';
         const classe = (temMRV || isGSP) && interativo ? `commrv ${ativo}` : '';
-        const clique = interativo ? (isGSP ? `onclick="trocarMapas()"` : `onclick="cliqueNoMapa('${p.id}', '${p.name}', ${temMRV})"`) : "";
+        const clique = interativo ? (isGSP ? `onclick="trocarMapas(true)"` : `onclick="cliqueNoMapa('${p.id}', '${p.name}', ${temMRV})"`) : "";
         
         return `<path id="${id}-${idPathNorm}" name="${p.name}" d="${p.d}" class="${classe}" ${clique} onmouseover="hoverNoMapa('${p.name}')" onmouseout="resetTitulo()"></path>`;
     }).join('');
@@ -160,8 +155,21 @@ function desenharMapas() {
     renderizarNoContainer('caixa-b', (mapaAtivo === 'GSP') ? MAPA_INTERIOR : MAPA_GSP, false);
 }
 
-function trocarMapas() { 
+// CORREÇÃO: Função de troca agora limpa os destaques e a vitrine
+function trocarMapas(completo = true) { 
     mapaAtivo = (mapaAtivo === 'GSP') ? 'INTERIOR' : 'GSP'; 
+    
+    if (completo) {
+        pathAtivo = null;
+        imovelAtivo = null;
+        document.getElementById('cidade-titulo').innerText = "SELECIONE UMA REGIÃO NO MAPA";
+        document.getElementById('ficha-tecnica').innerHTML = `
+            <div style="text-align:center; color:#ccc; margin-top:100px;">
+                <p style="font-size: 30px;">📍</p>
+                <p>Clique em algum Residencial ou em alguma região verde do mapa</p>
+            </div>`;
+    }
+
     desenharMapas(); 
     gerarListaLateral(); 
 }
@@ -193,7 +201,6 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
     const painel = document.getElementById('ficha-tecnica');
     if(!painel) return;
     
-    // Filtra apenas residenciais (tipo R) para a lista de botões superiores na vitrine
     const listaSuperior = listaDaCidade.filter(i => i.nome !== selecionado.nome && i.tipo === 'R');
     const urlMaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selecionado.endereco)}`;
     
