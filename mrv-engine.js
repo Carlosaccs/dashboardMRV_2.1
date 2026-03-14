@@ -212,34 +212,22 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
             }
         }
 
-        // --- CAIXA DE LOCALIZAÇÃO (T) ---
-        if(selecionado.localizacao && selecionado.localizacao !== "---" && selecionado.localizacao !== "") {
-            html += `
-            <div style="margin-top:2px; background: #fdf2e9; border-left: 4px solid var(--mrv-laranja); padding: 8px; border-radius: 4px; margin-bottom: 8px;">
-                <label style="display:block; font-size:0.55rem; font-weight:bold; color:var(--mrv-laranja); text-transform:uppercase; margin-bottom:2px;">📍 Diferenciais de Localização</label>
-                <p style="margin:0; font-size:0.7rem; color:#444; line-height:1.4;">${selecionado.localizacao}</p>
-            </div>`;
-        }
-
-        // --- GRID DE INFRAESTRUTURA (U, V, W, X) ---
-        const criarBoxInfra = (label, texto, cor) => {
+        // --- FUNÇÃO PARA CRIAR CAIXAS EM LINHA ÚNICA ---
+        const criarBoxDestaque = (label, texto, corFundo, corBorda) => {
             if(!texto || texto === "---" || texto === "") return "";
             return `
-            <div style="background: #f8f9fa; border-top: 2px solid ${cor}; padding: 6px; border-radius: 4px; margin-bottom: 4px;">
-                <label style="display:block; font-size:0.5rem; font-weight:bold; color:${cor}; text-transform:uppercase; margin-bottom:2px;">${label}</label>
-                <p style="margin:0; font-size:0.65rem; color:#555; line-height:1.2;">${texto}</p>
+            <div style="background: ${corFundo}; border-left: 4px solid ${corBorda}; padding: 8px; border-radius: 4px; margin-bottom: 6px; width: 100%; box-sizing: border-box;">
+                <label style="display:block; font-size:0.55rem; font-weight:bold; color:${corBorda}; text-transform:uppercase; margin-bottom:2px;">${label}</label>
+                <p style="margin:0; font-size:0.7rem; color:#444; line-height:1.4;">${texto}</p>
             </div>`;
         };
 
-        let infraHtml = "";
-        infraHtml += criarBoxInfra('🚍 Mobilidade', selecionado.mobilidade, '#2e7d32'); // Verde
-        infraHtml += criarBoxInfra('🎭 Cultura e Lazer', selecionado.lazer, '#1565c0');   // Azul
-        infraHtml += criarBoxInfra('🛒 Comércio', selecionado.comercio, '#c62828');       // Vermelho
-        infraHtml += criarBoxInfra('🏥 Saúde e Educação', selecionado.saude, '#6a1b9a'); // Roxo
-
-        if(infraHtml !== "") {
-            html += `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 4px;">${infraHtml}</div>`;
-        }
+        // Renderizando as caixas, uma por linha
+        html += criarBoxDestaque('📍 Diferenciais de Localização', selecionado.localizacao, '#fdf2e9', '#f37021'); // Laranja MRV
+        html += criarBoxDestaque('🚍 Mobilidade', selecionado.mobilidade, '#f1f8e9', '#2e7d32'); // Verde
+        html += criarBoxDestaque('🎭 Cultura e Lazer', selecionado.lazer, '#e3f2fd', '#1565c0');   // Azul
+        html += criarBoxDestaque('🛒 Comércio', selecionado.comercio, '#ffebee', '#c62828');       // Vermelho
+        html += criarBoxDestaque('🏥 Saúde e Educação', selecionado.saude, '#f3e5f5', '#6a1b9a'); // Roxo
 
         if(selecionado.descLonga) {
              html += `<div style="margin-top:8px; font-size:0.7rem; color:#666; font-style:italic; border-top:1px solid #eee; padding-top:4px;">${selecionado.descLonga}</div>`;
