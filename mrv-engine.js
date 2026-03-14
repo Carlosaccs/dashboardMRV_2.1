@@ -1,247 +1,106 @@
-let DADOS_PLANILHA = [];
-let pathAtivo = null;  
-let imovelAtivo = null;  
-let mapaAtivo = 'GSP'; 
-
-const COL = {
-    ID: 0, CATEGORIA: 1, ORDEM: 2, NOME: 3, NOME_FULL: 4, 
-    ESTOQUE: 5, END: 6, TIPOLOGIAS: 7, ENTREGA: 8, 
-    P_DE: 9, P_ATE: 10, OBRA: 11, LIMITADOR: 12, 
-    REGIAO: 13, CASA_PAULISTA: 14, CAMPANHA: 15, 
-    DESC_LONGA: 17, 
-    LOCALIZACAO: 19, MOBILIDADE: 20, CULTURA_LAZER: 21,    
-    COMERCIO: 22, SAUDE_EDUCACAO: 23,   
-    BOOK_CLIENTE: 24, BOOK_CORRETOR: 25     
-};
-
-async function iniciarApp() {
-    try { await carregarPlanilha(); } catch (err) { console.error(err); }
+:root {
+    --mrv-verde: #00713a;
+    --mrv-laranja: #ff8c00;
+    --mrv-preto: #333;
+    --vermelho-mrv: #e31010;
+    --cinza-claro: #f4f4f4;
+    --cinza-divisor: #ccc;
+    --cinza-mapa: #777;
 }
 
-// Função de Segurança: Converte link do Drive para modo Preview (oculta menus)
-function formatarLinkSeguro(url) {
-    if (!url || url === "---" || url === "") return "";
-    if (url.includes('drive.google.com')) {
-        // Remove parâmetros de visualização e força o modo preview limpo
-        return url.split('/view')[0] + '/preview';
-    }
-    return url;
+/* Reset e Layout Base */
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; background: white; }
+
+.header { 
+    background-color: var(--mrv-verde) !important; color: white !important; 
+    height: 60px !important; line-height: 60px !important; 
+    font-size: 1.6rem !important; font-weight: bold !important; text-align: center;
+    flex-shrink: 0;
 }
 
-function copiarLink(url) {
-    const linkSeguro = formatarLinkSeguro(url);
-    navigator.clipboard.writeText(linkSeguro);
-    alert("Link seguro copiado para a área de transferência!");
+.wrapper { display: flex; flex: 1; height: calc(100vh - 60px); overflow: hidden; }
+
+/* Lateral Esquerda - Lista */
+.sidebar-esq { width: 280px; border-right: 1px solid #ddd; overflow-y: auto; padding: 10px 0; background: #f8f9fa; flex-shrink: 0; }
+
+.btRes, .separador-complexo-btn {
+    width: 92% !important; margin: 4px auto !important; min-height: 28px;
+    display: flex !important; align-items: center !important; padding: 4px 8px !important;
+    border-radius: 4px; font-size: 0.72rem; cursor: pointer; border: 1px solid #ddd; 
+    text-decoration: none; transition: 0.1s;
 }
 
-async function carregarPlanilha() {
-    const SHEET_ID = "15V194P2JPGCCPpCTKJsib8sJuCZPgtbNb-rtgNaLS7E";
-    const URL_CSV = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0&v=${new Date().getTime()}`;
-    try {
-        const response = await fetch(URL_CSV);
-        let texto = await response.text();
-        const linhasPuras = texto.split(/\r?\n/);
-        DADOS_PLANILHA = linhasPuras.slice(1).map(linha => {
-            const colunas = []; let campo = "", aspas = false;
-            for (let i = 0; i < linha.length; i++) {
-                const char = linha[i];
-                if (char === '"') aspas = !aspas;
-                else if (char === ',' && !aspas) { colunas.push(campo.trim()); campo = ""; }
-                else { campo += char; }
-            }
-            colunas.push(campo.trim());
-            const cat = (colunas[COL.CATEGORIA] || "").toUpperCase();
-            if (!colunas[COL.NOME] || isNaN(parseInt(colunas[COL.ORDEM]))) return null;
-            return {
-                id_path: (colunas[COL.ID] || "").toLowerCase().replace(/\s/g, ''),
-                tipo: cat.includes('COMPLEXO') ? 'N' : 'R',
-                ordem: parseInt(colunas[COL.ORDEM]),
-                nome: colunas[COL.NOME],
-                nomeFull: colunas[COL.NOME_FULL] || colunas[COL.NOME],
-                estoque: colunas[COL.ESTOQUE],
-                endereco: colunas[COL.END] || "",
-                entrega: colunas[COL.ENTREGA] || "---",
-                obra: colunas[COL.OBRA] || "0",
-                tipologiasH: colunas[COL.TIPOLOGIAS] || "", 
-                regiao: colunas[COL.REGIAO] || "---",
-                p_de: colunas[COL.P_DE] || "---",
-                p_ate: colunas[COL.P_ATE] || "---",
-                limitador: colunas[COL.LIMITADOR] || "---",
-                casa_paulista: colunas[COL.CASA_PAULISTA] || "---",
-                campanha: colunas[COL.CAMPANHA] || "",
-                descLonga: colunas[COL.DESC_LONGA] || "",
-                localizacao: colunas[COL.LOCALIZACAO] || "",
-                mobilidade: colunas[COL.MOBILIDADE] || "",
-                lazer: colunas[COL.CULTURA_LAZER] || "",
-                comercio: colunas[COL.COMERCIO] || "",
-                saude: colunas[COL.SAUDE_EDUCACAO] || "",
-                linkCliente: colunas[COL.BOOK_CLIENTE] || "",
-                linkCorretor: colunas[COL.BOOK_CORRETOR] || ""
-            };
-        }).filter(i => i !== null);
-        DADOS_PLANILHA.sort((a, b) => a.ordem - b.ordem);
-        desenharMapas(); gerarListaLateral();
-    } catch (e) { console.error(e); }
+.separador-complexo-btn { background: #333 !important; color: white !important; justify-content: center !important; font-weight: bold; text-transform: uppercase; border: none !important; }
+
+.btRes { background: #fff; border-left: 4px solid var(--mrv-verde) !important; justify-content: space-between; color: #333; }
+.btRes:hover { background-color: #f0f0f0 !important; border: 1px solid var(--mrv-verde) !important; }
+.btRes.ativo { background-color: var(--mrv-laranja) !important; color: white !important; border: 1px solid var(--mrv-laranja) !important; }
+
+/* Centro - Mapas */
+.conteudo-centro { flex: 1; display: flex; flex-direction: column; background: #fff; overflow: hidden; }
+#cidade-titulo { background: #eee; padding: 4px; text-align: center; font-weight: bold; font-size: 0.85rem; color: #555; height: 30px; display: flex; align-items: center; justify-content: center; text-transform: uppercase; }
+#caixa-a { flex: 2; display: flex; align-items: center; justify-content: center; padding: 10px; overflow: hidden; }
+#caixa-b { flex: 0.8; display: flex; align-items: center; justify-content: center; padding: 5px; border-top: 2px solid #eee; cursor: pointer; background: #fff; min-height: 120px; }
+
+svg { width: 100%; height: 100%; }
+path { fill: var(--cinza-mapa); stroke: #fff; stroke-width: 0.8; transition: fill 0.1s; }
+path:hover { fill: #999 !important; cursor: pointer; }
+path.commrv { fill: var(--mrv-verde) !important; }
+path.commrv:hover, path.ativo { fill: var(--mrv-laranja) !important; stroke: #000 !important; stroke-width: 1.2px !important; }
+
+/* Lateral Direita - Vitrine */
+.sidebar-dir { width: 480px; border-left: 1px solid #ddd; overflow-y: auto; padding: 10px; flex-shrink: 0; }
+.vitrine-topo { background: var(--mrv-verde); color: white; padding: 6px; text-align: center; font-weight: bold; border-radius: 4px; margin-bottom: 6px; font-size: 0.85rem; text-transform: uppercase; }
+.titulo-vitrine-faixa { display: block !important; width: 100% !important; height: 32px !important; line-height: 32px !important; font-weight: bold !important; font-size: 0.85rem !important; border-radius: 4px; text-transform: uppercase; color: #fff; text-align: center; margin-bottom: 6px; }
+.faixa-laranja { background: var(--mrv-laranja) !important; }
+.faixa-preta { background: var(--mrv-preto) !important; }
+
+/* --- CARDS DE MATERIAIS COM MINIATURA --- */
+.card-material-item {
+    display: flex; justify-content: space-between; align-items: center;
+    background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;
+    padding: 10px 15px; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
-function obterHtmlEstoque(valor, tipo) {
-    if (tipo === 'N') return "";
-    const clean = valor ? valor.toString().toUpperCase().trim() : "";
-    if (clean === "VENDIDO" || clean === "0") return `<span style="color:#999; text-decoration:line-through; font-size:9px;">VENDIDO</span>`;
-    const num = parseInt(clean);
-    if (!isNaN(num)) return `<span style="color:${num < 6 ? '#e31010' : '#666'}; font-size:9px; font-weight:bold;">RESTAM ${num} UN.</span>`;
-    return `<span style="color:#666; font-size:9px;">${clean || "CONSULTAR"}</span>`;
+.card-material-left { display: flex; align-items: center; gap: 10px; flex: 1; }
+.card-text { font-size: 0.75rem; font-weight: 600; color: #333; }
+
+.container-abrir-preview { position: relative; display: inline-block; }
+
+.preview-hover-box {
+    display: none; position: absolute; bottom: 120%; right: 0;
+    width: 250px; height: 180px; background: white;
+    border: 3px solid var(--mrv-verde); border-radius: 12px;
+    overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    z-index: 1000; pointer-events: none;
 }
 
-function navegarVitrine(nome) { 
-    const imovel = DADOS_PLANILHA.find(i => i.nome === nome);
-    if (!imovel) return;
-    comandoSelecao(imovel.id_path, null, imovel); 
+.card-btn-abrir:hover + .preview-hover-box { display: block; }
+
+.preview-hover-box iframe { width: 100%; height: 100%; border: none; }
+
+.card-material-right { display: flex; gap: 8px; }
+.card-btn-abrir, .card-btn-copiar {
+    padding: 7px 16px; font-size: 0.7rem; font-weight: bold; border-radius: 6px;
+    text-decoration: none; border: none; cursor: pointer; color: #fff;
 }
+.card-btn-abrir { background: var(--mrv-verde); }
+.card-btn-copiar { background: var(--mrv-laranja); }
 
-function comandoSelecao(idPath, nomePath, fonte) {
-    pathAtivo = idPath.toLowerCase().replace(/\s/g, '');
-    const imoveisDaCidade = DADOS_PLANILHA.filter(d => d.id_path === pathAtivo);
-    const selecionado = fonte || imoveisDaCidade[0];
-    imovelAtivo = selecionado.nome;
-    document.querySelectorAll('path').forEach(el => el.classList.remove('ativo'));
-    const elMapa = document.getElementById(`caixa-a-${pathAtivo}`);
-    if (elMapa) elMapa.classList.add('ativo');
-    gerarListaLateral();
-    const todosPaths = MAPA_GSP.paths.concat(MAPA_INTERIOR.paths);
-    const nomeOficial = todosPaths.find(p => p.id.toLowerCase().replace(/\s/g, '') === pathAtivo)?.name || pathAtivo;
-    atualizarTituloSuperior(nomeOficial);
-    montarVitrine(selecionado, imoveisDaCidade, nomeOficial);
-}
+/* Grid e Boxes de Diferenciais */
+.grid-infos { display: table !important; width: 100% !important; table-layout: fixed !important; border-spacing: 2px !important; margin-bottom: 2px; }
+.row-infos { display: table-row; }
+.box-argumento { display: table-cell !important; width: 50% !important; padding: 4px 8px !important; border-radius: 4px; border-left: 4px solid #ddd; background: #f9f9f9; vertical-align: middle; height: 32px !important; }
+.box-inner { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+.box-argumento label { font-size: 0.55rem; font-weight: bold; text-transform: uppercase; color: var(--mrv-verde); }
+.box-argumento strong { font-size: 0.65rem; color: #333; }
+.box-campanha { color: var(--vermelho-mrv) !important; font-weight: bold !important; font-size: 0.68rem !important; border-left: 4px solid var(--vermelho-mrv) !important; text-align: center; }
 
-function atualizarTituloSuperior(texto) {
-    const titulo = document.getElementById('cidade-titulo');
-    if (texto) { titulo.innerText = texto.toUpperCase(); } 
-    else if (pathAtivo) {
-        const todosPaths = MAPA_GSP.paths.concat(MAPA_INTERIOR.paths);
-        const nomeFixo = todosPaths.find(p => p.id.toLowerCase().replace(/\s/g, '') === pathAtivo)?.name || "";
-        titulo.innerText = nomeFixo.toUpperCase();
-    } else { titulo.innerText = "SELECIONE UMA REGIÃO NO MAPA"; }
-}
-
-function renderizarNoContainer(id, dados, interativo) {
-    const container = document.getElementById(id);
-    const pathsHtml = dados.paths.map(p => {
-        const idNorm = p.id.toLowerCase().replace(/\s/g, '');
-        const temMRV = DADOS_PLANILHA.some(d => d.id_path === idNorm);
-        const ativo = (pathAtivo === idNorm && interativo) ? 'ativo' : '';
-        const isGSP = idNorm === "grandesaopaulo";
-        let eventos = "";
-        if (interativo) {
-            if (isGSP) { eventos = `onclick="trocarMapas(true)" onmouseover="atualizarTituloSuperior('GRANDE SÃO PAULO')" onmouseout="atualizarTituloSuperior()"`; } 
-            else { eventos = `onclick="comandoSelecao('${p.id}')" onmouseover="atualizarTituloSuperior('${p.name}')" onmouseout="atualizarTituloSuperior()"`; }
-        }
-        return `<path id="${id}-${idNorm}" d="${p.d}" class="${(temMRV || isGSP) && interativo ? 'commrv '+ativo : ''}" ${eventos}></path>`;
-    }).join('');
-    container.innerHTML = `<svg viewBox="${dados.viewBox}"><g transform="${dados.transform || ''}">${pathsHtml}</g></svg>`;
-}
-
-function desenharMapas() {
-    renderizarNoContainer('caixa-a', (mapaAtivo === 'GSP') ? MAPA_GSP : MAPA_INTERIOR, true);
-    renderizarNoContainer('caixa-b', (mapaAtivo === 'GSP') ? MAPA_INTERIOR : MAPA_GSP, false);
-    document.getElementById('caixa-b').onclick = () => trocarMapas(true);
-}
-
-function trocarMapas(completo) { 
-    mapaAtivo = (mapaAtivo === 'GSP') ? 'INTERIOR' : 'GSP'; 
-    if (completo) { 
-        pathAtivo = null; imovelAtivo = null; 
-        document.getElementById('ficha-tecnica').innerHTML = `<div style="text-align:center; color:#ccc; margin-top:80px;"><p style="font-size:30px;">📍</p><p>Clique no mapa ou na lista</p></div>`;
-        document.getElementById('cidade-titulo').innerText = "SELECIONE UMA REGIÃO NO MAPA";
-    }
-    desenharMapas(); gerarListaLateral(); 
-}
-
-function gerarListaLateral() {
-    const container = document.getElementById('lista-imoveis');
-    container.innerHTML = DADOS_PLANILHA.map(item => {
-        const ativo = item.nome === imovelAtivo ? 'ativo' : '';
-        return `<div class="${item.tipo === 'N' ? 'separador-complexo-btn' : 'btRes'} ${ativo}" onclick="navegarVitrine('${item.nome}')">
-                    <strong>${item.nome}</strong> ${obterHtmlEstoque(item.estoque, item.tipo)}
-                </div>`;
-    }).join('');
-}
-
-function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
-    const painel = document.getElementById('ficha-tecnica');
-    const urlMaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selecionado.endereco)}`;
-    
-    let html = `<div class="vitrine-topo">MRV EM ${nomeRegiao}</div>`;
-    
-    if (selecionado.tipo === 'R') {
-        html += `<div class="titulo-vitrine-faixa faixa-laranja">RES. ${selecionado.nome}</div>`;
-        html += `<div style="padding-bottom: 4px;"><p style="font-size:0.65rem; color:#444; display:flex; justify-content:space-between; align-items:center;"><span>📍 ${selecionado.endereco}</span><a href="${urlMaps}" target="_blank" class="btn-maps">MAPS</a></p></div>`;
-        
-        if(selecionado.campanha && selecionado.campanha !== "---" && selecionado.campanha !== "") {
-            html += `<div class="grid-infos"><div class="row-infos"><div class="box-argumento box-campanha" style="width:100%; display:block; text-align:center;">${selecionado.campanha}</div></div></div>`;
-        }
-
-        const fila = (l1, v1, l2, v2) => `
-            <div class="grid-infos"><div class="row-infos">
-                <div class="box-argumento"><div class="box-inner"><label>${l1}</label><strong>${v1}</strong></div></div>
-                <div class="box-argumento"><div class="box-inner"><label>${l2}</label><strong>${v2}</strong></div></div>
-            </div></div>`;
-
-        html += fila('Entrega', selecionado.entrega, 'Obra', selecionado.obra + '%');
-        html += fila('Plantas', selecionado.p_de + ' - ' + selecionado.p_ate, 'Estoque', selecionado.estoque + ' UN.');
-        html += fila('Limitador', selecionado.limitador, 'C. Paulista', selecionado.casa_paulista);
-
-        if(selecionado.tipologiasH) {
-            const linhas = selecionado.tipologiasH.split(';').map(l => l.trim()).filter(l => l !== "");
-            if(linhas.length > 0) {
-                const titulos = linhas[0].split(',').map(t => t.trim());
-                const dados = linhas.slice(1);
-                html += `<div class="tabela-precos-container"><div class="tabela-header">${titulos.map((t, idx) => `<div class="col-tabela ${idx === 1 ? 'col-laranja' : ''}">${t}</div>`).join('')}</div><div class="tabela-corpo">${dados.map(linha => { const cols = linha.split(',').map(c => c.trim()); if(cols.length <= 1) return ""; return `<div class="tabela-row">${cols.map((v, idx) => `<div class="col-tabela ${idx === 1 ? 'col-laranja' : ''}">${idx === 0 ? `<strong>${v}</strong>` : v}</div>`).join('')}</div>`; }).join('')}</div></div>`;
-            }
-        }
-
-        const criarBoxDestaque = (label, texto, corFundo, corBorda) => {
-            if(!texto || texto === "---" || texto === "") return "";
-            return `<div style="background: ${corFundo}; border-left: 4px solid ${corBorda}; padding: 8px; border-radius: 4px; margin-bottom: 4px;"><label style="display:block; font-size:0.55rem; font-weight:bold; color:${corBorda}; text-transform:uppercase; margin-bottom:2px;">${label}</label><p style="margin:0; font-size:0.7rem; color:#444;">${texto}</p></div>`;
-        };
-
-        html += criarBoxDestaque('📍 Localização', selecionado.localizacao, '#fdf2e9', '#f37021');
-        html += criarBoxDestaque('🚍 Mobilidade', selecionado.mobilidade, '#f1f8e9', '#2e7d32');
-        html += criarBoxDestaque('🎭 Lazer', selecionado.lazer, '#e3f2fd', '#1565c0');
-        html += criarBoxDestaque('🛒 Comércio', selecionado.comercio, '#ffebee', '#c62828');
-        html += criarBoxDestaque('🏥 Saúde', selecionado.saude, '#f3e5f5', '#6a1b9a');
-
-        // --- CARDS DE MATERIAIS COM MINIATURA E LINK SEGURO ---
-        const criarCardMaterial = (titulo, url, icone) => {
-            if (!url || url === "" || url === "---") return "";
-            const linkSeguro = formatarLinkSeguro(url);
-            return `
-            <div class="card-material-item">
-                <div class="card-material-left">
-                    <span class="card-icon">${icone}</span>
-                    <span class="card-text">${titulo}</span>
-                    <div class="preview-thumb" style="background-image: url('${url.replace('/view', '/preview')}');"></div>
-                </div>
-                <div class="card-material-right">
-                    <a href="${linkSeguro}" target="_blank" class="card-btn-abrir">Abrir</a>
-                    <button onclick="copiarLink('${url}')" class="card-btn-copiar">Copiar</button>
-                </div>
-            </div>`;
-        };
-
-        let materiaisHtml = "";
-        materiaisHtml += criarCardMaterial('Book Cliente', selecionado.linkCliente, '📄');
-        materiaisHtml += criarCardMaterial('Book Corretor', selecionado.linkCorretor, '💼');
-
-        if (materiaisHtml !== "") {
-            html += `<div style="margin-top: 15px;"><label style="display:block; font-size:0.6rem; font-weight:bold; color:#888; text-transform:uppercase; margin-bottom:8px; border-bottom:1px solid #eee;">MATERIAIS DE APOIO</label>${materiaisHtml}</div>`;
-        }
-
-        if(selecionado.descLonga) { html += `<div style="margin-top:8px; font-size:0.7rem; color:#666; font-style:italic;">${selecionado.descLonga}</div>`; }
-    } else {
-        html += `<div class="titulo-vitrine-faixa faixa-preta">${selecionado.nomeFull}</div>`;
-        html += `<div class="box-complexo-full"><p style="font-size:0.75rem; color:#444;">${selecionado.descLonga}</p></div>`;
-    }
-    painel.innerHTML = html;
-}
-window.onload = iniciarApp;
+/* Tabelas */
+.tabela-precos-container { width: 100%; border: 1px solid #ddd; border-radius: 4px; overflow: hidden; margin-top: 8px; }
+.tabela-header { background: #eee; font-weight: bold; font-size: 0.6rem; display: flex; }
+.tabela-row { display: flex; border-top: 1px solid #eee; font-size: 0.65rem; background: #fff; }
+.col-tabela { flex: 1; padding: 6px; text-align: center; border-right: 1px solid #eee; }
+.col-laranja { background: var(--mrv-laranja) !important; color: #fff !important; font-weight: bold; }
+.btn-maps { background: #4285F4; color: white !important; padding: 2px 8px; border-radius: 4px; font-size: 0.65rem; text-decoration: none; font-weight: bold; }
