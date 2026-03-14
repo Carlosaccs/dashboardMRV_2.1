@@ -11,8 +11,7 @@ const COL = {
     DESC_LONGA: 17, 
     LOCALIZACAO: 19, MOBILIDADE: 20, CULTURA_LAZER: 21,    
     COMERCIO: 22, SAUDE_EDUCACAO: 23,   
-    BOOK_CLIENTE: 24, BOOK_CORRETOR: 25,
-    MATERIAIS_EXTRAS: 26 // Coluna AA
+    BOOK_CLIENTE: 24, BOOK_CORRETOR: 25
 };
 
 async function iniciarApp() {
@@ -20,7 +19,7 @@ async function iniciarApp() {
 }
 
 function formatarLinkSeguro(url) {
-    if (!url || url === "---" || url.trim() === "") return "";
+    if (!url || url === "---" || url === "") return "";
     if (url.includes('drive.google.com')) {
         return url.split('/view')[0] + '/preview';
     }
@@ -30,7 +29,7 @@ function formatarLinkSeguro(url) {
 function copiarLink(url) {
     const linkSeguro = formatarLinkSeguro(url);
     navigator.clipboard.writeText(linkSeguro);
-    alert("Link seguro copiado!");
+    alert("Link copiado!");
 }
 
 async function carregarPlanilha() {
@@ -75,8 +74,7 @@ async function carregarPlanilha() {
                 comercio: colunas[COL.COMERCIO] || "",
                 saude: colunas[COL.SAUDE_EDUCACAO] || "",
                 linkCliente: colunas[COL.BOOK_CLIENTE] || "",
-                linkCorretor: colunas[COL.BOOK_CORRETOR] || "",
-                materiaisExtras: colunas[COL.MATERIAIS_EXTRAS] || ""
+                linkCorretor: colunas[COL.BOOK_CORRETOR] || ""
             };
         }).filter(i => i !== null);
         DADOS_PLANILHA.sort((a, b) => a.ordem - b.ordem);
@@ -169,7 +167,7 @@ function gerarListaLateral() {
 
 function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
     const painel = document.getElementById('ficha-tecnica');
-    const urlMaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selecionado.endereco)}`;
+    const urlMaps = `http://maps.google.com/?q=${encodeURIComponent(selecionado.endereco)}`;
     
     let html = `<div class="vitrine-topo">MRV EM ${nomeRegiao}</div>`;
     
@@ -229,50 +227,33 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
         html += criarBoxDestaque('🛒 Comércio', selecionado.comercio, '#ffebee', '#c62828');
         html += criarBoxDestaque('🏥 Saúde e Educação', selecionado.saude, '#f3e5f5', '#6a1b9a');
 
-        const criarCardMaterial = (titulo, url, icone) => {
-            if (!url || url === "" || url === "---") return "";
-            const linkSeguro = formatarLinkSeguro(url);
-            return `
-            <div class="card-material-item">
-                <div class="card-material-left">
-                    <span class="card-icon">${icone}</span>
-                    <span class="card-text">${titulo}</span>
-                </div>
-                <div class="card-material-right">
-                    <div class="container-abrir-preview">
-                        <a href="${linkSeguro}" target="_blank" class="card-btn-abrir">Abrir</a>
-                        <div class="preview-hover-box"><iframe src="${linkSeguro}" scrolling="no"></iframe></div>
-                    </div>
-                    <button onclick="copiarLink('${url}')" class="card-btn-copiar">Copiar</button>
-                </div>
-            </div>`;
-        };
+        const linkC = formatarLinkSeguro(selecionado.linkCliente);
+        const linkK = formatarLinkSeguro(selecionado.linkCorretor);
 
-        let materiaisHtml = "";
-        materiaisHtml += criarCardMaterial('Book Cliente', selecionado.linkCliente, '📄');
-        materiaisHtml += criarCardMaterial('Book Corretor', selecionado.linkCorretor, '💼');
-
-        // Lógica Dinâmica Protegida
-        if (selecionado.materiaisExtras && selecionado.materiaisExtras !== "---" && selecionado.materiaisExtras.trim() !== "") {
-            const itens = selecionado.materiaisExtras.split(';').map(i => i.trim()).filter(i => i !== "");
-            itens.forEach(item => {
-                const dados = item.split(',');
-                if (dados.length >= 2) {
-                    const tit = dados[0].trim();
-                    const lnk = dados[1].trim();
-                    if(lnk !== "" && lnk !== "---") {
-                        const ico = tit.toLowerCase().includes('vídeo') ? '🎬' : '🔗';
-                        materiaisHtml += criarCardMaterial(tit, lnk, ico);
-                    }
-                }
-            });
-        }
-
-        if (materiaisHtml !== "") {
+        if (linkC || linkK) {
             html += `<div style="margin-top: 15px;">
                 <label style="display:block; font-size:0.6rem; font-weight:bold; color:#888; text-transform:uppercase; margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:4px;">MATERIAIS DE APOIO</label>
-                ${materiaisHtml}
-            </div>`;
+                <div style="display: flex; gap: 8px; flex-direction: column;">`;
+            
+            if(linkC) {
+                html += `<div class="card-material" style="display: flex; justify-content: space-between; align-items: center; background: #fff; border: 1px solid #ddd; padding: 8px; border-radius: 4px;">
+                    <span style="font-size:0.75rem; font-weight:bold; color:#333;">📄 Book Cliente</span>
+                    <div style="display:flex; gap:4px;">
+                        <a href="${linkC}" target="_blank" style="background:var(--mrv-verde); color:white; padding:4px 8px; border-radius:3px; text-decoration:none; font-size:0.65rem; font-weight:bold;">Abrir</a>
+                        <button onclick="copiarLink('${selecionado.linkCliente}')" style="background:var(--mrv-laranja); color:white; border:none; padding:4px 8px; border-radius:3px; font-size:0.65rem; font-weight:bold; cursor:pointer;">Copiar</button>
+                    </div>
+                </div>`;
+            }
+            if(linkK) {
+                html += `<div class="card-material" style="display: flex; justify-content: space-between; align-items: center; background: #fff; border: 1px solid #ddd; padding: 8px; border-radius: 4px;">
+                    <span style="font-size:0.75rem; font-weight:bold; color:#333;">💼 Book Corretor</span>
+                    <div style="display:flex; gap:4px;">
+                        <a href="${linkK}" target="_blank" style="background:var(--mrv-verde); color:white; padding:4px 8px; border-radius:3px; text-decoration:none; font-size:0.65rem; font-weight:bold;">Abrir</a>
+                        <button onclick="copiarLink('${selecionado.linkCorretor}')" style="background:var(--mrv-laranja); color:white; border:none; padding:4px 8px; border-radius:3px; font-size:0.65rem; font-weight:bold; cursor:pointer;">Copiar</button>
+                    </div>
+                </div>`;
+            }
+            html += `</div></div>`;
         }
 
         if(selecionado.descLonga) {
