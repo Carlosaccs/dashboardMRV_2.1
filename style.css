@@ -40,16 +40,18 @@ body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; b
     color: #333; 
 }
 
+/* Hover solicitado: Balanço Interno com Contorno Verde */
 .btRes:hover { 
     background-color: #f0f0f0 !important; 
-    border-left-color: transparent !important; 
+    border: 1px solid var(--mrv-verde) !important; /* Volta o contorno verde */
+    border-left: 4px solid var(--mrv-verde) !important; /* Mantém a faixinha ativa */
     padding-left: 15px !important; 
 }
 
 .btRes.ativo { 
     background-color: var(--mrv-laranja) !important; 
     color: white !important; 
-    border-left-color: var(--mrv-laranja) !important;
+    border: 1px solid var(--mrv-laranja) !important;
 }
 
 /* Centro - Mapas */
@@ -60,14 +62,26 @@ body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; b
 
 svg { width: 100%; height: 100%; }
 path { fill: #777; stroke: #fff; stroke-width: 0.8; pointer-events: all; transition: 0.2s; }
-
 path:not(.commrv):hover { fill: var(--cinza-hover) !important; cursor: default; }
-
 path.commrv { fill: var(--mrv-verde) !important; cursor: pointer; }
 path.commrv:hover, path.ativo { fill: var(--mrv-laranja) !important; stroke: #000 !important; stroke-width: 1.2px !important; }
 
-/* Lateral Direita - Vitrine */
-.sidebar-dir { width: 480px; border-left: 1px solid #ddd; overflow-y: auto; padding: 10px; flex-shrink: 0; }
+/* Lateral Direita - Vitrine OTIMIZADA PARA TEXTO LONGO */
+.sidebar-dir { 
+    width: 480px; 
+    border-left: 1px solid #ddd; 
+    overflow-y: scroll !important; /* Força scroll se necessário */
+    padding: 10px; 
+    flex-shrink: 0;
+    display: block !important; /* Garante que se comporte como bloco */
+}
+
+#ficha-tecnica {
+    height: auto !important;
+    min-height: 100%;
+    display: block;
+}
+
 .vitrine-topo { background: var(--mrv-verde); color: white; padding: 8px; text-align: center; font-weight: bold; border-radius: 4px; margin-bottom: 8px; font-size: 0.85rem; text-transform: uppercase; }
 
 .titulo-vitrine-faixa {
@@ -86,13 +100,13 @@ path.commrv:hover, path.ativo { fill: var(--mrv-laranja) !important; stroke: #00
 .faixa-laranja { background: var(--mrv-laranja) !important; }
 .faixa-preta { background: var(--mrv-preto) !important; }
 
-/* Grid de Informações */
 .grid-infos { 
     display: table !important;
     width: 100% !important; 
     table-layout: fixed !important;
     border-spacing: 4px !important;
     margin-top: 0px;
+    margin-bottom: 10px;
 }
 .row-infos { display: table-row; }
 .box-argumento { 
@@ -109,15 +123,27 @@ path.commrv:hover, path.ativo { fill: var(--mrv-laranja) !important; stroke: #00
 .box-argumento label { font-size: 0.55rem; font-weight: bold; text-transform: uppercase; color: var(--mrv-verde); }
 .box-argumento strong { font-size: 0.72rem; color: #333; }
 
-/* Estilo para Texto do Complexo OTIMIZADO */
+/* Estilo para Texto do Complexo - CORREÇÃO DE CORTE */
 .box-complexo-full {
-    width: 100%;
-    padding: 12px;
-    background: #f9f9f9;
-    border-left: 4px solid var(--mrv-preto);
-    border-radius: 0 0 4px 4px; /* Arredonda só embaixo para colar na faixa */
-    height: auto !important; /* Garante que o texto não seja cortado */
+    width: 100% !important;
+    padding: 15px !important;
+    background: #f9f9f9 !important;
+    border-left: 4px solid var(--mrv-preto) !important;
+    border-radius: 0 0 4px 4px !important;
+    height: auto !important; 
+    min-height: 100px;
     overflow: visible !important;
+    display: block !important;
+    margin-bottom: 20px; /* Espaço extra no final para não colar no fim da página */
+}
+
+.box-complexo-full p {
+    font-size: 0.75rem !important;
+    color: #444 !important;
+    line-height: 1.6 !important;
+    text-align: justify !important;
+    display: block !important;
+    height: auto !important;
 }
 
 .btn-maps { background: #4285F4; color: white !important; text-decoration: none; padding: 3px 7px; border-radius: 4px; font-size: 0.6rem; font-weight: bold; }
