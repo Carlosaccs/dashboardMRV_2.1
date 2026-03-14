@@ -13,7 +13,9 @@ const COL = {
     MOBILIDADE: 20,       // U
     CULTURA_LAZER: 21,    // V
     COMERCIO: 22,         // W
-    SAUDE_EDUCACAO: 23    // X
+    SAUDE_EDUCACAO: 23,   // X
+    BOOK_CLIENTE: 24,     // Y
+    BOOK_CORRETOR: 25     // Z
 };
 
 async function iniciarApp() {
@@ -60,7 +62,9 @@ async function carregarPlanilha() {
                 mobilidade: colunas[COL.MOBILIDADE] || "",
                 lazer: colunas[COL.CULTURA_LAZER] || "",
                 comercio: colunas[COL.COMERCIO] || "",
-                saude: colunas[COL.SAUDE_EDUCACAO] || ""
+                saude: colunas[COL.SAUDE_EDUCACAO] || "",
+                linkCliente: colunas[COL.BOOK_CLIENTE] || "",
+                linkCorretor: colunas[COL.BOOK_CORRETOR] || ""
             };
         }).filter(i => i !== null);
         DADOS_PLANILHA.sort((a, b) => a.ordem - b.ordem);
@@ -212,7 +216,6 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
             }
         }
 
-        // --- FUNÇÃO PARA CRIAR CAIXAS EM LINHA ÚNICA ---
         const criarBoxDestaque = (label, texto, corFundo, corBorda) => {
             if(!texto || texto === "---" || texto === "") return "";
             return `
@@ -222,12 +225,30 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
             </div>`;
         };
 
-        // Renderizando as caixas, uma por linha
-        html += criarBoxDestaque('📍 Diferenciais de Localização', selecionado.localizacao, '#fdf2e9', '#f37021'); // Laranja MRV
-        html += criarBoxDestaque('🚍 Mobilidade', selecionado.mobilidade, '#f1f8e9', '#2e7d32'); // Verde
-        html += criarBoxDestaque('🎭 Cultura e Lazer', selecionado.lazer, '#e3f2fd', '#1565c0');   // Azul
-        html += criarBoxDestaque('🛒 Comércio', selecionado.comercio, '#ffebee', '#c62828');       // Vermelho
-        html += criarBoxDestaque('🏥 Saúde e Educação', selecionado.saude, '#f3e5f5', '#6a1b9a'); // Roxo
+        html += criarBoxDestaque('📍 Diferenciais de Localização', selecionado.localizacao, '#fdf2e9', '#f37021');
+        html += criarBoxDestaque('🚍 Mobilidade', selecionado.mobilidade, '#f1f8e9', '#2e7d32');
+        html += criarBoxDestaque('🎭 Cultura e Lazer', selecionado.lazer, '#e3f2fd', '#1565c0');
+        html += criarBoxDestaque('🛒 Comércio', selecionado.comercio, '#ffebee', '#c62828');
+        html += criarBoxDestaque('🏥 Saúde e Educação', selecionado.saude, '#f3e5f5', '#6a1b9a');
+
+        // --- MATERIAIS DE APOIO (Colunas Y e Z) ---
+        let materiaisHtml = "";
+        if (selecionado.linkCliente && selecionado.linkCliente !== "" && selecionado.linkCliente !== "---") {
+            materiaisHtml += `<a href="${selecionado.linkCliente}" target="_blank" class="btn-material">📄 BOOK CLIENTE</a>`;
+        }
+        if (selecionado.linkCorretor && selecionado.linkCorretor !== "" && selecionado.linkCorretor !== "---") {
+            materiaisHtml += `<a href="${selecionado.linkCorretor}" target="_blank" class="btn-material" style="background: #333;">💼 BOOK CORRETOR</a>`;
+        }
+
+        if (materiaisHtml !== "") {
+            html += `
+            <div style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 4px; border: 1px solid #ddd;">
+                <label style="display:block; font-size:0.6rem; font-weight:bold; color:#666; text-transform:uppercase; margin-bottom:8px; text-align:center;">Materiais de Apoio</label>
+                <div style="display: flex; gap: 8px;">
+                    ${materiaisHtml}
+                </div>
+            </div>`;
+        }
 
         if(selecionado.descLonga) {
              html += `<div style="margin-top:8px; font-size:0.7rem; color:#666; font-style:italic; border-top:1px solid #eee; padding-top:4px;">${selecionado.descLonga}</div>`;
