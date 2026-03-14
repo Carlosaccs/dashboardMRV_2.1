@@ -29,18 +29,17 @@ body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; b
     display: flex !important; align-items: center !important; padding: 4px 8px !important;
     border-radius: 4px; font-size: 0.72rem; cursor: pointer; border: 1px solid #ddd; 
     text-decoration: none;
-    transition: background 0.1s ease; /* Transição apenas na cor, sem movimento lateral */
+    transition: background 0.1s ease;
 }
 
 .separador-complexo-btn { background: #333 !important; color: white !important; justify-content: center !important; font-weight: bold; text-transform: uppercase; border: none !important; }
 
 .btRes { background: #fff; border-left: 4px solid var(--mrv-verde) !important; justify-content: space-between; color: #333; }
 
-/* --- CORREÇÃO DO HOVER NOS BOTÕES (Sem balanço lateral e com contorno verde) --- */
 .btRes:hover { 
     background-color: #f0f0f0 !important; 
-    border: 1px solid var(--mrv-verde) !important; /* Retorna o contorno verde no hover */
-    border-left: 4px solid var(--mrv-verde) !important; /* Mantém a barra lateral verde */
+    border: 1px solid var(--mrv-verde) !important; 
+    border-left: 4px solid var(--mrv-verde) !important; 
 }
 
 .btRes.ativo { background-color: var(--mrv-laranja) !important; color: white !important; border: 1px solid var(--mrv-laranja) !important; }
@@ -54,9 +53,8 @@ body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; b
 svg { width: 100%; height: 100%; }
 path { fill: var(--cinza-mapa); stroke: #fff; stroke-width: 0.8; transition: fill 0.1s; }
 
-/* --- CORREÇÃO DO HOVER NO MAPA (Paths cinzas e verdes) --- */
 path:hover { 
-    fill: #999 !important; /* Destaque para os paths cinzas */
+    fill: #999 !important; 
     cursor: pointer;
 }
 
@@ -76,7 +74,7 @@ path.commrv:hover, path.ativo {
 .faixa-laranja { background: var(--mrv-laranja) !important; }
 .faixa-preta { background: var(--mrv-preto) !important; }
 
-/* Grid e Boxes */
+/* Grid e Boxes de Diferenciais (Agora ocupando 100% em uma por linha via JS) */
 .grid-infos { display: table !important; width: 100% !important; table-layout: fixed !important; border-spacing: 2px !important; margin-bottom: 2px; }
 .row-infos { display: table-row; }
 .box-argumento { display: table-cell !important; width: 50% !important; padding: 4px 8px !important; border-radius: 4px; border-left: 4px solid #ddd; background: #f9f9f9; vertical-align: middle; height: 32px !important; }
@@ -85,7 +83,47 @@ path.commrv:hover, path.ativo {
 .box-argumento strong { font-size: 0.65rem; color: #333; }
 .box-campanha { color: var(--vermelho-mrv) !important; font-weight: bold !important; font-size: 0.68rem !important; border-left: 4px solid var(--vermelho-mrv) !important; text-align: center; }
 
-/* Complexo */
+/* --- CARDS DE MATERIAIS (O ESTILO QUE VOCÊ GOSTOU) --- */
+.card-material-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.card-material-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.card-icon { font-size: 1.1rem; }
+.card-text { font-size: 0.75rem; font-weight: 600; color: #333; }
+
+.card-material-right {
+    display: flex;
+    gap: 6px;
+}
+
+.card-btn-abrir, .card-btn-copiar {
+    padding: 5px 12px;
+    font-size: 0.65rem;
+    font-weight: bold;
+    border-radius: 4px;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+}
+
+.card-btn-abrir { background: var(--mrv-verde); color: #fff; } 
+.card-btn-copiar { background: var(--mrv-laranja); color: #fff; }
+
+/* Complexo e Mapas */
 .box-complexo-full { width: 100%; padding: 12px; background: #f9f9f9; border-left: 4px solid var(--mrv-preto); border-radius: 0 0 4px 4px; }
 .btn-maps { background: #4285F4; color: white !important; text-decoration: none; padding: 2px 8px; border-radius: 4px; font-size: 0.65rem; font-weight: bold; }
 
