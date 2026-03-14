@@ -61,18 +61,17 @@ path.commrv:hover, path.ativo { fill: var(--mrv-laranja) !important; stroke: #00
 .box-inner { display: flex; justify-content: space-between; align-items: center; width: 100%; }
 .box-argumento label { font-size: 0.52rem; font-weight: bold; text-transform: uppercase; color: var(--mrv-verde); }
 .box-argumento strong { font-size: 0.62rem; color: #333; }
-
 .box-campanha { width: 100% !important; text-align: center !important; color: var(--vermelho-mrv) !important; font-weight: bold !important; font-size: 0.68rem !important; border-left: 4px solid var(--vermelho-mrv) !important; }
 
 /* Tabela de Preços Dinâmica */
-.tabela-precos-container { width: 100%; background: var(--cinza-claro); border-radius: 4px; margin-top: 6px; border: 1px solid #eee; overflow: hidden; }
+.tabela-precos-container { width: 100%; background: var(--cinza-claro); border-radius: 4px; margin-top: 6px; border: 1px solid #ddd; overflow: hidden; }
 .tabela-header, .tabela-row { display: flex; width: 100%; align-items: stretch; text-align: center; }
-.tabela-header { background: #ececec; font-weight: bold; font-size: 0.62rem; color: #333; min-height: 35px; text-transform: uppercase; }
-.tabela-row { font-size: 0.65rem; color: #444; min-height: 30px; border-bottom: 1px solid #eee; background: #fff; }
-.col-tabela { flex: 1; padding: 4px; display: flex; align-items: center; justify-content: center; border-right: 1px solid #f0f0f0; }
+.tabela-header { background: #f0f0f0; font-weight: bold; font-size: 0.58rem; color: #333; min-height: 32px; text-transform: uppercase; }
+.tabela-row { font-size: 0.62rem; color: #444; min-height: 28px; border-bottom: 1px solid #eee; background: #fff; }
+.col-tabela { flex: 1; padding: 4px; display: flex; align-items: center; justify-content: center; border-right: 1px solid #f0f0f0; word-break: break-all; }
 .col-tabela:last-child { border-right: none; }
 .col-laranja { background: var(--mrv-laranja) !important; color: white !important; font-weight: bold; }
-.tabela-divisor { width: 100%; height: 2px; background: var(--cinza-divisor); }
+.tabela-divisor { width: 100%; height: 1px; background: #ddd; }
 
 .box-complexo-full { width: 100%; padding: 12px; background: #f9f9f9; border-left: 4px solid var(--mrv-preto); border-radius: 0 0 4px 4px; }
 .btn-maps { background: #4285F4; color: white !important; text-decoration: none; padding: 2px 6px; border-radius: 4px; font-size: 0.6rem; font-weight: bold; }
