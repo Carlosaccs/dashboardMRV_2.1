@@ -178,20 +178,24 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
                 const titulos = linhas[0].split(',').map(t => t.trim());
                 const dados = linhas.slice(1);
                 html += `
-                <div class="tabela-precos-container">
-                    <div class="tabela-header">
-                        ${titulos.map((t, idx) => `<div class="col-tabela ${idx === 1 ? 'col-laranja' : ''}">${t}</div>`).join('')}
+                <div class="tabela-precos-container" style="border-radius: 4px 4px 0 0; border-bottom: none;">
+                    <div class="tabela-header" style="min-height: 34px;">
+                        ${titulos.map((t, idx) => `<div class="col-tabela ${idx === 1 ? 'col-laranja' : ''}" style="padding: 8px 4px;">${t}</div>`).join('')}
                     </div>
-                    <div class="tabela-divisor"></div>
                     <div class="tabela-corpo">
                         ${dados.map(linha => {
                             const cols = linha.split(',').map(c => c.trim());
                             if(cols.length <= 1) return "";
-                            return `<div class="tabela-row">
-                                ${cols.map((v, idx) => `<div class="col-tabela ${idx === 1 ? 'col-laranja' : ''}">${idx === 0 ? `<strong>${v}</strong>` : v}</div>`).join('')}
+                            return `<div class="tabela-row" style="min-height: 38px;">
+                                ${cols.map((v, idx) => `<div class="col-tabela ${idx === 1 ? 'col-laranja' : ''}" style="padding: 10px 4px;">${idx === 0 ? `<strong>${v}</strong>` : v}</div>`).join('')}
                             </div>`;
                         }).join('')}
                     </div>
+                </div>
+                <div style="background: #e9ecef; padding: 8px; text-align: center; border: 1px solid #ddd; border-top: 1px solid #eee; border-radius: 0 0 4px 4px; margin-bottom: 8px;">
+                    <p style="margin: 0; font-size: 0.55rem; color: #777; text-transform: uppercase; letter-spacing: 0.5px; font-weight: bold;">
+                        * Valores para referência informativa. Favor validar condições e disponibilidade na tabela vigente.
+                    </p>
                 </div>`;
             }
         }
