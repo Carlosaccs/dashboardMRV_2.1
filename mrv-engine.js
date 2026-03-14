@@ -158,8 +158,8 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
         html += `<div class="titulo-vitrine-faixa faixa-laranja">RES. ${selecionado.nome}</div>`;
         html += `<div style="padding: 0 0 4px 0;"><p style="font-size:0.65rem; color:#444; display:flex; justify-content:space-between; align-items:center;"><span>📍 ${selecionado.endereco}</span><a href="${urlMaps}" target="_blank" class="btn-maps">MAPS</a></p></div>`;
         
-        if(selecionado.campanha && selecionado.campanha !== "---") {
-            html += `<div class="grid-infos"><div class="row-infos"><div class="box-argumento box-campanha">${selecionado.campanha}</div></div></div>`;
+        if(selecionado.campanha && selecionado.campanha !== "---" && selecionado.campanha !== "") {
+            html += `<div class="grid-infos"><div class="row-infos"><div class="box-argumento box-campanha" style="width:100%; display:block; text-align:center;">${selecionado.campanha}</div></div></div>`;
         }
 
         const fila = (l1, v1, l2, v2) => `
@@ -172,24 +172,24 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
         html += fila('Plantas', selecionado.p_de + ' - ' + selecionado.p_ate, 'Estoque', selecionado.estoque + ' UN.');
         html += fila('Limitador', selecionado.limitador, 'C. Paulista', selecionado.casa_paulista);
 
-        // --- TABELA DE PREÇOS DINÂMICA ---
         if(selecionado.tipologiasH) {
             const linhas = selecionado.tipologiasH.split(';').map(l => l.trim()).filter(l => l !== "");
-            if(linhas.length > 1) {
+            if(linhas.length > 0) {
                 const titulos = linhas[0].split(',').map(t => t.trim());
                 const dados = linhas.slice(1);
                 html += `
                 <div class="tabela-precos-container">
                     <div class="tabela-header">
-                        ${titulos.map((t, idx) => `<div class="col-tabela ${idx === 1 ? 'col-laranja' : ''}">${t}</div>`).join('')}
+                        <div class="col-tabela">TIPOLOGIA</div>
+                        ${titulos.map((t, idx) => `<div class="col-tabela ${idx === 0 ? 'col-laranja' : ''}">${t}</div>`).join('')}
                     </div>
                     <div class="tabela-divisor"></div>
                     <div class="tabela-corpo">
                         ${dados.map(linha => {
                             const cols = linha.split(',').map(c => c.trim());
-                            if(cols.length <= 1) return "";
                             return `<div class="tabela-row">
-                                ${cols.map((v, idx) => `<div class="col-tabela ${idx === 1 ? 'col-laranja' : ''}">${idx === 0 ? `<strong>${v}</strong>` : v}</div>`).join('')}
+                                <div class="col-tabela"><strong>${cols[0] || ""}</strong></div>
+                                ${cols.slice(1).map((v, idx) => `<div class="col-tabela ${idx === 0 ? 'col-laranja' : ''}">${v || ""}</div>`).join('')}
                             </div>`;
                         }).join('')}
                     </div>
@@ -201,7 +201,7 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
         }
     } else {
         html += `<div class="titulo-vitrine-faixa faixa-preta" style="margin-bottom:0px;">${selecionado.nomeFull}</div>`;
-        html += `<div class="box-complexo-full"><p style="font-size:0.75rem; color:#444; line-height:1.5; text-align:justify;">${selecionado.descLonga}</p></div>`;
+        html += `<div class="box-complexo-full" style="margin-top:0px;"><p style="font-size:0.75rem; color:#444; line-height:1.5; text-align:justify;">${selecionado.descLonga}</p></div>`;
     }
     painel.innerHTML = html;
 }
