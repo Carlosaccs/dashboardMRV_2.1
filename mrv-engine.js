@@ -72,6 +72,11 @@ async function carregarPlanilha() {
     } catch (e) { console.error(e); }
 }
 
+function copiarLink(url) {
+    navigator.clipboard.writeText(url);
+    alert("Link copiado!");
+}
+
 function obterHtmlEstoque(valor, tipo) {
     if (tipo === 'N') return "";
     const clean = valor ? valor.toString().toUpperCase().trim() : "";
@@ -231,22 +236,31 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
         html += criarBoxDestaque('🛒 Comércio', selecionado.comercio, '#ffebee', '#c62828');
         html += criarBoxDestaque('🏥 Saúde e Educação', selecionado.saude, '#f3e5f5', '#6a1b9a');
 
-        // --- MATERIAIS DE APOIO (Colunas Y e Z) ---
+        // --- MATERIAIS DE APOIO (ESTILO LISTA CARD) ---
+        const criarCardMaterial = (titulo, url, icone) => {
+            if (!url || url === "" || url === "---") return "";
+            return `
+            <div class="card-material-item">
+                <div class="card-material-left">
+                    <span class="card-icon">${icone}</span>
+                    <span class="card-text">${titulo}</span>
+                </div>
+                <div class="card-material-right">
+                    <a href="${url}" target="_blank" class="card-btn-abrir">Abrir</a>
+                    <button onclick="copiarLink('${url}')" class="card-btn-copiar">Copiar</button>
+                </div>
+            </div>`;
+        };
+
         let materiaisHtml = "";
-        if (selecionado.linkCliente && selecionado.linkCliente !== "" && selecionado.linkCliente !== "---") {
-            materiaisHtml += `<a href="${selecionado.linkCliente}" target="_blank" class="btn-material">📄 BOOK CLIENTE</a>`;
-        }
-        if (selecionado.linkCorretor && selecionado.linkCorretor !== "" && selecionado.linkCorretor !== "---") {
-            materiaisHtml += `<a href="${selecionado.linkCorretor}" target="_blank" class="btn-material" style="background: #333;">💼 BOOK CORRETOR</a>`;
-        }
+        materiaisHtml += criarCardMaterial('Book Cliente', selecionado.linkCliente, '📄');
+        materiaisHtml += criarCardMaterial('Book Corretor', selecionado.linkCorretor, '💼');
 
         if (materiaisHtml !== "") {
             html += `
-            <div style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 4px; border: 1px solid #ddd;">
-                <label style="display:block; font-size:0.6rem; font-weight:bold; color:#666; text-transform:uppercase; margin-bottom:8px; text-align:center;">Materiais de Apoio</label>
-                <div style="display: flex; gap: 8px;">
-                    ${materiaisHtml}
-                </div>
+            <div style="margin-top: 15px;">
+                <label style="display:block; font-size:0.6rem; font-weight:bold; color:#888; text-transform:uppercase; margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:4px;">MATERIAIS DE VENDA</label>
+                ${materiaisHtml}
             </div>`;
         }
 
