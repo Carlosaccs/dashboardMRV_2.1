@@ -91,14 +91,11 @@ function comandoSelecao(idPath, nomePath, fonte) {
     montarVitrine(selecionado, imoveisDaCidade, nomeOficial);
 }
 
-// --- NOVAS FUNÇÕES DE INTERAÇÃO DE TÍTULO ---
-
 function atualizarTituloSuperior(texto) {
     const titulo = document.getElementById('cidade-titulo');
     if (texto) {
         titulo.innerText = texto.toUpperCase();
     } else if (pathAtivo) {
-        // Se tirou o mouse, mas tem algo selecionado, volta o nome do selecionado
         const todosPaths = MAPA_GSP.paths.concat(MAPA_INTERIOR.paths);
         const nomeFixo = todosPaths.find(p => p.id.toLowerCase().replace(/\s/g, '') === pathAtivo)?.name || "";
         titulo.innerText = nomeFixo.toUpperCase();
@@ -158,7 +155,6 @@ function gerarListaLateral() {
 function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
     const painel = document.getElementById('ficha-tecnica');
     const outros = listaDaCidade.filter(i => i.nome !== selecionado.nome);
-    // Correção da URL do Maps (syntax corrigida)
     const urlMaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selecionado.endereco)}`;
     
     let html = `<div class="vitrine-topo">MRV EM ${nomeRegiao}</div>`;
@@ -194,10 +190,10 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
         }
 
     } else {
-        html += `<div class="titulo-vitrine-faixa faixa-preta">${selecionado.nomeFull}</div>`;
-        html += `<div class="box-complexo-full">
-                    <label style="color:var(--mrv-preto); font-size: 0.6rem; font-weight: bold; text-transform: uppercase;">Sobre o Complexo</label>
-                    <p style="margin-top:10px; font-size:0.75rem; color:#444; line-height:1.5; text-align:justify;">${selecionado.descLonga}</p>
+        // COMPLEXO: Faixa preta e descrição longa sem margem superior e sem título interno
+        html += `<div class="titulo-vitrine-faixa faixa-preta" style="margin-bottom:0px;">${selecionado.nomeFull}</div>`;
+        html += `<div class="box-complexo-full" style="margin-top:0px;">
+                    <p style="font-size:0.75rem; color:#444; line-height:1.5; text-align:justify;">${selecionado.descLonga}</p>
                  </div>`;
     }
     painel.innerHTML = html;
