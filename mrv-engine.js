@@ -42,7 +42,7 @@ async function carregarPlanilha() {
                 endereco: colunas[COL.END] || "",
                 entrega: colunas[COL.ENTREGA] || "---",
                 obra: colunas[COL.OBRA] || "0",
-                tipologiasH: colunas[COL.TIPOLOGIAS] || "", // Coluna H
+                tipologiasH: colunas[COL.TIPOLOGIAS] || "", 
                 regiao: colunas[COL.REGIAO] || "---",
                 p_de: colunas[COL.P_DE] || "---",
                 p_ate: colunas[COL.P_ATE] || "---",
@@ -69,8 +69,6 @@ function obterHtmlEstoque(valor, tipo) {
 function navegarVitrine(nome) { 
     const imovel = DADOS_PLANILHA.find(i => i.nome === nome);
     if (!imovel) return;
-    const mapaAtual = (mapaAtivo === 'GSP') ? MAPA_GSP : MAPA_INTERIOR;
-    if (!mapaAtual.paths.some(p => p.id.toLowerCase().replace(/\s/g, '') === imovel.id_path)) trocarMapas(false);
     comandoSelecao(imovel.id_path, null, imovel); 
 }
 
@@ -79,31 +77,24 @@ function comandoSelecao(idPath, nomePath, fonte) {
     const imoveisDaCidade = DADOS_PLANILHA.filter(d => d.id_path === pathAtivo);
     const selecionado = fonte || imoveisDaCidade[0];
     imovelAtivo = selecionado.nome;
-    
     document.querySelectorAll('path').forEach(el => el.classList.remove('ativo'));
     const elMapa = document.getElementById(`caixa-a-${pathAtivo}`);
     if (elMapa) elMapa.classList.add('ativo');
-
     gerarListaLateral();
-    
     const todosPaths = MAPA_GSP.paths.concat(MAPA_INTERIOR.paths);
     const nomeOficial = todosPaths.find(p => p.id.toLowerCase().replace(/\s/g, '') === pathAtivo)?.name || pathAtivo;
-    
     atualizarTituloSuperior(nomeOficial);
     montarVitrine(selecionado, imoveisDaCidade, nomeOficial);
 }
 
 function atualizarTituloSuperior(texto) {
     const titulo = document.getElementById('cidade-titulo');
-    if (texto) {
-        titulo.innerText = texto.toUpperCase();
-    } else if (pathAtivo) {
+    if (texto) { titulo.innerText = texto.toUpperCase(); } 
+    else if (pathAtivo) {
         const todosPaths = MAPA_GSP.paths.concat(MAPA_INTERIOR.paths);
         const nomeFixo = todosPaths.find(p => p.id.toLowerCase().replace(/\s/g, '') === pathAtivo)?.name || "";
         titulo.innerText = nomeFixo.toUpperCase();
-    } else {
-        titulo.innerText = "SELECIONE UMA REGIÃO NO MAPA";
-    }
+    } else { titulo.innerText = "SELECIONE UMA REGIÃO NO MAPA"; }
 }
 
 function renderizarNoContainer(id, dados, interativo) {
@@ -113,16 +104,11 @@ function renderizarNoContainer(id, dados, interativo) {
         const temMRV = DADOS_PLANILHA.some(d => d.id_path === idNorm);
         const ativo = (pathAtivo === idNorm && interativo) ? 'ativo' : '';
         const isGSP = idNorm === "grandesaopaulo";
-        
         let eventos = "";
         if (interativo) {
-            if (isGSP) {
-                eventos = `onclick="trocarMapas(true)" onmouseover="atualizarTituloSuperior('GRANDE SÃO PAULO')" onmouseout="atualizarTituloSuperior()"`;
-            } else {
-                eventos = `onclick="comandoSelecao('${p.id}')" onmouseover="atualizarTituloSuperior('${p.name}')" onmouseout="atualizarTituloSuperior()"`;
-            }
+            if (isGSP) { eventos = `onclick="trocarMapas(true)" onmouseover="atualizarTituloSuperior('GRANDE SÃO PAULO')" onmouseout="atualizarTituloSuperior()"`; } 
+            else { eventos = `onclick="comandoSelecao('${p.id}')" onmouseover="atualizarTituloSuperior('${p.name}')" onmouseout="atualizarTituloSuperior()"`; }
         }
-
         return `<path id="${id}-${idNorm}" d="${p.d}" class="${(temMRV || isGSP) && interativo ? 'commrv '+ativo : ''}" ${eventos}></path>`;
     }).join('');
     container.innerHTML = `<svg viewBox="${dados.viewBox}"><g transform="${dados.transform || ''}">${pathsHtml}</g></svg>`;
@@ -172,76 +158,51 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
         html += `<div class="titulo-vitrine-faixa faixa-laranja">RES. ${selecionado.nome}</div>`;
         html += `<div style="padding: 0 0 4px 0;"><p style="font-size:0.65rem; color:#444; display:flex; justify-content:space-between; align-items:center;"><span>📍 ${selecionado.endereco}</span><a href="${urlMaps}" target="_blank" class="btn-maps">MAPS</a></p></div>`;
         
-        // Fila 1: Campanha
         if(selecionado.campanha && selecionado.campanha !== "---" && selecionado.campanha !== "") {
-            html += `<div class="grid-infos">
-                        <div class="row-infos">
-                            <div class="box-argumento box-campanha" style="width:100%; display:block; text-align:center;">
-                                ${selecionado.campanha}
-                            </div>
-                        </div>
-                     </div>`;
+            html += `<div class="grid-infos"><div class="row-infos"><div class="box-argumento box-campanha" style="width:100%; display:block; text-align:center;">${selecionado.campanha}</div></div></div>`;
         }
 
-        // Fila 2: Entrega e Obra
-        html += `<div class="grid-infos">
-                    <div class="row-infos">
-                        <div class="box-argumento"><div class="box-inner"><label>Entrega</label><strong>${selecionado.entrega}</strong></div></div>
-                        <div class="box-argumento"><div class="box-inner"><label>Obra</label><strong>${selecionado.obra}%</strong></div></div>
-                    </div>
-                 </div>`;
-        
-        // Fila 3: Plantas e Estoque
-        html += `<div class="grid-infos">
-                    <div class="row-infos">
-                        <div class="box-argumento"><div class="box-inner"><label>Plantas</label><strong>${selecionado.p_de} - ${selecionado.p_ate}</strong></div></div>
-                        <div class="box-argumento"><div class="box-inner"><label>Estoque</label><strong>${selecionado.estoque} UN.</strong></div></div>
-                    </div>
-                 </div>`;
-                 
-        // Fila 4: Limitador e C. Paulista
-        html += `<div class="grid-infos">
-                    <div class="row-infos">
-                        <div class="box-argumento"><div class="box-inner"><label>Limitador</label><strong>${selecionado.limitador}</strong></div></div>
-                        <div class="box-argumento"><div class="box-inner"><label>C. Paulista</label><strong>${selecionado.casa_paulista}</strong></div></div>
-                    </div>
-                 </div>`;
+        const fila = (l1, v1, l2, v2) => `
+            <div class="grid-infos"><div class="row-infos">
+                <div class="box-argumento"><div class="box-inner"><label>${l1}</label><strong>${v1}</strong></div></div>
+                <div class="box-argumento"><div class="box-inner"><label>${l2}</label><strong>${v2}</strong></div></div>
+            </div></div>`;
 
-        // NOVA FILA: TABELA DE PREÇOS (Coluna H)
+        html += fila('Entrega', selecionado.entrega, 'Obra', selecionado.obra + '%');
+        html += fila('Plantas', selecionado.p_de + ' - ' + selecionado.p_ate, 'Estoque', selecionado.estoque + ' UN.');
+        html += fila('Limitador', selecionado.limitador, 'C. Paulista', selecionado.casa_paulista);
+
         if(selecionado.tipologiasH) {
-            const linhasPreco = selecionado.tipologiasH.split(',,;');
-            html += `<div class="tabela-precos-container">
-                        <div class="tabela-header">
-                            <div class="col-tabela">TIPOLOGIA</div>
-                            <div class="col-tabela col-laranja">MENOR PREÇO</div>
-                            <div class="col-tabela">AVALIAÇÃO CAIXA</div>
-                        </div>
-                        <div class="tabela-divisor"></div>
-                        <div class="tabela-corpo">
-                            ${linhasPreco.map(linha => {
-                                const cols = linha.split('|'); // Assume que dentro da linha você usa pipe ou algo similar para separar as 3 infos
-                                return `
-                                <div class="tabela-row">
-                                    <div class="col-tabela">${cols[0] || ""}</div>
-                                    <div class="col-tabela col-laranja">${cols[1] || ""}</div>
-                                    <div class="col-tabela">${cols[2] || ""}</div>
-                                </div>`;
-                            }).join('')}
-                        </div>
-                     </div>`;
+            const linhas = selecionado.tipologiasH.split(';').map(l => l.trim()).filter(l => l !== "");
+            if(linhas.length > 0) {
+                const titulos = linhas[0].split(',').map(t => t.trim());
+                const dados = linhas.slice(1);
+                html += `
+                <div class="tabela-precos-container">
+                    <div class="tabela-header">
+                        <div class="col-tabela">TIPOLOGIA</div>
+                        ${titulos.map((t, idx) => `<div class="col-tabela ${idx === 0 ? 'col-laranja' : ''}">${t}</div>`).join('')}
+                    </div>
+                    <div class="tabela-divisor"></div>
+                    <div class="tabela-corpo">
+                        ${dados.map(linha => {
+                            const cols = linha.split(',').map(c => c.trim());
+                            return `<div class="tabela-row">
+                                <div class="col-tabela"><strong>${cols[0] || ""}</strong></div>
+                                ${cols.slice(1).map((v, idx) => `<div class="col-tabela ${idx === 0 ? 'col-laranja' : ''}">${v || ""}</div>`).join('')}
+                            </div>`;
+                        }).join('')}
+                    </div>
+                </div>`;
+            }
         }
-        
         if(selecionado.descLonga) {
              html += `<div style="margin-top:6px; font-size:0.7rem; color:#666; font-style:italic; border-top:1px solid #eee; padding-top:4px;">${selecionado.descLonga}</div>`;
         }
-
     } else {
         html += `<div class="titulo-vitrine-faixa faixa-preta" style="margin-bottom:0px;">${selecionado.nomeFull}</div>`;
-        html += `<div class="box-complexo-full" style="margin-top:0px;">
-                    <p style="font-size:0.75rem; color:#444; line-height:1.5; text-align:justify;">${selecionado.descLonga}</p>
-                 </div>`;
+        html += `<div class="box-complexo-full" style="margin-top:0px;"><p style="font-size:0.75rem; color:#444; line-height:1.5; text-align:justify;">${selecionado.descLonga}</p></div>`;
     }
     painel.innerHTML = html;
 }
-
 window.onload = iniciarApp;
