@@ -9,23 +9,19 @@ const COL = {
     P_DE: 9, P_ATE: 10, OBRA: 11, LIMITADOR: 12, 
     REGIAO: 13, CASA_PAULISTA: 14, CAMPANHA: 15, 
     DESC_LONGA: 17, 
-    LOCALIZACAO: 19,      // T
-    MOBILIDADE: 20,       // U
-    CULTURA_LAZER: 21,    // V
-    COMERCIO: 22,         // W
-    SAUDE_EDUCACAO: 23,   // X
-    BOOK_CLIENTE: 24,     // Y
-    BOOK_CORRETOR: 25     // Z
+    LOCALIZACAO: 19, MOBILIDADE: 20, CULTURA_LAZER: 21,    
+    COMERCIO: 22, SAUDE_EDUCACAO: 23,   
+    BOOK_CLIENTE: 24, BOOK_CORRETOR: 25     
 };
 
 async function iniciarApp() {
     try { await carregarPlanilha(); } catch (err) { console.error(err); }
 }
 
-// --- FUNÇÕES DE UTILIDADE PARA LINKS ---
+// --- FUNÇÃO PARA SEGURANÇA ---
 function formatarLinkSeguro(url) {
     if (!url || url === "---" || url === "") return "";
-    // Remove interface do Drive para visualização limpa e miniatura
+    // Se for link do Drive, garante que use o modo preview (sem ferramentas externas)
     if (url.includes('drive.google.com')) {
         return url.split('/view')[0] + '/preview';
     }
@@ -33,9 +29,10 @@ function formatarLinkSeguro(url) {
 }
 
 function copiarLink(url) {
+    // Garante que o link copiado também seja o seguro
     const linkSeguro = formatarLinkSeguro(url);
     navigator.clipboard.writeText(linkSeguro);
-    alert("Link seguro copiado!");
+    alert("Link seguro (sem menus) copiado!");
 }
 
 async function carregarPlanilha() {
@@ -173,18 +170,10 @@ function gerarListaLateral() {
 
 function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
     const painel = document.getElementById('ficha-tecnica');
-    const outros = listaDaCidade.filter(i => i.nome !== selecionado.nome);
     const urlMaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selecionado.endereco)}`;
     
     let html = `<div class="vitrine-topo">MRV EM ${nomeRegiao}</div>`;
     
-    if(outros.length > 0) {
-        html += `<div style="margin-bottom:6px;">${outros.map(i => `
-            <button class="${i.tipo === 'N' ? 'separador-complexo-btn' : 'btRes'}" style="width:100%;" onclick="navegarVitrine('${i.nome}')">
-                <strong>${i.nome}</strong> ${obterHtmlEstoque(i.estoque, i.tipo)}
-            </button>`).join('')}</div><hr style="border:0; border-top:1px solid #eee; margin:6px 0;">`;
-    }
-
     if (selecionado.tipo === 'R') {
         html += `<div class="titulo-vitrine-faixa faixa-laranja">RES. ${selecionado.nome}</div>`;
         html += `<div style="padding: 0 0 4px 0;"><p style="font-size:0.65rem; color:#444; display:flex; justify-content:space-between; align-items:center;"><span>📍 ${selecionado.endereco}</span><a href="${urlMaps}" target="_blank" class="btn-maps">MAPS</a></p></div>`;
@@ -195,8 +184,8 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
 
         const fila = (l1, v1, l2, v2) => `
             <div class="grid-infos"><div class="row-infos">
-                <div class="box-argumento"><div class="box-inner"><label>${l1}</label><strong>${v1}</strong></div></div>
-                <div class="box-argumento"><div class="box-inner"><label>${l2}</label><strong>${v2}</strong></div></div>
+                <div class="box-argumento"><div class="box-inner"><label>${l1}</label>strong>${v1}</strong></div></div>
+                <div class="box-argumento"><div class="box-inner"><label>${l2}</label>strong>${v2}</strong></div></div>
             </div></div>`;
 
         html += fila('Entrega', selecionado.entrega, 'Obra', selecionado.obra + '%');
@@ -209,24 +198,20 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
                 const titulos = linhas[0].split(',').map(t => t.trim());
                 const dados = linhas.slice(1);
                 html += `
-                <div class="tabela-precos-container" style="border-radius: 4px 4px 0 0; border-bottom: none; margin-top:10px;">
-                    <div class="tabela-header" style="min-height: 34px;">
-                        ${titulos.map((t, idx) => `<div class="col-tabela ${idx === 1 ? 'col-laranja' : ''}" style="padding: 8px 4px;">${t}</div>`).join('')}
+                <div class="tabela-precos-container">
+                    <div class="tabela-header">
+                        ${titulos.map((t, idx) => `<div class="col-tabela ${idx === 1 ? 'col-laranja' : ''}">${t}</div>`).join('')}
                     </div>
+                    <div class="tabela-divisor"></div>
                     <div class="tabela-corpo">
                         ${dados.map(linha => {
                             const cols = linha.split(',').map(c => c.trim());
                             if(cols.length <= 1) return "";
-                            return `<div class="tabela-row" style="min-height: 38px;">
-                                ${cols.map((v, idx) => `<div class="col-tabela ${idx === 1 ? 'col-laranja' : ''}" style="padding: 10px 4px;">${idx === 0 ? `<strong>${v}</strong>` : v}</div>`).join('')}
+                            return `<div class="tabela-row">
+                                ${cols.map((v, idx) => `<div class="col-tabela ${idx === 1 ? 'col-laranja' : ''}">${idx === 0 ? `<strong>${v}</strong>` : v}</div>`).join('')}
                             </div>`;
                         }).join('')}
                     </div>
-                </div>
-                <div style="background: #e9ecef; padding: 8px; text-align: center; border: 1px solid #ddd; border-radius: 0 0 4px 4px; margin-bottom: 8px;">
-                    <p style="margin: 0; font-size: 0.55rem; color: #777; text-transform: uppercase; letter-spacing: 0.5px; font-weight: bold;">
-                        * Valores para referência informativa. Favor validar condições e disponibilidade na tabela vigente.
-                    </p>
                 </div>`;
             }
         }
@@ -246,23 +231,23 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
         html += criarBoxDestaque('🛒 Comércio', selecionado.comercio, '#ffebee', '#c62828');
         html += criarBoxDestaque('🏥 Saúde e Educação', selecionado.saude, '#f3e5f5', '#6a1b9a');
 
-        // --- CARDS DE MATERIAIS COM MINIATURA NO HOVER ---
+        // --- MATERIAIS DE APOIO (ESTILO CARDS COM SEGURANÇA) ---
         const criarCardMaterial = (titulo, url, icone) => {
             if (!url || url === "" || url === "---") return "";
+            // Garante que o link seguro seja gerado para o iframe
             const linkSeguro = formatarLinkSeguro(url);
+            
             return `
             <div class="card-material-item">
                 <div class="card-material-left">
                     <span class="card-icon">${icone}</span>
                     <span class="card-text">${titulo}</span>
+                    <div class="preview-hover-box">
+                        <iframe src="${linkSeguro}"></iframe>
+                    </div>
                 </div>
                 <div class="card-material-right">
-                    <div class="container-abrir-preview">
-                        <a href="${linkSeguro}" target="_blank" class="card-btn-abrir">Abrir</a>
-                        <div class="preview-hover-box">
-                            <iframe src="${linkSeguro}" scrolling="no"></iframe>
-                        </div>
-                    </div>
+                    <a href="${linkSeguro}" target="_blank" class="card-btn-abrir">Abrir</a>
                     <button onclick="copiarLink('${url}')" class="card-btn-copiar">Copiar</button>
                 </div>
             </div>`;
@@ -275,7 +260,7 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
         if (materiaisHtml !== "") {
             html += `
             <div style="margin-top: 15px;">
-                <label style="display:block; font-size:0.6rem; font-weight:bold; color:#888; text-transform:uppercase; margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:4px;">MATERIAIS DE VENDA</label>
+                <label style="display:block; font-size:0.6rem; font-weight:bold; color:#888; text-transform:uppercase; margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:4px;">MATERIAIS DE APOIO</label>
                 ${materiaisHtml}
             </div>`;
         }
