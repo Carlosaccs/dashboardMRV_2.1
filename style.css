@@ -24,7 +24,7 @@ body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; b
     width: 92% !important; margin: 3px auto !important; min-height: 28px;
     display: flex !important; align-items: center !important; padding: 4px 8px !important;
     border-radius: 4px; font-size: 0.72rem; cursor: pointer; border: 1px solid #ddd; 
-    transition: all 0.3s ease; /* Transição suave para todos os estados */
+    transition: all 0.3s ease;
 }
 
 .separador-complexo-btn { 
@@ -40,11 +40,10 @@ body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; b
     color: #333; 
 }
 
-/* Novo estilo de Hover solicitado: Balanço Interno */
 .btRes:hover { 
     background-color: #f0f0f0 !important; 
-    border-left-color: transparent !important; /* Faz a faixinha sumir */
-    padding-left: 15px !important; /* Desloca o texto internamente */
+    border-left-color: transparent !important; 
+    padding-left: 15px !important; 
 }
 
 .btRes.ativo { 
@@ -62,10 +61,8 @@ body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; b
 svg { width: 100%; height: 100%; }
 path { fill: #777; stroke: #fff; stroke-width: 0.8; pointer-events: all; transition: 0.2s; }
 
-/* Destaque claro para paths cinzas (sem MRV) */
 path:not(.commrv):hover { fill: var(--cinza-hover) !important; cursor: default; }
 
-/* Destaque para regiões com MRV */
 path.commrv { fill: var(--mrv-verde) !important; cursor: pointer; }
 path.commrv:hover, path.ativo { fill: var(--mrv-laranja) !important; stroke: #000 !important; stroke-width: 1.2px !important; }
 
@@ -73,7 +70,6 @@ path.commrv:hover, path.ativo { fill: var(--mrv-laranja) !important; stroke: #00
 .sidebar-dir { width: 480px; border-left: 1px solid #ddd; overflow-y: auto; padding: 10px; flex-shrink: 0; }
 .vitrine-topo { background: var(--mrv-verde); color: white; padding: 8px; text-align: center; font-weight: bold; border-radius: 4px; margin-bottom: 8px; font-size: 0.85rem; text-transform: uppercase; }
 
-/* Faixas de Título */
 .titulo-vitrine-faixa {
     display: block !important;
     width: 100% !important; 
@@ -113,14 +109,15 @@ path.commrv:hover, path.ativo { fill: var(--mrv-laranja) !important; stroke: #00
 .box-argumento label { font-size: 0.55rem; font-weight: bold; text-transform: uppercase; color: var(--mrv-verde); }
 .box-argumento strong { font-size: 0.72rem; color: #333; }
 
-/* Estilo para Texto do Complexo */
+/* Estilo para Texto do Complexo OTIMIZADO */
 .box-complexo-full {
     width: 100%;
-    padding: 15px;
+    padding: 12px;
     background: #f9f9f9;
     border-left: 4px solid var(--mrv-preto);
-    border-radius: 4px;
-    margin-top: 5px;
+    border-radius: 0 0 4px 4px; /* Arredonda só embaixo para colar na faixa */
+    height: auto !important; /* Garante que o texto não seja cortado */
+    overflow: visible !important;
 }
 
 .btn-maps { background: #4285F4; color: white !important; text-decoration: none; padding: 3px 7px; border-radius: 4px; font-size: 0.6rem; font-weight: bold; }
