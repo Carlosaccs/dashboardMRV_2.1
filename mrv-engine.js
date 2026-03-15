@@ -9,15 +9,28 @@ const COL = {
     P_DE: 9, P_ATE: 10, OBRA: 11, LIMITADOR: 12, 
     REGIAO: 13, CASA_PAULISTA: 14, CAMPANHA: 15, 
     DESC_LONGA: 17, 
-    LOCALIZACAO: 19,      // T
-    MOBILIDADE: 20,       // U
-    CULTURA_LAZER: 21,    // V
-    COMERCIO: 22,         // W
-    SAUDE_EDUCACAO: 23    // X
+    LOCALIZACAO: 19, MOBILIDADE: 20, CULTURA_LAZER: 21,    
+    COMERCIO: 22, SAUDE_EDUCACAO: 23,
+    BOOK_CLIENTE: 24, BOOK_CORRETOR: 25 
 };
 
 async function iniciarApp() {
     try { await carregarPlanilha(); } catch (err) { console.error(err); }
+}
+
+// --- FUNÇÃO PARA SEGURANÇA E MINIATURA ---
+function formatarLinkSeguro(url) {
+    if (!url || url === "---" || url === "") return "";
+    if (url.includes('drive.google.com')) {
+        return url.split('/view')[0].split('/edit')[0] + '/preview';
+    }
+    return url;
+}
+
+function copiarLink(url) {
+    const linkSeguro = formatarLinkSeguro(url);
+    navigator.clipboard.writeText(linkSeguro);
+    alert("Link seguro copiado!");
 }
 
 async function carregarPlanilha() {
@@ -60,7 +73,9 @@ async function carregarPlanilha() {
                 mobilidade: colunas[COL.MOBILIDADE] || "",
                 lazer: colunas[COL.CULTURA_LAZER] || "",
                 comercio: colunas[COL.COMERCIO] || "",
-                saude: colunas[COL.SAUDE_EDUCACAO] || ""
+                saude: colunas[COL.SAUDE_EDUCACAO] || "",
+                linkCliente: colunas[COL.BOOK_CLIENTE] || "",
+                linkCorretor: colunas[COL.BOOK_CORRETOR] || ""
             };
         }).filter(i => i !== null);
         DADOS_PLANILHA.sort((a, b) => a.ordem - b.ordem);
@@ -84,13 +99,24 @@ function navegarVitrine(nome) {
 }
 
 function comandoSelecao(idPath, nomePath, fonte) {
-    pathAtivo = idPath.toLowerCase().replace(/\s/g, '');
+    const idNorm = idPath.toLowerCase().replace(/\s/g, '');
+    
+    // --- LÓGICA DE TROCA DE MAPA AUTOMÁTICA ---
+    const noGSP = MAPA_GSP.paths.some(p => p.id.toLowerCase().replace(/\s/g, '') === idNorm);
+    const noInterior = MAPA_INTERIOR.paths.some(p => p.id.toLowerCase().replace(/\s/g, '') === idNorm);
+
+    if (noGSP && mapaAtivo !== 'GSP') trocarMapas(false);
+    if (noInterior && mapaAtivo !== 'INTERIOR') trocarMapas(false);
+
+    pathAtivo = idNorm;
     const imoveisDaCidade = DADOS_PLANILHA.filter(d => d.id_path === pathAtivo);
     const selecionado = fonte || imoveisDaCidade[0];
     imovelAtivo = selecionado.nome;
+
     document.querySelectorAll('path').forEach(el => el.classList.remove('ativo'));
     const elMapa = document.getElementById(`caixa-a-${pathAtivo}`);
     if (elMapa) elMapa.classList.add('ativo');
+
     gerarListaLateral();
     const todosPaths = MAPA_GSP.paths.concat(MAPA_INTERIOR.paths);
     const nomeOficial = todosPaths.find(p => p.id.toLowerCase().replace(/\s/g, '') === pathAtivo)?.name || pathAtivo;
@@ -183,7 +209,6 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
         html += fila('Plantas', selecionado.p_de + ' - ' + selecionado.p_ate, 'Estoque', selecionado.estoque + ' UN.');
         html += fila('Limitador', selecionado.limitador, 'C. Paulista', selecionado.casa_paulista);
 
-        // --- TABELA DE PREÇOS ---
         if(selecionado.tipologiasH) {
             const linhas = selecionado.tipologiasH.split(';').map(l => l.trim()).filter(l => l !== "");
             if(linhas.length > 0) {
@@ -203,16 +228,10 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
                             </div>`;
                         }).join('')}
                     </div>
-                </div>
-                <div style="background: #e9ecef; padding: 8px; text-align: center; border: 1px solid #ddd; border-top: 1px solid #eee; border-radius: 0 0 4px 4px; margin-bottom: 8px;">
-                    <p style="margin: 0; font-size: 0.55rem; color: #777; text-transform: uppercase; letter-spacing: 0.5px; font-weight: bold;">
-                        * Valores para referência informativa. Favor validar condições e disponibilidade na tabela vigente.
-                    </p>
                 </div>`;
             }
         }
 
-        // --- FUNÇÃO PARA CRIAR CAIXAS EM LINHA ÚNICA ---
         const criarBoxDestaque = (label, texto, corFundo, corBorda) => {
             if(!texto || texto === "---" || texto === "") return "";
             return `
@@ -222,25 +241,48 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
             </div>`;
         };
 
-        // Renderizando as caixas, uma por linha
-        html += criarBoxDestaque('📍 Diferenciais de Localização', selecionado.localizacao, '#fdf2e9', '#f37021'); // Laranja MRV
-        html += criarBoxDestaque('🚍 Mobilidade', selecionado.mobilidade, '#f1f8e9', '#2e7d32'); // Verde
-        html += criarBoxDestaque('🎭 Cultura e Lazer', selecionado.lazer, '#e3f2fd', '#1565c0');   // Azul
-        html += criarBoxDestaque('🛒 Comércio', selecionado.comercio, '#ffebee', '#c62828');       // Vermelho
-        html += criarBoxDestaque('🏥 Saúde e Educação', selecionado.saude, '#f3e5f5', '#6a1b9a'); // Roxo
+        html += criarBoxDestaque('📍 Localização', selecionado.localizacao, '#fdf2e9', '#f37021');
+        html += criarBoxDestaque('🚍 Mobilidade', selecionado.mobilidade, '#f1f8e9', '#2e7d32');
+        html += criarBoxDestaque('🎭 Cultura e Lazer', selecionado.lazer, '#e3f2fd', '#1565c0');
+        html += criarBoxDestaque('🛒 Comércio', selecionado.comercio, '#ffebee', '#c62828');
+        html += criarBoxDestaque('🏥 Saúde e Educação', selecionado.saude, '#f3e5f5', '#6a1b9a');
+
+        // --- CARDS DE MATERIAIS COM MINIATURA NO HOVER ---
+        const criarCardMaterial = (titulo, url, icone) => {
+            if (!url || url === "" || url === "---") return "";
+            const linkSeguro = formatarLinkSeguro(url);
+            return `
+            <div class="card-material-item">
+                <div class="card-material-left">
+                    <span class="card-icon">${icone}</span>
+                    <span class="card-text">${titulo}</span>
+                </div>
+                <div class="card-material-right" style="position: relative;">
+                    <a href="${linkSeguro}" target="_blank" class="card-btn-abrir">Abrir</a>
+                    <div class="preview-hover-box"><iframe src="${linkSeguro}"></iframe></div>
+                    <button onclick="copiarLink('${url}')" class="card-btn-copiar">Copiar</button>
+                </div>
+            </div>`;
+        };
+
+        let materiaisHtml = "";
+        materiaisHtml += criarCardMaterial('Book Cliente', selecionado.linkCliente, '📄');
+        materiaisHtml += criarCardMaterial('Book Corretor', selecionado.linkCorretor, '💼');
+
+        if (materiaisHtml !== "") {
+            html += `<div style="margin-top: 15px;">
+                <label style="display:block; font-size:0.6rem; font-weight:bold; color:#888; text-transform:uppercase; margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:4px;">MATERIAIS DE APOIO</label>
+                ${materiaisHtml}
+            </div>`;
+        }
 
         if(selecionado.descLonga) {
              html += `<div style="margin-top:8px; font-size:0.7rem; color:#666; font-style:italic; border-top:1px solid #eee; padding-top:4px;">${selecionado.descLonga}</div>`;
         }
     } else {
-        html += `<div class="titulo-vitrine-faixa faixa-preta" style="margin-bottom:0px;">${selecionado.nomeFull}</div>`;
-        html += `<div class="box-complexo-full" style="margin-top:0px;">
-                    <div style="margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #ddd;">
-                        <p style="font-size:0.7rem; color:#444; display:flex; justify-content:space-between; align-items:center;">
-                            <span>📍 ${selecionado.endereco}</span>
-                            <a href="${urlMaps}" target="_blank" class="btn-maps">MAPS</a>
-                        </p>
-                    </div>
+        html += `<div class="titulo-vitrine-faixa faixa-preta">${selecionado.nomeFull}</div>`;
+        html += `<div class="box-complexo-full">
+                    <p style="font-size:0.7rem; color:#444; margin-bottom:10px;"><span>📍 ${selecionado.endereco}</span> <a href="${urlMaps}" target="_blank" class="btn-maps">MAPS</a></p>
                     <p style="font-size:0.75rem; color:#444; line-height:1.5; text-align:justify;">${selecionado.descLonga}</p>
                  </div>`;
     }
