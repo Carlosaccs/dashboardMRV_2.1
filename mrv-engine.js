@@ -190,35 +190,47 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
 
     if (selecionado.tipo === 'R') {
         html += `<div class="titulo-vitrine-faixa faixa-laranja">RES. ${selecionado.nome}</div>`;
-        html += `<div style="padding: 0 0 4px 0;"><p style="font-size:0.65rem; color:#444; display:flex; justify-content:space-between; align-items:center;"><span>📍 ${selecionado.endereco}</span><a href="${urlMaps}" target="_blank" class="btn-maps">MAPS</a></p></div>`;
+        html += `<div style="padding-bottom: 4px;"><p style="font-size:0.65rem; color:#444; display:flex; justify-content:space-between; align-items:center;"><span>📍 ${selecionado.endereco}</span><a href="${urlMaps}" target="_blank" class="btn-maps">MAPS</a></p></div>`;
+        
+        // --- BLOCO ÚNICO DE INFORMAÇÕES CINZA (MOLDURA ÚNICA) ---
+        html += `<div style="background: #f9f9f9; border: 1px solid #ddd; border-radius: 4px; overflow: hidden; margin-bottom: 4px;">`;
         
         if(selecionado.campanha && selecionado.campanha !== "---" && selecionado.campanha !== "") {
-            html += `<div class="grid-infos" style="margin-bottom: 0px;"><div class="row-infos"><div class="box-argumento box-campanha" style="width:100%; display:block; text-align:center;">${selecionado.campanha}</div></div></div>`;
+            html += `<div style="background: white; color: var(--vermelho-mrv); font-weight: bold; font-size: 0.7rem; text-align: center; padding: 6px; border-bottom: 1px solid #ddd;">${selecionado.campanha}</div>`;
         }
 
-        const fila = (l1, v1, l2, v2) => `
-            <div class="grid-infos" style="margin-bottom: 0px; border-spacing: 2px 0px !important;"><div class="row-infos">
-                <div class="box-argumento" style="border-bottom: 1px solid #eee;"><div class="box-inner"><label>${l1}</label><strong>${v1}</strong></div></div>
-                <div class="box-argumento" style="border-bottom: 1px solid #eee;"><div class="box-inner"><label>${l2}</label><strong>${v2}</strong></div></div>
-            </div></div>`;
+        const linhaInfo = (l1, v1, l2, v2, borda) => `
+            <div style="display: flex; width: 100%; ${borda ? 'border-bottom: 1px solid #ddd;' : ''}">
+                <div style="flex: 1; padding: 4px 8px; border-right: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center;">
+                    <label style="font-size: 0.55rem; font-weight: bold; color: var(--mrv-verde); text-transform: uppercase;">${l1}</label>
+                    <strong style="font-size: 0.65rem; color: #333;">${v1}</strong>
+                </div>
+                <div style="flex: 1; padding: 4px 8px; display: flex; justify-content: space-between; align-items: center;">
+                    <label style="font-size: 0.55rem; font-weight: bold; color: var(--mrv-verde); text-transform: uppercase;">${l2}</label>
+                    <strong style="font-size: 0.65rem; color: #333;">${v2}</strong>
+                </div>
+            </div>`;
 
-        html += fila('Entrega', selecionado.entrega, 'Obra', selecionado.obra + '%');
-        html += fila('Plantas', selecionado.p_de + ' - ' + selecionado.p_ate, 'Estoque', selecionado.estoque + ' UN.');
-        html += fila('Limitador', selecionado.limitador, 'C. Paulista', selecionado.casa_paulista);
+        html += linhaInfo('Entrega', selecionado.entrega, 'Obra', selecionado.obra + '%', true);
+        html += linhaInfo('Plantas', selecionado.p_de + ' - ' + selecionado.p_ate, 'Estoque', selecionado.estoque + ' UN.', true);
+        html += linhaInfo('Limitador', selecionado.limitador, 'C. Paulista', selecionado.casa_paulista, false);
+        
+        html += `</div>`; // Fecha moldura cinza
 
+        // --- TABELA DE PREÇOS ---
         if(selecionado.tipologiasH) {
             const linhas = selecionado.tipologiasH.split(';').map(l => l.trim()).filter(l => l !== "");
             if(linhas.length > 0) {
                 const titulos = linhas[0].split(',').map(t => t.trim());
                 const dados = linhas.slice(1);
                 html += `
-                <div class="tabela-precos-container" style="border-radius: 4px 4px 0 0; border-bottom: none; margin-top:3px;">
-                    <div class="tabela-header" style="min-height: 30px;">
+                <div class="tabela-precos-container" style="margin-top:2px;">
+                    <div class="tabela-header" style="min-height: 28px;">
                         ${titulos.map((t, idx) => `<div class="col-tabela ${idx === 1 ? 'col-laranja' : ''}" style="padding: 4px;">${t}</div>`).join('')}
                     </div>
                     <div class="tabela-corpo">
-                        ${dados.map(linha => {
-                            const cols = linha.split(',').map(c => c.trim());
+                        ${dados.map(linhaStr => {
+                            const cols = linhaStr.split(',').map(c => c.trim());
                             if(cols.length <= 1) return "";
                             return `<div class="tabela-row" style="min-height: 28px;">
                                 ${cols.map((v, idx) => `<div class="col-tabela ${idx === 1 ? 'col-laranja' : ''}" style="padding: 4px;">${idx === 0 ? `<strong>${v}</strong>` : v}</div>`).join('')}
@@ -226,36 +238,39 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
                         }).join('')}
                     </div>
                 </div>
-                <div style="background: #e9ecef; padding: 6px; text-align: center; border: 1px solid #ddd; border-top: none; border-radius: 0 0 4px 4px; margin-bottom: 8px;">
-                    <p style="margin: 0; font-size: 0.5rem; color: #777; text-transform: uppercase; font-weight: bold;">* Valores referenciais. Validar condições na tabela vigente.</p>
+                <div style="background: #eee; padding: 4px; text-align: center; border: 1px solid #ddd; border-top: none; border-radius: 0 0 4px 4px; margin-bottom: 8px;">
+                    <p style="margin: 0; font-size: 0.5rem; color: #777; font-weight: bold;">* VALORES REFERENCIAIS. VALIDAR CONDIÇÕES NA TABELA VIGENTE.</p>
                 </div>`;
             }
         }
 
-        const criarBoxDestaque = (label, texto, corFundo, corBorda) => {
+        // --- CAIXAS DE DIFERENCIAIS (BLOCO ÚNICO SEM ESPAÇO) ---
+        html += `<div style="border-radius: 4px; overflow: hidden; border: 1px solid #ddd;">`;
+        
+        const criarBoxDiferencial = (label, texto, corFundo, corBorda, temBorda) => {
             if(!texto || texto === "---" || texto === "") return "";
             return `
-            <div style="background: ${corFundo}; border-left: 4px solid ${corBorda}; padding: 8px; border-radius: 4px; margin-bottom: 6px; width: 100%; box-sizing: border-box;">
-                <label style="display:block; font-size:0.55rem; font-weight:bold; color:${corBorda}; text-transform:uppercase; margin-bottom:2px;">${label}</label>
-                <p style="margin:0; font-size:0.7rem; color:#444; line-height:1.4;">${texto}</p>
+            <div style="background: ${corFundo}; border-left: 6px solid ${corBorda}; padding: 6px 10px; ${temBorda ? 'border-bottom: 1px solid #ddd;' : ''}">
+                <label style="display:block; font-size:0.55rem; font-weight:bold; color:${corBorda}; text-transform:uppercase; margin-bottom:1px;">${label}</label>
+                <p style="margin:0; font-size:0.68rem; color:#444; line-height:1.3;">${texto}</p>
             </div>`;
         };
 
-        html += criarBoxDestaque('📍 Localização', selecionado.localizacao, '#fdf2e9', '#f37021');
-        html += criarBoxDestaque('🚍 Mobilidade', selecionado.mobilidade, '#f1f8e9', '#2e7d32');
-        html += criarBoxDestaque('🎭 Cultura e Lazer', selecionado.lazer, '#e3f2fd', '#1565c0');
-        html += criarBoxDestaque('🛒 Comércio', selecionado.comercio, '#ffebee', '#c62828');
-        html += criarBoxDestaque('🏥 Saúde e Educação', selecionado.saude, '#f3e5f5', '#6a1b9a');
+        html += criarBoxDiferencial('📍 Localização', selecionado.localizacao, '#fdf2e9', '#f37021', true);
+        html += criarBoxDiferencial('🚍 Mobilidade', selecionado.mobilidade, '#f1f8e9', '#2e7d32', true);
+        html += criarBoxDiferencial('🎭 Cultura e Lazer', selecionado.lazer, '#e3f2fd', '#1565c0', true);
+        html += criarBoxDiferencial('🛒 Comércio', selecionado.comercio, '#ffebee', '#c62828', true);
+        html += criarBoxDiferencial('🏥 Saúde e Educação', selecionado.saude, '#f3e5f5', '#6a1b9a', false);
+        
+        html += `</div>`; // Fecha bloco de diferenciais
 
+        // --- MATERIAIS DE APOIO ---
         const criarCardMaterial = (titulo, url, icone) => {
             if (!url || url === "" || url === "---") return "";
             const linkSeguro = formatarLinkSeguro(url);
             return `
             <div class="card-material-item">
-                <div class="card-material-left">
-                    <span class="card-icon">${icone}</span>
-                    <span class="card-text">${titulo}</span>
-                </div>
+                <div class="card-material-left"><span class="card-icon">${icone}</span><span class="card-text">${titulo}</span></div>
                 <div class="card-material-right" style="position: relative;">
                     <a href="${linkSeguro}" target="_blank" class="card-btn-abrir">Abrir</a>
                     <div class="preview-hover-box"><iframe src="${linkSeguro}"></iframe></div>
@@ -269,8 +284,8 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
         materiaisHtml += criarCardMaterial('Book Corretor', selecionado.linkCorretor, '💼');
 
         if (materiaisHtml !== "") {
-            html += `<div style="margin-top: 15px;">
-                <label style="display:block; font-size:0.6rem; font-weight:bold; color:#888; text-transform:uppercase; margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:4px;">MATERIAIS DE APOIO</label>
+            html += `<div style="margin-top: 10px;">
+                <label style="display:block; font-size:0.6rem; font-weight:bold; color:#888; text-transform:uppercase; margin-bottom:6px; border-bottom:1px solid #eee;">MATERIAIS DE APOIO</label>
                 ${materiaisHtml}
             </div>`;
         }
