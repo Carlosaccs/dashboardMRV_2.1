@@ -7,15 +7,16 @@ const COL = {
     ID: 0, CATEGORIA: 1, ORDEM: 2, NOME: 3, NOME_FULL: 4, 
     ESTOQUE: 5, END: 6, TIPOLOGIAS: 7, ENTREGA: 8, 
     P_DE: 9, P_ATE: 10, OBRA: 11, LIMITADOR: 12, 
-    REGIAO: 13, CASA_PAULISTA: 14, CAMPANHA: 15, 
+    REGIONAL_MRV: 13, // Coluna N - Regional responsável
+    REGIAO_MAPA: 14, CASA_PAULISTA: 14, CAMPANHA: 15, 
     DESC_LONGA: 17, 
     LOCALIZACAO: 19, MOBILIDADE: 20, CULTURA_LAZER: 21,    
     COMERCIO: 22, SAUDE_EDUCACAO: 23,
     BOOK_CLIENTE: 24, BOOK_CORRETOR: 25,
     LINKS_VIDEOS: 26,   // Coluna AA
     LINKS_PLANTAS: 27,  // Coluna AB
-    LINKS_IMPLANT: 28,  // Coluna AC (Implantação/Localização)
-    LINKS_DIVERSOS: 29  // Coluna AD (Decorado/Diversos)
+    LINKS_IMPLANT: 28,  // Coluna AC
+    LINKS_DIVERSOS: 29  // Coluna AD
 };
 
 async function iniciarApp() {
@@ -65,7 +66,7 @@ async function carregarPlanilha() {
                 entrega: colunas[COL.ENTREGA] || "---",
                 obra: colunas[COL.OBRA] || "0",
                 tipologiasH: colunas[COL.TIPOLOGIAS] || "", 
-                regiao: colunas[COL.REGIAO] || "---",
+                regional: colunas[COL.REGIONAL_MRV] || "", // Captura da Coluna N
                 p_de: colunas[COL.P_DE] || "---",
                 p_ate: colunas[COL.P_ATE] || "---",
                 limitador: colunas[COL.LIMITADOR] || "---",
@@ -193,7 +194,13 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
     }
 
     if (selecionado.tipo === 'R') {
-        html += `<div class="titulo-vitrine-faixa faixa-laranja">RES. ${selecionado.nome}</div>`;
+        // FAIXA LARANJA COM REGIONAL INCLUÍDA
+        html += `
+        <div class="titulo-vitrine-faixa faixa-laranja" style="display: flex; justify-content: space-between; align-items: center; padding: 0 10px;">
+            <span>RES. ${selecionado.nome}</span>
+            <span style="font-size: 0.55rem; background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 10px; text-transform: uppercase;">${selecionado.regional}</span>
+        </div>`;
+        
         html += `<div style="padding-bottom: 4px;"><p style="font-size:0.65rem; color:#444; display:flex; justify-content:space-between; align-items:center;"><span>📍 ${selecionado.endereco}</span><a href="${urlMaps}" target="_blank" class="btn-maps">MAPS</a></p></div>`;
         
         // MOLDURA INFO CINZA
@@ -281,7 +288,6 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
         materiaisHtml += criarCardMaterial('Book Cliente', selecionado.linkCliente, '📄');
         materiaisHtml += criarCardMaterial('Book Corretor', selecionado.linkCorretor, '💼');
 
-        // Funções Auxiliares para quebra de strings dinâmicas
         const extrairLinks = (campo, icone) => {
             if(!campo || campo === "---") return "";
             let htmlTemp = "";
