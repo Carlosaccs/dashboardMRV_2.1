@@ -12,8 +12,10 @@ const COL = {
     LOCALIZACAO: 19, MOBILIDADE: 20, CULTURA_LAZER: 21,    
     COMERCIO: 22, SAUDE_EDUCACAO: 23,
     BOOK_CLIENTE: 24, BOOK_CORRETOR: 25,
-    LINKS_VIDEOS: 26,  // Coluna AA
-    LINKS_PLANTAS: 27  // Coluna AB
+    LINKS_VIDEOS: 26,   // Coluna AA
+    LINKS_PLANTAS: 27,  // Coluna AB
+    LINKS_IMPLANT: 28,  // Coluna AC (Implantação/Localização)
+    LINKS_DIVERSOS: 29  // Coluna AD (Decorado/Diversos)
 };
 
 async function iniciarApp() {
@@ -78,7 +80,9 @@ async function carregarPlanilha() {
                 linkCliente: colunas[COL.BOOK_CLIENTE] || "",
                 linkCorretor: colunas[COL.BOOK_CORRETOR] || "",
                 linksVideos: colunas[COL.LINKS_VIDEOS] || "",
-                linksPlantas: colunas[COL.LINKS_PLANTAS] || ""
+                linksPlantas: colunas[COL.LINKS_PLANTAS] || "",
+                linksImplant: colunas[COL.LINKS_IMPLANT] || "",
+                linksDiversos: colunas[COL.LINKS_DIVERSOS] || ""
             };
         }).filter(i => i !== null);
         DADOS_PLANILHA.sort((a, b) => a.ordem - b.ordem);
@@ -277,23 +281,22 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
         materiaisHtml += criarCardMaterial('Book Cliente', selecionado.linkCliente, '📄');
         materiaisHtml += criarCardMaterial('Book Corretor', selecionado.linkCorretor, '💼');
 
-        // Lógica para Coluna AA (Vídeos)
-        if(selecionado.linksVideos && selecionado.linksVideos !== "---") {
-            const gruposV = selecionado.linksVideos.split(';').map(g => g.trim()).filter(g => g !== "");
-            gruposV.forEach(g => {
+        // Funções Auxiliares para quebra de strings dinâmicas
+        const extrairLinks = (campo, icone) => {
+            if(!campo || campo === "---") return "";
+            let htmlTemp = "";
+            const grupos = campo.split(';').map(g => g.trim()).filter(g => g !== "");
+            grupos.forEach(g => {
                 const partes = g.split(',').map(p => p.trim());
-                if(partes.length >= 2) materiaisHtml += criarCardMaterial(partes[0], partes[1], '🎬');
+                if(partes.length >= 2) htmlTemp += criarCardMaterial(partes[0], partes[1], icone);
             });
-        }
+            return htmlTemp;
+        };
 
-        // Lógica para Coluna AB (Plantas)
-        if(selecionado.linksPlantas && selecionado.linksPlantas !== "---") {
-            const gruposP = selecionado.linksPlantas.split(';').map(g => g.trim()).filter(g => g !== "");
-            gruposP.forEach(g => {
-                const partes = g.split(',').map(p => p.trim());
-                if(partes.length >= 2) materiaisHtml += criarCardMaterial(partes[0], partes[1], '📐');
-            });
-        }
+        materiaisHtml += extrairLinks(selecionado.linksVideos, '🎬');
+        materiaisHtml += extrairLinks(selecionado.linksPlantas, '📐');
+        materiaisHtml += extrairLinks(selecionado.linksImplant, '📍');
+        materiaisHtml += extrairLinks(selecionado.linksDiversos, '✨');
 
         if (materiaisHtml !== "") {
             html += `<div style="margin-top: 10px;">
