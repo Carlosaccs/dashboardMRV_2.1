@@ -7,8 +7,8 @@ const COL = {
     ID: 0, CATEGORIA: 1, ORDEM: 2, NOME: 3, NOME_FULL: 4, 
     ESTOQUE: 5, END: 6, TIPOLOGIAS: 7, ENTREGA: 8, 
     P_DE: 9, P_ATE: 10, OBRA: 11, LIMITADOR: 12, 
-    REGIONAL_MRV: 13, // Coluna N - Regional responsável
-    REGIAO_MAPA: 14, CASA_PAULISTA: 14, CAMPANHA: 15, 
+    REGIONAL_MRV: 13, // Coluna N
+    CASA_PAULISTA: 14, CAMPANHA: 15, 
     DESC_LONGA: 17, 
     LOCALIZACAO: 19, MOBILIDADE: 20, CULTURA_LAZER: 21,    
     COMERCIO: 22, SAUDE_EDUCACAO: 23,
@@ -66,7 +66,7 @@ async function carregarPlanilha() {
                 entrega: colunas[COL.ENTREGA] || "---",
                 obra: colunas[COL.OBRA] || "0",
                 tipologiasH: colunas[COL.TIPOLOGIAS] || "", 
-                regional: colunas[COL.REGIONAL_MRV] || "", // Captura da Coluna N
+                regional: colunas[COL.REGIONAL_MRV] || "",
                 p_de: colunas[COL.P_DE] || "---",
                 p_ate: colunas[COL.P_ATE] || "---",
                 limitador: colunas[COL.LIMITADOR] || "---",
@@ -179,6 +179,35 @@ function gerarListaLateral() {
     }).join('');
 }
 
+// Funções auxiliares de renderização de materiais
+const criarCardMaterial = (titulo, url, icone) => {
+    if (!url || url === "" || url === "---") return "";
+    const linkSeguro = formatarLinkSeguro(url);
+    return `
+    <div class="card-material-item" style="padding: 4px 8px; margin-bottom: 4px; min-height: 32px;">
+        <div class="card-material-left" style="gap: 8px;">
+            <span class="card-icon" style="font-size: 0.8rem;">${icone}</span>
+            <span class="card-text" style="font-size: 0.65rem;">${titulo}</span>
+        </div>
+        <div class="card-material-right" style="position: relative; gap: 4px;">
+            <a href="${linkSeguro}" target="_blank" class="card-btn-abrir" style="padding: 2px 8px; font-size: 0.6rem;">Abrir</a>
+            <div class="preview-hover-box"><iframe src="${linkSeguro}"></iframe></div>
+            <button onclick="copiarLink('${url}')" class="card-btn-copiar" style="padding: 2px 8px; font-size: 0.6rem;">Copiar</button>
+        </div>
+    </div>`;
+};
+
+const extrairLinks = (campo, icone) => {
+    if(!campo || campo === "---") return "";
+    let htmlTemp = "";
+    const grupos = campo.split(';').map(g => g.trim()).filter(g => g !== "");
+    grupos.forEach(g => {
+        const partes = g.split(',').map(p => p.trim());
+        if(partes.length >= 2) htmlTemp += criarCardMaterial(partes[0], partes[1], icone);
+    });
+    return htmlTemp;
+};
+
 function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
     const painel = document.getElementById('ficha-tecnica');
     const outros = listaDaCidade.filter(i => i.nome !== selecionado.nome);
@@ -194,16 +223,15 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
     }
 
     if (selecionado.tipo === 'R') {
-        // FAIXA LARANJA COM REGIONAL INCLUÍDA
+        // RESIDENCIAL: TÍTULO COM REGIONAL EM DESTAQUE CENTRALIZADO
         html += `
-        <div class="titulo-vitrine-faixa faixa-laranja" style="display: flex; justify-content: space-between; align-items: center; padding: 0 10px;">
-            <span>RES. ${selecionado.nome}</span>
-            <span style="font-size: 0.55rem; background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 10px; text-transform: uppercase;">${selecionado.regional}</span>
+        <div class="titulo-vitrine-faixa faixa-laranja" style="display: flex; justify-content: space-between; align-items: center; padding: 0 10px; height: 38px;">
+            <span style="flex-shrink: 0;">RES. ${selecionado.nome}</span>
+            <span style="font-size: inherit; background: rgba(255,255,255,0.2); padding: 2px 10px; border-radius: 6px; text-transform: uppercase; font-weight: bold; line-height: 1;">${selecionado.regional}</span>
         </div>`;
         
         html += `<div style="padding-bottom: 4px;"><p style="font-size:0.65rem; color:#444; display:flex; justify-content:space-between; align-items:center;"><span>📍 ${selecionado.endereco}</span><a href="${urlMaps}" target="_blank" class="btn-maps">MAPS</a></p></div>`;
         
-        // MOLDURA INFO CINZA
         html += `<div style="background: #f9f9f9; border: 1px solid #ddd; border-radius: 4px; overflow: hidden; margin-bottom: 4px;">`;
         if(selecionado.campanha && selecionado.campanha !== "---" && selecionado.campanha !== "") {
             html += `<div style="background: white; color: var(--vermelho-mrv); font-weight: bold; font-size: 0.7rem; text-align: center; padding: 6px; border-bottom: 1px solid #ddd;">${selecionado.campanha}</div>`;
@@ -224,7 +252,6 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
         html += linhaInfo('Limitador', selecionado.limitador, 'C. Paulista', selecionado.casa_paulista, false);
         html += `</div>`;
 
-        // TABELA PREÇOS
         if(selecionado.tipologiasH) {
             const linhas = selecionado.tipologiasH.split(';').map(l => l.trim()).filter(l => l !== "");
             if(linhas.length > 0) {
@@ -243,14 +270,10 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
                                     </div>`;
                                 }).join('')}
                             </div>
-                        </div>
-                        <div style="background: #eee; padding: 4px; text-align: center; border: 1px solid #ddd; border-top: none; border-radius: 0 0 4px 4px; margin-bottom: 8px;">
-                            <p style="margin: 0; font-size: 0.5rem; color: #777; font-weight: bold;">* VALORES REFERENCIAIS. VALIDAR CONDIÇÕES NA TABELA VIGENTE.</p>
                         </div>`;
             }
         }
 
-        // BLOCO DIFERENCIAIS
         html += `<div style="border-radius: 4px; overflow: hidden; border: 1px solid #ddd;">`;
         const criarBoxDiferencial = (label, texto, corFundo, corBorda, temBorda) => {
             if(!texto || texto === "---" || texto === "") return "";
@@ -266,60 +289,39 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
         html += criarBoxDiferencial('🏥 Saúde e Educação', selecionado.saude, '#f3e5f5', '#6a1b9a', false);
         html += `</div>`;
 
-        // MATERIAIS DE APOIO
-        const criarCardMaterial = (titulo, url, icone) => {
-            if (!url || url === "" || url === "---") return "";
-            const linkSeguro = formatarLinkSeguro(url);
-            return `
-            <div class="card-material-item" style="padding: 4px 8px; margin-bottom: 4px; min-height: 32px;">
-                <div class="card-material-left" style="gap: 8px;">
-                    <span class="card-icon" style="font-size: 0.8rem;">${icone}</span>
-                    <span class="card-text" style="font-size: 0.65rem;">${titulo}</span>
-                </div>
-                <div class="card-material-right" style="position: relative; gap: 4px;">
-                    <a href="${linkSeguro}" target="_blank" class="card-btn-abrir" style="padding: 2px 8px; font-size: 0.6rem;">Abrir</a>
-                    <div class="preview-hover-box"><iframe src="${linkSeguro}"></iframe></div>
-                    <button onclick="copiarLink('${url}')" class="card-btn-copiar" style="padding: 2px 8px; font-size: 0.6rem;">Copiar</button>
-                </div>
-            </div>`;
-        };
-
         let materiaisHtml = "";
         materiaisHtml += criarCardMaterial('Book Cliente', selecionado.linkCliente, '📄');
         materiaisHtml += criarCardMaterial('Book Corretor', selecionado.linkCorretor, '💼');
-
-        const extrairLinks = (campo, icone) => {
-            if(!campo || campo === "---") return "";
-            let htmlTemp = "";
-            const grupos = campo.split(';').map(g => g.trim()).filter(g => g !== "");
-            grupos.forEach(g => {
-                const partes = g.split(',').map(p => p.trim());
-                if(partes.length >= 2) htmlTemp += criarCardMaterial(partes[0], partes[1], icone);
-            });
-            return htmlTemp;
-        };
-
         materiaisHtml += extrairLinks(selecionado.linksVideos, '🎬');
         materiaisHtml += extrairLinks(selecionado.linksPlantas, '📐');
         materiaisHtml += extrairLinks(selecionado.linksImplant, '📍');
         materiaisHtml += extrairLinks(selecionado.linksDiversos, '✨');
 
         if (materiaisHtml !== "") {
-            html += `<div style="margin-top: 10px;">
-                <label style="display:block; font-size:0.6rem; font-weight:bold; color:#888; text-transform:uppercase; margin-bottom:4px; border-bottom:1px solid #eee;">MATERIAIS DE APOIO</label>
-                ${materiaisHtml}
-            </div>`;
+            html += `<div style="margin-top: 10px;"><label style="display:block; font-size:0.6rem; font-weight:bold; color:#888; text-transform:uppercase; margin-bottom:4px; border-bottom:1px solid #eee;">MATERIAIS DE APOIO</label>${materiaisHtml}</div>`;
         }
 
-        if(selecionado.descLonga) {
-             html += `<div style="margin-top:8px; font-size:0.7rem; color:#666; font-style:italic; border-top:1px solid #eee; padding-top:4px;">${selecionado.descLonga}</div>`;
-        }
     } else {
-        html += `<div class="titulo-vitrine-faixa faixa-preta">${selecionado.nomeFull}</div>`;
+        // COMPLEXO: INCLUI LINKS DE IMPLANTAÇÃO (COLUNA AC)
+        html += `
+        <div class="titulo-vitrine-faixa faixa-preta" style="display: flex; justify-content: space-between; align-items: center; padding: 0 10px; height: 38px;">
+            <span>${selecionado.nomeFull}</span>
+            <span style="font-size: inherit; background: rgba(255,255,255,0.2); padding: 2px 10px; border-radius: 6px; text-transform: uppercase; font-weight: bold; line-height: 1;">${selecionado.regional}</span>
+        </div>`;
+        
         html += `<div class="box-complexo-full">
                     <p style="font-size:0.7rem; color:#444; margin-bottom:10px;"><span>📍 ${selecionado.endereco}</span> <a href="${urlMaps}" target="_blank" class="btn-maps">MAPS</a></p>
                     <p style="font-size:0.75rem; color:#444; line-height:1.5; text-align:justify;">${selecionado.descLonga}</p>
                  </div>`;
+
+        // Materiais para Complexo (Apenas Implantação da Coluna AC)
+        let materiaisComplexo = extrairLinks(selecionado.linksImplant, '📍');
+        if (materiaisComplexo !== "") {
+            html += `<div style="margin-top: 10px; padding: 0 10px;">
+                <label style="display:block; font-size:0.6rem; font-weight:bold; color:#888; text-transform:uppercase; margin-bottom:4px; border-bottom:1px solid #eee;">MATERIAIS DE APOIO</label>
+                ${materiaisComplexo}
+            </div>`;
+        }
     }
     painel.innerHTML = html;
 }
