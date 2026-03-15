@@ -192,13 +192,11 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
         html += `<div class="titulo-vitrine-faixa faixa-laranja">RES. ${selecionado.nome}</div>`;
         html += `<div style="padding-bottom: 4px;"><p style="font-size:0.65rem; color:#444; display:flex; justify-content:space-between; align-items:center;"><span>📍 ${selecionado.endereco}</span><a href="${urlMaps}" target="_blank" class="btn-maps">MAPS</a></p></div>`;
         
-        // --- BLOCO ÚNICO DE INFORMAÇÕES CINZA (MOLDURA ÚNICA) ---
+        // BLOCO CINZA ÚNICO
         html += `<div style="background: #f9f9f9; border: 1px solid #ddd; border-radius: 4px; overflow: hidden; margin-bottom: 4px;">`;
-        
         if(selecionado.campanha && selecionado.campanha !== "---" && selecionado.campanha !== "") {
             html += `<div style="background: white; color: var(--vermelho-mrv); font-weight: bold; font-size: 0.7rem; text-align: center; padding: 6px; border-bottom: 1px solid #ddd;">${selecionado.campanha}</div>`;
         }
-
         const linhaInfo = (l1, v1, l2, v2, borda) => `
             <div style="display: flex; width: 100%; ${borda ? 'border-bottom: 1px solid #ddd;' : ''}">
                 <div style="flex: 1; padding: 4px 8px; border-right: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center;">
@@ -210,14 +208,12 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
                     <strong style="font-size: 0.65rem; color: #333;">${v2}</strong>
                 </div>
             </div>`;
-
         html += linhaInfo('Entrega', selecionado.entrega, 'Obra', selecionado.obra + '%', true);
         html += linhaInfo('Plantas', selecionado.p_de + ' - ' + selecionado.p_ate, 'Estoque', selecionado.estoque + ' UN.', true);
         html += linhaInfo('Limitador', selecionado.limitador, 'C. Paulista', selecionado.casa_paulista, false);
-        
-        html += `</div>`; // Fecha moldura cinza
+        html += `</div>`;
 
-        // --- TABELA DE PREÇOS ---
+        // TABELA PREÇOS
         if(selecionado.tipologiasH) {
             const linhas = selecionado.tipologiasH.split(';').map(l => l.trim()).filter(l => l !== "");
             if(linhas.length > 0) {
@@ -244,9 +240,8 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
             }
         }
 
-        // --- CAIXAS DE DIFERENCIAIS (BLOCO ÚNICO SEM ESPAÇO) ---
+        // BLOCO DIFERENCIAIS
         html += `<div style="border-radius: 4px; overflow: hidden; border: 1px solid #ddd;">`;
-        
         const criarBoxDiferencial = (label, texto, corFundo, corBorda, temBorda) => {
             if(!texto || texto === "---" || texto === "") return "";
             return `
@@ -255,26 +250,28 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
                 <p style="margin:0; font-size:0.68rem; color:#444; line-height:1.3;">${texto}</p>
             </div>`;
         };
-
         html += criarBoxDiferencial('📍 Localização', selecionado.localizacao, '#fdf2e9', '#f37021', true);
         html += criarBoxDiferencial('🚍 Mobilidade', selecionado.mobilidade, '#f1f8e9', '#2e7d32', true);
         html += criarBoxDiferencial('🎭 Cultura e Lazer', selecionado.lazer, '#e3f2fd', '#1565c0', true);
         html += criarBoxDiferencial('🛒 Comércio', selecionado.comercio, '#ffebee', '#c62828', true);
         html += criarBoxDiferencial('🏥 Saúde e Educação', selecionado.saude, '#f3e5f5', '#6a1b9a', false);
-        
-        html += `</div>`; // Fecha bloco de diferenciais
+        html += `</div>`;
 
-        // --- MATERIAIS DE APOIO ---
+        // MATERIAIS DE APOIO (COM ALTURA REDUZIDA EM 20%)
         const criarCardMaterial = (titulo, url, icone) => {
             if (!url || url === "" || url === "---") return "";
             const linkSeguro = formatarLinkSeguro(url);
+            // Altura e padding reduzidos para o padrão slim
             return `
-            <div class="card-material-item">
-                <div class="card-material-left"><span class="card-icon">${icone}</span><span class="card-text">${titulo}</span></div>
-                <div class="card-material-right" style="position: relative;">
-                    <a href="${linkSeguro}" target="_blank" class="card-btn-abrir">Abrir</a>
+            <div class="card-material-item" style="padding: 4px 8px; margin-bottom: 4px; min-height: 32px;">
+                <div class="card-material-left" style="gap: 8px;">
+                    <span class="card-icon" style="font-size: 0.8rem;">${icone}</span>
+                    <span class="card-text" style="font-size: 0.65rem;">${titulo}</span>
+                </div>
+                <div class="card-material-right" style="position: relative; gap: 4px;">
+                    <a href="${linkSeguro}" target="_blank" class="card-btn-abrir" style="padding: 2px 8px; font-size: 0.6rem;">Abrir</a>
                     <div class="preview-hover-box"><iframe src="${linkSeguro}"></iframe></div>
-                    <button onclick="copiarLink('${url}')" class="card-btn-copiar">Copiar</button>
+                    <button onclick="copiarLink('${url}')" class="card-btn-copiar" style="padding: 2px 8px; font-size: 0.6rem;">Copiar</button>
                 </div>
             </div>`;
         };
@@ -285,7 +282,7 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
 
         if (materiaisHtml !== "") {
             html += `<div style="margin-top: 10px;">
-                <label style="display:block; font-size:0.6rem; font-weight:bold; color:#888; text-transform:uppercase; margin-bottom:6px; border-bottom:1px solid #eee;">MATERIAIS DE APOIO</label>
+                <label style="display:block; font-size:0.6rem; font-weight:bold; color:#888; text-transform:uppercase; margin-bottom:4px; border-bottom:1px solid #eee;">MATERIAIS DE APOIO</label>
                 ${materiaisHtml}
             </div>`;
         }
