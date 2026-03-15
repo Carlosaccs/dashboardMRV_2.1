@@ -18,7 +18,6 @@ async function iniciarApp() {
     try { await carregarPlanilha(); } catch (err) { console.error(err); }
 }
 
-// --- FUNÇÃO PARA SEGURANÇA E MINIATURA ---
 function formatarLinkSeguro(url) {
     if (!url || url === "---" || url === "") return "";
     if (url.includes('drive.google.com')) {
@@ -100,8 +99,6 @@ function navegarVitrine(nome) {
 
 function comandoSelecao(idPath, nomePath, fonte) {
     const idNorm = idPath.toLowerCase().replace(/\s/g, '');
-    
-    // --- LÓGICA DE TROCA DE MAPA AUTOMÁTICA ---
     const noGSP = MAPA_GSP.paths.some(p => p.id.toLowerCase().replace(/\s/g, '') === idNorm);
     const noInterior = MAPA_INTERIOR.paths.some(p => p.id.toLowerCase().replace(/\s/g, '') === idNorm);
 
@@ -196,13 +193,13 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
         html += `<div style="padding: 0 0 4px 0;"><p style="font-size:0.65rem; color:#444; display:flex; justify-content:space-between; align-items:center;"><span>📍 ${selecionado.endereco}</span><a href="${urlMaps}" target="_blank" class="btn-maps">MAPS</a></p></div>`;
         
         if(selecionado.campanha && selecionado.campanha !== "---" && selecionado.campanha !== "") {
-            html += `<div class="grid-infos"><div class="row-infos"><div class="box-argumento box-campanha" style="width:100%; display:block; text-align:center;">${selecionado.campanha}</div></div></div>`;
+            html += `<div class="grid-infos" style="margin-bottom: 0px;"><div class="row-infos"><div class="box-argumento box-campanha" style="width:100%; display:block; text-align:center;">${selecionado.campanha}</div></div></div>`;
         }
 
         const fila = (l1, v1, l2, v2) => `
-            <div class="grid-infos"><div class="row-infos">
-                <div class="box-argumento"><div class="box-inner"><label>${l1}</label><strong>${v1}</strong></div></div>
-                <div class="box-argumento"><div class="box-inner"><label>${l2}</label><strong>${v2}</strong></div></div>
+            <div class="grid-infos" style="margin-bottom: 0px; border-spacing: 2px 0px !important;"><div class="row-infos">
+                <div class="box-argumento" style="border-bottom: 1px solid #eee;"><div class="box-inner"><label>${l1}</label><strong>${v1}</strong></div></div>
+                <div class="box-argumento" style="border-bottom: 1px solid #eee;"><div class="box-inner"><label>${l2}</label><strong>${v2}</strong></div></div>
             </div></div>`;
 
         html += fila('Entrega', selecionado.entrega, 'Obra', selecionado.obra + '%');
@@ -215,19 +212,22 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
                 const titulos = linhas[0].split(',').map(t => t.trim());
                 const dados = linhas.slice(1);
                 html += `
-                <div class="tabela-precos-container" style="border-radius: 4px 4px 0 0; border-bottom: none; margin-top:10px;">
-                    <div class="tabela-header" style="min-height: 34px;">
-                        ${titulos.map((t, idx) => `<div class="col-tabela ${idx === 1 ? 'col-laranja' : ''}" style="padding: 8px 4px;">${t}</div>`).join('')}
+                <div class="tabela-precos-container" style="border-radius: 4px 4px 0 0; border-bottom: none; margin-top:3px;">
+                    <div class="tabela-header" style="min-height: 30px;">
+                        ${titulos.map((t, idx) => `<div class="col-tabela ${idx === 1 ? 'col-laranja' : ''}" style="padding: 4px;">${t}</div>`).join('')}
                     </div>
                     <div class="tabela-corpo">
                         ${dados.map(linha => {
                             const cols = linha.split(',').map(c => c.trim());
                             if(cols.length <= 1) return "";
-                            return `<div class="tabela-row" style="min-height: 38px;">
-                                ${cols.map((v, idx) => `<div class="col-tabela ${idx === 1 ? 'col-laranja' : ''}" style="padding: 10px 4px;">${idx === 0 ? `<strong>${v}</strong>` : v}</div>`).join('')}
+                            return `<div class="tabela-row" style="min-height: 28px;">
+                                ${cols.map((v, idx) => `<div class="col-tabela ${idx === 1 ? 'col-laranja' : ''}" style="padding: 4px;">${idx === 0 ? `<strong>${v}</strong>` : v}</div>`).join('')}
                             </div>`;
                         }).join('')}
                     </div>
+                </div>
+                <div style="background: #e9ecef; padding: 6px; text-align: center; border: 1px solid #ddd; border-top: none; border-radius: 0 0 4px 4px; margin-bottom: 8px;">
+                    <p style="margin: 0; font-size: 0.5rem; color: #777; text-transform: uppercase; font-weight: bold;">* Valores referenciais. Validar condições na tabela vigente.</p>
                 </div>`;
             }
         }
@@ -247,7 +247,6 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
         html += criarBoxDestaque('🛒 Comércio', selecionado.comercio, '#ffebee', '#c62828');
         html += criarBoxDestaque('🏥 Saúde e Educação', selecionado.saude, '#f3e5f5', '#6a1b9a');
 
-        // --- CARDS DE MATERIAIS COM MINIATURA NO HOVER ---
         const criarCardMaterial = (titulo, url, icone) => {
             if (!url || url === "" || url === "---") return "";
             const linkSeguro = formatarLinkSeguro(url);
