@@ -12,7 +12,8 @@ const COL = {
     LOCALIZACAO: 19, MOBILIDADE: 20, CULTURA_LAZER: 21,    
     COMERCIO: 22, SAUDE_EDUCACAO: 23,
     BOOK_CLIENTE: 24, BOOK_CORRETOR: 25,
-    LINKS_EXTRAS: 26 // Nova Coluna AA
+    LINKS_VIDEOS: 26,  // Coluna AA
+    LINKS_PLANTAS: 27  // Coluna AB
 };
 
 async function iniciarApp() {
@@ -76,7 +77,8 @@ async function carregarPlanilha() {
                 saude: colunas[COL.SAUDE_EDUCACAO] || "",
                 linkCliente: colunas[COL.BOOK_CLIENTE] || "",
                 linkCorretor: colunas[COL.BOOK_CORRETOR] || "",
-                linksExtras: colunas[COL.LINKS_EXTRAS] || "" // Armazena Título, Link; Título, Link...
+                linksVideos: colunas[COL.LINKS_VIDEOS] || "",
+                linksPlantas: colunas[COL.LINKS_PLANTAS] || ""
             };
         }).filter(i => i !== null);
         DADOS_PLANILHA.sort((a, b) => a.ordem - b.ordem);
@@ -190,7 +192,7 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
         html += `<div class="titulo-vitrine-faixa faixa-laranja">RES. ${selecionado.nome}</div>`;
         html += `<div style="padding-bottom: 4px;"><p style="font-size:0.65rem; color:#444; display:flex; justify-content:space-between; align-items:center;"><span>📍 ${selecionado.endereco}</span><a href="${urlMaps}" target="_blank" class="btn-maps">MAPS</a></p></div>`;
         
-        // BLOCO CINZA ÚNICO
+        // MOLDURA INFO CINZA
         html += `<div style="background: #f9f9f9; border: 1px solid #ddd; border-radius: 4px; overflow: hidden; margin-bottom: 4px;">`;
         if(selecionado.campanha && selecionado.campanha !== "---" && selecionado.campanha !== "") {
             html += `<div style="background: white; color: var(--vermelho-mrv); font-weight: bold; font-size: 0.7rem; text-align: center; padding: 6px; border-bottom: 1px solid #ddd;">${selecionado.campanha}</div>`;
@@ -253,7 +255,7 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
         html += criarBoxDiferencial('🏥 Saúde e Educação', selecionado.saude, '#f3e5f5', '#6a1b9a', false);
         html += `</div>`;
 
-        // MATERIAIS DE APOIO (COM SUPORTE A LINKS DINÂMICOS NA COLUNA AA)
+        // MATERIAIS DE APOIO
         const criarCardMaterial = (titulo, url, icone) => {
             if (!url || url === "" || url === "---") return "";
             const linkSeguro = formatarLinkSeguro(url);
@@ -272,18 +274,24 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
         };
 
         let materiaisHtml = "";
-        // Links Fixos (Se existirem)
         materiaisHtml += criarCardMaterial('Book Cliente', selecionado.linkCliente, '📄');
         materiaisHtml += criarCardMaterial('Book Corretor', selecionado.linkCorretor, '💼');
 
-        // Links Dinâmicos (Coluna AA)
-        if(selecionado.linksExtras && selecionado.linksExtras !== "---") {
-            const gruposExtras = selecionado.linksExtras.split(';').map(g => g.trim()).filter(g => g !== "");
-            gruposExtras.forEach(grupo => {
-                const [tituloExtra, linkExtra] = grupo.split(',').map(p => p.trim());
-                if(tituloExtra && linkExtra) {
-                    materiaisHtml += criarCardMaterial(tituloExtra, linkExtra, '🔗');
-                }
+        // Lógica para Coluna AA (Vídeos)
+        if(selecionado.linksVideos && selecionado.linksVideos !== "---") {
+            const gruposV = selecionado.linksVideos.split(';').map(g => g.trim()).filter(g => g !== "");
+            gruposV.forEach(g => {
+                const partes = g.split(',').map(p => p.trim());
+                if(partes.length >= 2) materiaisHtml += criarCardMaterial(partes[0], partes[1], '🎬');
+            });
+        }
+
+        // Lógica para Coluna AB (Plantas)
+        if(selecionado.linksPlantas && selecionado.linksPlantas !== "---") {
+            const gruposP = selecionado.linksPlantas.split(';').map(g => g.trim()).filter(g => g !== "");
+            gruposP.forEach(g => {
+                const partes = g.split(',').map(p => p.trim());
+                if(partes.length >= 2) materiaisHtml += criarCardMaterial(partes[0], partes[1], '📐');
             });
         }
 
