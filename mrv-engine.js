@@ -11,7 +11,8 @@ const COL = {
     DESC_LONGA: 17, 
     LOCALIZACAO: 19, MOBILIDADE: 20, CULTURA_LAZER: 21,    
     COMERCIO: 22, SAUDE_EDUCACAO: 23,
-    BOOK_CLIENTE: 24, BOOK_CORRETOR: 25 
+    BOOK_CLIENTE: 24, BOOK_CORRETOR: 25,
+    LINKS_EXTRAS: 26 // Nova Coluna AA
 };
 
 async function iniciarApp() {
@@ -74,7 +75,8 @@ async function carregarPlanilha() {
                 comercio: colunas[COL.COMERCIO] || "",
                 saude: colunas[COL.SAUDE_EDUCACAO] || "",
                 linkCliente: colunas[COL.BOOK_CLIENTE] || "",
-                linkCorretor: colunas[COL.BOOK_CORRETOR] || ""
+                linkCorretor: colunas[COL.BOOK_CORRETOR] || "",
+                linksExtras: colunas[COL.LINKS_EXTRAS] || "" // Armazena Título, Link; Título, Link...
             };
         }).filter(i => i !== null);
         DADOS_PLANILHA.sort((a, b) => a.ordem - b.ordem);
@@ -101,19 +103,15 @@ function comandoSelecao(idPath, nomePath, fonte) {
     const idNorm = idPath.toLowerCase().replace(/\s/g, '');
     const noGSP = MAPA_GSP.paths.some(p => p.id.toLowerCase().replace(/\s/g, '') === idNorm);
     const noInterior = MAPA_INTERIOR.paths.some(p => p.id.toLowerCase().replace(/\s/g, '') === idNorm);
-
     if (noGSP && mapaAtivo !== 'GSP') trocarMapas(false);
     if (noInterior && mapaAtivo !== 'INTERIOR') trocarMapas(false);
-
     pathAtivo = idNorm;
     const imoveisDaCidade = DADOS_PLANILHA.filter(d => d.id_path === pathAtivo);
     const selecionado = fonte || imoveisDaCidade[0];
     imovelAtivo = selecionado.nome;
-
     document.querySelectorAll('path').forEach(el => el.classList.remove('ativo'));
     const elMapa = document.getElementById(`caixa-a-${pathAtivo}`);
     if (elMapa) elMapa.classList.add('ativo');
-
     gerarListaLateral();
     const todosPaths = MAPA_GSP.paths.concat(MAPA_INTERIOR.paths);
     const nomeOficial = todosPaths.find(p => p.id.toLowerCase().replace(/\s/g, '') === pathAtivo)?.name || pathAtivo;
@@ -219,24 +217,23 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
             if(linhas.length > 0) {
                 const titulos = linhas[0].split(',').map(t => t.trim());
                 const dados = linhas.slice(1);
-                html += `
-                <div class="tabela-precos-container" style="margin-top:2px;">
-                    <div class="tabela-header" style="min-height: 28px;">
-                        ${titulos.map((t, idx) => `<div class="col-tabela ${idx === 1 ? 'col-laranja' : ''}" style="padding: 4px;">${t}</div>`).join('')}
-                    </div>
-                    <div class="tabela-corpo">
-                        ${dados.map(linhaStr => {
-                            const cols = linhaStr.split(',').map(c => c.trim());
-                            if(cols.length <= 1) return "";
-                            return `<div class="tabela-row" style="min-height: 28px;">
-                                ${cols.map((v, idx) => `<div class="col-tabela ${idx === 1 ? 'col-laranja' : ''}" style="padding: 4px;">${idx === 0 ? `<strong>${v}</strong>` : v}</div>`).join('')}
-                            </div>`;
-                        }).join('')}
-                    </div>
-                </div>
-                <div style="background: #eee; padding: 4px; text-align: center; border: 1px solid #ddd; border-top: none; border-radius: 0 0 4px 4px; margin-bottom: 8px;">
-                    <p style="margin: 0; font-size: 0.5rem; color: #777; font-weight: bold;">* VALORES REFERENCIAIS. VALIDAR CONDIÇÕES NA TABELA VIGENTE.</p>
-                </div>`;
+                html += `<div class="tabela-precos-container" style="margin-top:2px;">
+                            <div class="tabela-header" style="min-height: 28px;">
+                                ${titulos.map((t, idx) => `<div class="col-tabela ${idx === 1 ? 'col-laranja' : ''}" style="padding: 4px;">${t}</div>`).join('')}
+                            </div>
+                            <div class="tabela-corpo">
+                                ${dados.map(linhaStr => {
+                                    const cols = linhaStr.split(',').map(c => c.trim());
+                                    if(cols.length <= 1) return "";
+                                    return `<div class="tabela-row" style="min-height: 28px;">
+                                        ${cols.map((v, idx) => `<div class="col-tabela ${idx === 1 ? 'col-laranja' : ''}" style="padding: 4px;">${idx === 0 ? `<strong>${v}</strong>` : v}</div>`).join('')}
+                                    </div>`;
+                                }).join('')}
+                            </div>
+                        </div>
+                        <div style="background: #eee; padding: 4px; text-align: center; border: 1px solid #ddd; border-top: none; border-radius: 0 0 4px 4px; margin-bottom: 8px;">
+                            <p style="margin: 0; font-size: 0.5rem; color: #777; font-weight: bold;">* VALORES REFERENCIAIS. VALIDAR CONDIÇÕES NA TABELA VIGENTE.</p>
+                        </div>`;
             }
         }
 
@@ -244,8 +241,7 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
         html += `<div style="border-radius: 4px; overflow: hidden; border: 1px solid #ddd;">`;
         const criarBoxDiferencial = (label, texto, corFundo, corBorda, temBorda) => {
             if(!texto || texto === "---" || texto === "") return "";
-            return `
-            <div style="background: ${corFundo}; border-left: 6px solid ${corBorda}; padding: 6px 10px; ${temBorda ? 'border-bottom: 1px solid #ddd;' : ''}">
+            return `<div style="background: ${corFundo}; border-left: 6px solid ${corBorda}; padding: 6px 10px; ${temBorda ? 'border-bottom: 1px solid #ddd;' : ''}">
                 <label style="display:block; font-size:0.55rem; font-weight:bold; color:${corBorda}; text-transform:uppercase; margin-bottom:1px;">${label}</label>
                 <p style="margin:0; font-size:0.68rem; color:#444; line-height:1.3;">${texto}</p>
             </div>`;
@@ -257,11 +253,10 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
         html += criarBoxDiferencial('🏥 Saúde e Educação', selecionado.saude, '#f3e5f5', '#6a1b9a', false);
         html += `</div>`;
 
-        // MATERIAIS DE APOIO (COM ALTURA REDUZIDA EM 20%)
+        // MATERIAIS DE APOIO (COM SUPORTE A LINKS DINÂMICOS NA COLUNA AA)
         const criarCardMaterial = (titulo, url, icone) => {
             if (!url || url === "" || url === "---") return "";
             const linkSeguro = formatarLinkSeguro(url);
-            // Altura e padding reduzidos para o padrão slim
             return `
             <div class="card-material-item" style="padding: 4px 8px; margin-bottom: 4px; min-height: 32px;">
                 <div class="card-material-left" style="gap: 8px;">
@@ -277,8 +272,20 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
         };
 
         let materiaisHtml = "";
+        // Links Fixos (Se existirem)
         materiaisHtml += criarCardMaterial('Book Cliente', selecionado.linkCliente, '📄');
         materiaisHtml += criarCardMaterial('Book Corretor', selecionado.linkCorretor, '💼');
+
+        // Links Dinâmicos (Coluna AA)
+        if(selecionado.linksExtras && selecionado.linksExtras !== "---") {
+            const gruposExtras = selecionado.linksExtras.split(';').map(g => g.trim()).filter(g => g !== "");
+            gruposExtras.forEach(grupo => {
+                const [tituloExtra, linkExtra] = grupo.split(',').map(p => p.trim());
+                if(tituloExtra && linkExtra) {
+                    materiaisHtml += criarCardMaterial(tituloExtra, linkExtra, '🔗');
+                }
+            });
+        }
 
         if (materiaisHtml !== "") {
             html += `<div style="margin-top: 10px;">
