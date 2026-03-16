@@ -246,12 +246,12 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
     }
 
     if (selecionado.tipo === 'R') {
-        // FAIXA LARANJA COM A REGIONAL (COLUNA N)
-        html += `<div class="titulo-vitrine-faixa faixa-laranja">
-                    <span>RES. ${selecionado.nome}</span>
-                    <span class="tag-regional">${selecionado.regiao}</span>
+        // AJUSTADO: Nome à esquerda, Regional à direita
+        html += `<div class="titulo-vitrine-faixa faixa-laranja" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 15px;">
+                    <span style="flex: 1; text-align: left;">RES. ${selecionado.nome}</span>
+                    <span class="tag-regional" style="margin-left: 10px; white-space: nowrap;">${selecionado.regiao}</span>
                  </div>`;
-        html += `<div style="padding-bottom: 4px;"><p style="font-size:0.65rem; color:#444; display:flex; justify-content:space-between; align-items:center;"><span>📍 ${selecionado.endereco}</span><a href="${urlMaps}" target="_blank" class="btn-maps">MAPS</a></p></div>`;
+        html += `<div style="padding: 5px 0;"><p style="font-size:0.65rem; color:#444; display:flex; justify-content:space-between; align-items:center;"><span>📍 ${selecionado.endereco}</span><a href="${urlMaps}" target="_blank" class="btn-maps">MAPS</a></p></div>`;
         
         html += `<div style="background: #f9f9f9; border: 1px solid #ddd; border-radius: 4px; overflow: hidden; margin-bottom: 4px;">`;
         if(selecionado.campanha && selecionado.campanha !== "---" && selecionado.campanha !== "") {
@@ -331,10 +331,10 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
              html += `<div style="margin-top:8px; font-size:0.7rem; color:#666; line-height:1.4; border-top:1px solid #eee; padding-top:4px;">${selecionado.descLonga}</div>`;
         }
     } else {
-        // FAIXA PRETA COM A REGIONAL (COLUNA N)
-        html += `<div class="titulo-vitrine-faixa faixa-preta">
-                    <span>${selecionado.nomeFull}</span>
-                    <span class="tag-regional">${selecionado.regiao}</span>
+        // AJUSTADO: Nome à esquerda, Regional à direita para COMPLEXO
+        html += `<div class="titulo-vitrine-faixa faixa-preta" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 15px;">
+                    <span style="flex: 1; text-align: left;">${selecionado.nomeFull}</span>
+                    <span class="tag-regional" style="margin-left: 10px; white-space: nowrap;">${selecionado.regiao}</span>
                  </div>`;
         html += `<div class="box-complexo-full">
                     <p style="font-size:0.7rem; color:#444; margin-bottom:10px;"><span>📍 ${selecionado.endereco}</span> <a href="${urlMaps}" target="_blank" class="btn-maps">MAPS</a></p>
