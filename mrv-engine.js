@@ -144,10 +144,8 @@ function atualizarTituloSuperior(texto) {
     } else { titulo.innerText = "SELECIONE UMA REGIÃO NO MAPA"; }
 }
 
-// FUNÇÃO ATUALIZADA COM ESCALA DE 1.25 (AUMENTO DE 25%)
 function renderizarNoContainer(id, dados, interativo) {
     const container = document.getElementById(id);
-    
     container.style.display = "flex";
     container.style.alignItems = "center";
     container.style.justifyContent = "center";
@@ -166,8 +164,6 @@ function renderizarNoContainer(id, dados, interativo) {
         return `<path id="${id}-${idNorm}" d="${p.d}" class="${(temMRV || isGSP) && interativo ? 'commrv '+ativo : ''}" ${eventos}></path>`;
     }).join('');
 
-    // Aplicação da escala de 1.25 para aumentar 25% no mapa ativo
-    // Usei o transform direto no SVG para garantir centralização
     const escala = (mapaAtivo === 'GSP' && interativo) ? 'transform: scale(1.25); transform-origin: center;' : '';
 
     container.innerHTML = `
@@ -250,7 +246,11 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
     }
 
     if (selecionado.tipo === 'R') {
-        html += `<div class="titulo-vitrine-faixa faixa-laranja">RES. ${selecionado.nome}</div>`;
+        // FAIXA LARANJA COM A REGIONAL (COLUNA N)
+        html += `<div class="titulo-vitrine-faixa faixa-laranja">
+                    <span>RES. ${selecionado.nome}</span>
+                    <span class="tag-regional">${selecionado.regiao}</span>
+                 </div>`;
         html += `<div style="padding-bottom: 4px;"><p style="font-size:0.65rem; color:#444; display:flex; justify-content:space-between; align-items:center;"><span>📍 ${selecionado.endereco}</span><a href="${urlMaps}" target="_blank" class="btn-maps">MAPS</a></p></div>`;
         
         html += `<div style="background: #f9f9f9; border: 1px solid #ddd; border-radius: 4px; overflow: hidden; margin-bottom: 4px;">`;
@@ -331,7 +331,11 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
              html += `<div style="margin-top:8px; font-size:0.7rem; color:#666; line-height:1.4; border-top:1px solid #eee; padding-top:4px;">${selecionado.descLonga}</div>`;
         }
     } else {
-        html += `<div class="titulo-vitrine-faixa faixa-preta">${selecionado.nomeFull}</div>`;
+        // FAIXA PRETA COM A REGIONAL (COLUNA N)
+        html += `<div class="titulo-vitrine-faixa faixa-preta">
+                    <span>${selecionado.nomeFull}</span>
+                    <span class="tag-regional">${selecionado.regiao}</span>
+                 </div>`;
         html += `<div class="box-complexo-full">
                     <p style="font-size:0.7rem; color:#444; margin-bottom:10px;"><span>📍 ${selecionado.endereco}</span> <a href="${urlMaps}" target="_blank" class="btn-maps">MAPS</a></p>
                     <div style="font-size:0.75rem; color:#444; line-height:1.5; text-align:justify;">${selecionado.descLonga}</div>
