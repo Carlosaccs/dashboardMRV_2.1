@@ -5,6 +5,7 @@ let DADOS_PLANILHA = [];
 let pathAtivo = null;  
 let imovelAtivo = null;  
 let mapaAtivo = 'GSP'; 
+let DADOS_IMPRESSOS = [];
 
 const COL = {
     ID: 0, CATEGORIA: 1, ORDEM: 2, 
@@ -61,70 +62,48 @@ function copiarLink(url) {
    ========================================================================== */
 async function carregarPlanilha() {
     const SHEET_ID = "15V194P2JPGCCPpCTKJsib8sJuCZPgtbNb-rtgNaLS7E";
-    const URL_CSV = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0&v=${new Date().getTime()}`;
+    const cacheBuster = `&v=${new Date().getTime()}`;
+    
+    // URL da aba principal (Imóveis)
+    const URL_IMOVEIS = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0${cacheBuster}`;
+    
+    // URL da aba Documentos (AJUSTE O GID ABAIXO)
+    const URL_DOCUMENTOS = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=SUA_GID_AQUI${cacheBuster}`;
+
     try {
-        const response = await fetch(URL_CSV);
-        let texto = await response.text();
-        const linhasPuras = texto.split(/\r?\n/);
-
-        DADOS_PLANILHA = linhasPuras.slice(1).map(linha => {
-            const colunas = []; let campo = "", aspas = false;
-            for (let i = 0; i < linha.length; i++) {
-                const char = linha[i];
-                if (char === '"') aspas = !aspas;
-                else if (char === ',' && !aspas) { colunas.push(campo.trim()); campo = ""; }
-                else { campo += char; }
-            }
-            colunas.push(campo.trim());
-
-            const nomeImovel = colunas[COL.NOME] || "";
-            const idPath = (colunas[COL.ID] || "").toLowerCase().replace(/\s/g, '');
-            const ordem = parseInt(colunas[COL.ORDEM]);
-
-            if (!idPath || nomeImovel.length <= 1 || isNaN(ordem)) return null;
-
-            const cat = (colunas[COL.CATEGORIA] || "").toUpperCase();
-            
-            return {
-                id_path: idPath,
-                tipo: cat.includes('COMPLEXO') ? 'N' : 'R',
-                ordem: ordem,
-                zona: colunas[COL.ZONA] || "", // Capturando a coluna D
-                nome: nomeImovel,
-                nomeFull: colunas[COL.NOME_FULL] || nomeImovel,
-                estoque: colunas[COL.ESTOQUE],
-                endereco: colunas[COL.END] || "",
-                entrega: colunas[COL.ENTREGA] || "---",
-                obra: colunas[COL.OBRA] || "0",
-                tipologiasH: colunas[COL.TIPOLOGIAS] || "", 
-                regiao: colunas[COL.REGIAO] || "---",
-                p_de: colunas[COL.P_DE] || "---",
-                p_ate: colunas[COL.P_ATE] || "---",
-                limitador: colunas[COL.LIMITADOR] || "---",
-                casa_paulista: colunas[COL.CASA_PAULISTA] || "---",
-                campanha: colunas[COL.CAMPANHA] || "",
-                observacoes: colunas[COL.OBSERVACOES] || "", 
-                descLonga: colunas[COL.DESC_LONGA] || "",
-                localizacao: colunas[COL.LOCALIZACAO] || "",
-                mobilidade: colunas[COL.MOBILIDADE] || "",
-                lazer: colunas[COL.CULTURA_LAZER] || "",
-                comercio: colunas[COL.COMERCIO] || "",
-                saude: colunas[COL.SAUDE_EDUCACAO] || "",
-                linkCliente: colunas[COL.BOOK_CLIENTE] || "",
-                linkCorretor: colunas[COL.BOOK_CORRETOR] || "",
-                linksVideos: colunas[COL.LINKS_VIDEOS] || "",
-                linksPlantas: colunas[COL.LINKS_PLANTAS] || "",
-                linksImplant: colunas[COL.LINKS_IMPLANT] || "",
-                linksDiversos: colunas[COL.LINKS_DIVERSOS] || "",
-                estande: colunas[COL.ESTANDE] || ""
-            };
+        // 1. Carrega os Imóveis (o que você já tinha)
+        const res1 = await fetch(URL_IMOVEIS);
+        const texto1 = await res1.text();
+        const linhasImoveis = texto1.split(/\r?\n/);
+        
+        DADOS_PLANILHA = linhasImoveis.slice(1).map(linha => {
+            // ... (mantenha toda a sua lógica de mapeamento do COL.ID, COL.NOME, etc)
+            // Vou omitir o meio para o código não ficar gigante, mas use o seu código original aqui
         }).filter(i => i !== null);
 
-        DADOS_PLANILHA.sort((a, b) => a.ordem - b.ordem);
-        desenharMapas(); gerarListaLateral();
-    } catch (e) { console.error(e); }
-}
+        // 2. Carrega os Documentos (A nova parte!)
+        const res2 = await fetch(URL_DOCUMENTOS);
+        const texto2 = await res2.text();
+        const linhasDoc = texto2.split(/\r?\n/);
+        
+        DADOS_IMPRESSOS = linhasDoc.slice(1).map(linha => {
+            // Divide por vírgula, mas ignora vírgulas dentro de aspas (comum em links)
+            const colunas = linha.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+            if (colunas.length >= 2) {
+                return {
+                    nome: colunas[0].replace(/"/g, '').trim(),
+                    link: colunas[1].replace(/"/g, '').trim()
+                };
+            }
+            return null;
+        }).filter(d => d && d.nome !== "");
 
+        DADOS_PLANILHA.sort((a, b) => a.ordem - b.ordem);
+        desenharMapas(); 
+        gerarListaLateral();
+        
+    } catch (e) { console.error("Erro ao carregar:", e); }
+}
 /* ==========================================================================
    BLOCO 04: LÓGICA DO MAPA E SELEÇÃO
    ========================================================================== */
@@ -469,19 +448,45 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
    BLOCO 08: LÓGICA DO MODAL (SOBRE)
    ========================================================================== */
 document.addEventListener('DOMContentLoaded', () => {
-    const modal = document.getElementById("modal-sobre");
-    const btn = document.getElementById("btn-sobre");
-    const span = document.querySelector(".modal-close");
+    const modalSobre = document.getElementById("modal-sobre");
+    const btnSobre = document.getElementById("btn-sobre");
+    
+    const modalImp = document.getElementById("modal-impressos");
+    const btnImp = document.getElementById("btn-impressos");
+    const containerLista = document.getElementById("lista-impressos-container");
 
-    if(btn && modal) {
-        btn.onclick = () => { modal.style.display = "block"; };
+    // Lógica do botão Sobre
+    if(btnSobre) btnSobre.onclick = () => { modalSobre.style.display = "block"; };
+
+    // Lógica do botão Impressos
+    if(btnImp) {
+        btnImp.onclick = () => {
+            modalImp.style.display = "block";
+            // Renderiza os documentos que carregamos da planilha
+            if (DADOS_IMPRESSOS.length > 0) {
+                containerLista.innerHTML = DADOS_IMPRESSOS.map(doc => `
+                    <a href="${doc.link}" target="_blank" class="item-impresso-link">
+                        <span>📂 ${doc.nome}</span>
+                        <div class="badge-pdf">ABRIR PDF</div>
+                    </a>
+                `).join('');
+            } else {
+                containerLista.innerHTML = "<p style='text-align:center; font-size:0.8rem; color:#888;'>Nenhum documento encontrado.</p>";
+            }
+        };
     }
-    if(span && modal) {
-        span.onclick = () => { modal.style.display = "none"; };
-    }
+
+    // Fechar modais ao clicar no X
+    document.querySelectorAll('.modal-close').forEach(span => {
+        span.onclick = () => {
+            modalSobre.style.display = "none";
+            modalImp.style.display = "none";
+        };
+    });
+
+    // Fechar ao clicar fora
     window.onclick = (event) => {
-        if (event.target == modal) { modal.style.display = "none"; }
+        if (event.target == modalSobre) modalSobre.style.display = "none";
+        if (event.target == modalImp) modalImp.style.display = "none";
     };
 });
-
-window.onload = iniciarApp;
