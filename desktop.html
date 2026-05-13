@@ -1,55 +1,52 @@
 <!DOCTYPE html>
 <html lang="pt-br" class="notranslate">
 <head>
+    <meta charset="UTF-8">
     <link rel="stylesheet" href="desktop.css">
 
     <style>
-        /* Ajuste do Header para blindar o layout */
+        /* RESET DE SEGURANÇA PARA O HEADER */
         .header {
             display: flex !important;
-            justify-content: space-between !important;
             align-items: center !important;
-            padding: 0 40px !important; 
-            height: 60px !important;
+            justify-content: flex-start !important; /* Alinha tudo à esquerda por padrão */
+            padding: 0 !important;
+            height: 65px !important;
             background-color: #006d38 !important;
-            color: white !important;
             position: relative !important;
-            box-sizing: border-box !important;
         }
 
+        /* CAIXA DO TÍTULO: Controla a distância da borda esquerda */
         .header-titulo {
+            margin-left: 50px !important; /* Ajuste este número para mover o título mais para a direita ou esquerda */
+            color: white !important;
             font-weight: bold !important;
-            font-size: 1.2rem !important;
+            font-size: 1.1rem !important;
+            flex-grow: 1 !important; /* Empurra o que vier depois para o fim da linha */
         }
 
-        /* Container dos botões que impede a sobreposição */
-        .header-buttons {
+        /* CAIXA DOS BOTÕES: Força o alinhamento e impede sobreposição */
+        .header-buttons-container {
             display: flex !important;
-            gap: 12px !important;
-            position: relative !important; /* Força a saída do absolute do CSS antigo */
-            right: auto !important;
-            top: auto !important;
-            transform: none !important;
+            gap: 15px !important;
+            margin-right: 40px !important; /* Distância da quina direita da tela */
             align-items: center !important;
         }
 
-        /* Estilo unificado para os dois botões (Amarelo e Retangular) */
+        /* ESTILO DOS BOTÕES (Amarelo Retangular) */
         .btn-header-novo {
-            background-color: #fbc02d !important; /* Amarelo MRV */
+            position: static !important; /* ANULA o absolute/fixed do seu CSS antigo */
+            float: none !important;
+            background-color: #fbc02d !important;
             color: #333 !important;
             border: none !important;
-            padding: 8px 18px !important;
-            border-radius: 4px !important; /* Bordas suaves */
+            padding: 8px 20px !important;
+            border-radius: 4px !important;
             font-size: 0.8rem !important;
             font-weight: bold !important;
-            cursor: pointer !important;
             text-transform: uppercase !important;
-            transition: background 0.2s !important;
-            white-space: nowrap !important; /* Impede que o texto quebre */
-            display: inline-block !important;
-            line-height: normal !important;
-            height: auto !important;
-            width: auto !important;
+            cursor: pointer !important;
+            white-space: nowrap !important;
         }
 
         .btn-header-novo:hover {
@@ -57,12 +54,14 @@
         }
     </style>
 </head>
-<body>
 
+<body>
     <div class="header">
-        <div class="header-titulo">RESIDENCIAIS MRV EM SÃO PAULO - mai/26</div>
+        <div class="header-titulo">
+            RESIDENCIAIS MRV EM SÃO PAULO - mai/26
+        </div>
         
-        <div class="header-buttons">
+        <div class="header-buttons-container">
             <button id="btn-documentos" class="btn-header-novo">Documentos</button>
             <button id="btn-sobre" class="btn-header-novo">Sobre</button>
         </div>
