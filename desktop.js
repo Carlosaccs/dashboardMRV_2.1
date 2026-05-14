@@ -467,80 +467,68 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
 
 
 /* ==========================================================================
-   BLOCO 08: GESTÃO DE DOCUMENTOS - VERSÃO FINAL E SEGURA
+   BLOCO 08: RETORNO SEGURO - DOCUMENTOS
    ========================================================================== */
 document.addEventListener('DOMContentLoaded', () => {
     const btnDocumentos = document.getElementById("btn-documentos");
     const fichaTecnica = document.getElementById("ficha-tecnica");
 
-    if (btnDocumentos) {
+    if (btnDocumentos && fichaTecnica) {
         btnDocumentos.onclick = async () => {
-            // 1. Limpa o painel e prepara o carregamento
-            fichaTecnica.innerHTML = '<div class="vitrine-topo">DOCUMENTOS GERAIS</div>';
-            fichaTecnica.innerHTML += '<p style="padding:20px; color:#666; font-size:0.7rem;">Carregando arquivos...</p>';
+            // 1. Reset visual imediato
+            fichaTecnica.innerHTML = '<div class="vitrine-topo">DOCUMENTOS GERAIS</div>' + 
+                                   '<p style="padding:20px; font-size:0.8rem;">Conectando...</p>';
             
-            const URL_DOCS = "https://docs.google.com/spreadsheets/d/15V194P2JPGCCPpCTKJsib8sJuCZPgtbNb-rtgNaLS7E/export?format=csv&gid=122737037&v=" + new Date().getTime();
+            const SHEET_ID = "15V194P2JPGCCPpCTKJsib8sJuCZPgtbNb-rtgNaLS7E";
+            const GID_DOCS = "122737037"; 
+            const URL_DOCS = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID_DOCS}&v=${new Date().getTime()}`;
 
             try {
                 const resp = await fetch(URL_DOCS);
-                if (!resp.ok) throw new Error("Erro na conexão");
+                if (!resp.ok) throw new Error("Falha na resposta da planilha");
                 const csv = await resp.text();
                 
-                // Limpa para desenhar os cards
+                // Limpa e prepara a lista
                 fichaTecnica.innerHTML = '<div class="vitrine-topo">DOCUMENTOS GERAIS</div>';
-                
-                // Container que evita a faixa preta e usa seu padrão cinza
-                let htmlFinal = '<div id="container-docs-gerais" style="margin-top: 15px; padding: 0 5px; min-height: 100vh; background-color: var(--cinza-claro);">';
+                let htmlLista = '<div style="margin-top:10px; padding:5px; background: var(--cinza-claro); min-height:100vh;">';
 
+                // Processa as linhas (pula o cabeçalho)
                 const linhas = csv.split(/\r?\n/).filter(l => l.trim().length > 10).slice(1);
 
-                linhas.forEach((linha) => {
-                    let textoLimpo = linha.replace(/"/g, "").trim();
-                    let posHttp = textoLimpo.indexOf("http");
-                    
-                    if (posHttp !== -1) {
-                        let link = textoLimpo.substring(posHttp).trim();
-                        let titulo = textoLimpo.substring(0, posHttp).replace(/,$/, "").trim();
+                linhas.forEach(linha => {
+                    let partes = linha.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/); // Split seguro para CSV
+                    if (partes.length >= 2) {
+                        let titulo = partes[0].replace(/"/g, "").trim();
+                        let link = partes[partes.length - 1].replace(/"/g, "").trim();
                         
-                        // MONTAGEM DO CARD COM O ÍCONE POR CIMA (Z-INDEX) E ALINHADO
-                        htmlFinal += `
-                        <div class="card-material-item" style="position: relative; overflow: visible; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 8px 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                            <div style="display: flex; align-items: center; gap: 10px; flex: 1; overflow: visible;">
-                                <span style="
-                                    position: absolute; 
-                                    top: -12px; 
-                                    left: 8px; 
-                                    z-index: 999; 
-                                    background: white; 
-                                    border-radius: 4px; 
-                                    padding: 2px; 
-                                    border: 1px solid #ccc; 
-                                    font-size: 1.1rem;
-                                    line-height: 1;
-                                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                                ">📄</span>
-                                <span style="font-size: 0.72rem; font-weight: 600; color: #333; margin-left: 30px;">${titulo || "Documento"}</span>
-                            </div>
-                            <div style="display: flex; gap: 5px; align-items: center;">
-                                <a href="${link}" target="_blank" class="card-btn-abrir">Abrir</a>
-                                <button onclick="navigator.clipboard.writeText('${link}')" class="card-btn-copiar">Copiar</button>
-                            </div>
-                        </div>`;
+                        if (link.startsWith("http")) {
+                            htmlLista += `
+                                <div style="position:relative; background:white; border-radius:8px; padding:10px; margin-bottom:15px; border:1px solid #ddd; display:flex; justify-content:space-between; align-items:center; overflow:visible;">
+                                    <div style="display:flex; align-items:center;">
+                                        <span style="position:absolute; top:-10px; left:10px; background:white; border:1px solid #ccc; padding:2px; border-radius:4px; z-index:10; font-size:1rem;">📄</span>
+                                        <span style="margin-left:30px; font-size:0.75rem; font-weight:bold; color:#333;">${titulo}</span>
+                                    </div>
+                                    <div style="display:flex; gap:5px;">
+                                        <a href="${link}" target="_blank" style="background:#00713d; color:white; padding:5px 10px; border-radius:4px; text-decoration:none; font-size:0.7rem; font-weight:bold;">Abrir</a>
+                                        <button onclick="navigator.clipboard.writeText('${link}')" style="background:#f37021; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; font-size:0.7rem; font-weight:bold;">Copiar</button>
+                                    </div>
+                                </div>`;
+                        }
                     }
                 });
 
-                htmlFinal += '</div>';
-                fichaTecnica.innerHTML += htmlFinal;
+                htmlLista += '</div>';
+                fichaTecnica.innerHTML += htmlLista;
 
             } catch (err) {
-                fichaTecnica.innerHTML = `<div style="padding:20px; color:red;">Erro ao carregar documentos.</div>`;
-                console.error("Erro no Bloco 08:", err);
+                console.error("Erro Documentos:", err);
+                fichaTecnica.innerHTML = `<div style="padding:20px; color:red;">Erro ao carregar: ${err.message}</div>`;
             }
         };
     }
 });
 
-// Lógica do Modal Sobre (Mantida separada para segurança)
+// Modal Sobre - Versão Isolada
 document.addEventListener('DOMContentLoaded', () => {
     const modal = document.getElementById("modal-sobre");
     const btn = document.getElementById("btn-sobre");
