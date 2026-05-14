@@ -467,33 +467,30 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
 
 
 /* ==========================================================================
-   BLOCO 08: LÓGICA DE DOCUMENTOS (VERSÃO FINAL COM AJUSTE VISUAL)
+   BLOCO 08: LÓGICA DE DOCUMENTOS (VERSÃO FINAL COM SOBREPOSIÇÃO DE ÍCONE)
    ========================================================================== */
 document.addEventListener('click', async function(event) {
-    // Detecta o clique no botão DOCUMENTOS (pelo ID ou pelo texto)
+    // Detecta o clique no botão DOCUMENTOS
     if (event.target.id === 'btn-documentos' || event.target.innerText === 'DOCUMENTOS') {
         
         const painel = document.getElementById("ficha-tecnica");
         if (!painel) return;
 
-        // 1. Prepara o painel lateral
+        // Limpa e prepara o painel
         painel.innerHTML = '<div class="vitrine-topo">DOCUMENTOS GERAIS</div>';
         painel.innerHTML += '<p style="padding:20px; color:#666; font-size:0.7rem;">Carregando base de dados...</p>';
 
-        // URL da aba Documentos (GID 122737037)
         const URL_DOCS = "https://docs.google.com/spreadsheets/d/15V194P2JPGCCPpCTKJsib8sJuCZPgtbNb-rtgNaLS7E/export?format=csv&gid=122737037&v=" + new Date().getTime();
 
         try {
             const r = await fetch(URL_DOCS);
             const csv = await r.text();
             
-            // Limpa o aviso de carregamento
             painel.innerHTML = '<div class="vitrine-topo">DOCUMENTOS GERAIS</div>';
             
-            // Container com fundo que preenche a tela (min-height) para evitar a faixa preta no fundo
+            // Container com fundo cinza claro para evitar a faixa preta no fundo
             let htmlFinal = '<div id="container-docs-gerais" style="margin-top: 10px; padding: 0 5px; min-height: 100vh; background-color: #f4f4f4;">';
 
-            // Divide linhas, remove vazias e pula o cabeçalho (A1)
             const linhas = csv.split(/\r?\n/).filter(l => l.trim().length > 10).slice(1);
 
             linhas.forEach((linha) => {
@@ -503,12 +500,9 @@ document.addEventListener('click', async function(event) {
                 if (posHttp !== -1) {
                     let link = textoLimpo.substring(posHttp).trim();
                     let titulo = textoLimpo.substring(0, posHttp).replace(/,$/, "").trim();
-                    
-                    // NOME FINAL DO DOCUMENTO
                     let nomeFinal = titulo || "Documento de Apoio";
 
-                    // GERAÇÃO DO CARD
-                    // O ícone '📄' agora vai com um estilo de z-index forçado se necessário
+                    // Inserindo o card
                     htmlFinal += criarCardMaterial(nomeFinal, link, '📄');
                 }
             });
@@ -516,12 +510,25 @@ document.addEventListener('click', async function(event) {
             htmlFinal += '</div>';
             painel.innerHTML += htmlFinal;
 
-            // AJUSTE DINÂMICO: Garante que o ícone (emoji) fique por cima de tudo
-            // Isso corrige o problema da miniatura por baixo da faixa verde
-            const miniaturas = painel.querySelectorAll('.material-icon'); // ou a classe que seu card usa para o ícone
-            miniaturas.forEach(icon => {
-                icon.style.position = 'relative';
-                icon.style.zIndex = '10';
+            // --- AJUSTE DE SOBREPOSIÇÃO (Z-INDEX) ---
+            // Localizamos as faixas verdes e os ícones para garantir a ordem correta
+            const cards = painel.querySelectorAll('.material-card'); // Ajuste para a classe real do seu card
+            cards.forEach(card => {
+                // Garante que o card não esconda o que está fora dele
+                card.style.overflow = 'visible'; 
+                
+                // Busca o elemento do ícone/emoji dentro do card
+                const icone = card.querySelector('.material-icon') || card.querySelector('span:first-child');
+                if (icone) {
+                    icone.style.position = 'relative';
+                    icone.style.zIndex = '999'; // Força para ficar acima da faixa
+                }
+                
+                // Se a faixa verde for um elemento específico (ex: .faixa-verde)
+                const faixa = card.querySelector('.header-verde'); // Ajuste para a classe da sua faixa
+                if (faixa) {
+                    faixa.style.zIndex = '1'; // Mantém a faixa na camada de baixo
+                }
             });
 
         } catch (e) {
@@ -530,7 +537,7 @@ document.addEventListener('click', async function(event) {
     }
 });
 
-// Lógica do Modal "Sobre" (Separada para garantir o funcionamento)
+// Lógica do Modal "Sobre"
 document.addEventListener('DOMContentLoaded', () => {
     const modal = document.getElementById("modal-sobre");
     const btn = document.getElementById("btn-sobre");
