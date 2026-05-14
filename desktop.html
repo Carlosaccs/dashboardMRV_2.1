@@ -2,21 +2,23 @@
 <html lang="pt-br" class="notranslate">
 <head>
     <meta charset="UTF-8">
+    <meta name="google" content="notranslate">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard MRV SP</title>
     
     <link rel="stylesheet" href="desktop.css">
 
     <style>
-        /* Ajuste definitivo do Header */
+        /* Ajuste do Cabeçalho */
         .header {
             display: flex !important;
             justify-content: space-between !important;
             align-items: center !important;
-            padding: 0 40px !important; /* Move o título para a direita */
+            padding: 0 60px !important; /* Aumentei para o título desgrudar da esquerda */
             height: 60px !important;
             background-color: #006d38 !important;
             position: relative !important;
+            box-sizing: border-box !important;
         }
 
         .header-titulo {
@@ -26,14 +28,15 @@
             margin: 0 !important;
         }
 
-        /* Container que trava os botões lado a lado */
+        /* Container dos Botões */
         .header-buttons-container {
             display: flex !important;
             gap: 12px !important;
             align-items: center !important;
+            position: static !important;
         }
 
-        /* Botão Amarelo (Estilo Residencial) */
+        /* Estilo Amarelo Retangular (Igual aos botões da lista lateral) */
         .btn-mrv-style {
             background-color: #fbc02d !important;
             color: #333 !important;
@@ -44,8 +47,7 @@
             font-weight: bold !important;
             text-transform: uppercase !important;
             cursor: pointer !important;
-            /* Reset de posição para ignorar o desktop.css */
-            position: static !important;
+            position: static !important; /* Mata o absolute do desktop.css */
             top: auto !important;
             right: auto !important;
             margin: 0 !important;
@@ -67,24 +69,55 @@
         </div>
     </div>
 
+    <div class="wrapper">
+        <aside class="sidebar-esq" id="lista-imoveis">
+            <div style="padding:20px; color:#666; font-size: 0.8rem;">Carregando residenciais...</div>
+        </aside>
+        
+        <main class="conteudo-centro">
+            <div id="cidade-titulo">Selecione uma região no mapa</div> 
+            <div id="caixa-a"></div> 
+            <div id="caixa-b"></div> 
+        </main>
+
+        <aside class="sidebar-dir" id="ficha-tecnica">
+            <div style="text-align:center; color:#ccc; margin-top:100px;">
+                <p style="font-size: 30px;">📍</p>
+                <p>Clique em algum Residencial ou em alguma região verde do mapa</p>
+            </div>
+        </aside>
+    </div>
+
+    <div id="modal-sobre" class="modal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <h2 style="color: #006d38; margin-bottom: 10px;">Sobre o Projeto</h2>
+            <hr style="border: 0; border-top: 1px solid #eee; margin-bottom: 20px;">
+            <div class="modal-body" style="text-align: center;">
+                <p style="margin-bottom: 20px; color: #333; line-height: 1.5;">
+                    Dashboard de consulta rápida para residenciais MRV.
+                </p>
+                <div style="background: #fff9c4; padding: 15px; border-radius: 8px; border-left: 5px solid #fbc02d; margin-bottom: 25px; text-align: left;">
+                    <p style="font-size: 0.9rem; color: #444;">Feedback ou erros, envie pelo WhatsApp abaixo.</p>
+                </div>
+                <a href="https://wa.me/5511999999999" target="_blank" style="background:#25d366; color:white; padding:10px 20px; border-radius:5px; text-decoration:none; font-weight:bold;">
+                    📱 Carlos Custódio - Enviar Feedback
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script src="mapa-SP.js"></script>
+    <script src="desktop.js"></script>
+
     <script>
-        // Ajuste no JavaScript para reconhecer os novos IDs dos botões
+        // Pequeno ajuste para garantir que o modal abra mesmo com as trocas de nomes
         document.addEventListener('DOMContentLoaded', () => {
             const modal = document.getElementById("modal-sobre");
-            const btnSobre = document.getElementById("btn-sobre-novo");
-            const btnDoc = document.getElementById("btn-doc-novo");
+            const btnSobre = document.getElementById("btn-sobre");
             const span = document.querySelector(".modal-close");
-
-            if(btnSobre) {
-                btnSobre.onclick = () => { modal.style.display = "block"; };
-            }
-            
-            // Aqui depois colocaremos a função do botão Documentos
-            if(btnDoc) {
-                btnDoc.onclick = () => { alert("Botão Documentos clicado!"); };
-            }
-
-            if(span) span.onclick = () => { modal.style.display = "none"; };
+            if(btnSobre && modal) { btnSobre.onclick = () => { modal.style.display = "block"; }; }
+            if(span && modal) { span.onclick = () => { modal.style.display = "none"; }; }
         });
     </script>
 </body>
