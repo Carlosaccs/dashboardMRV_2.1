@@ -474,78 +474,68 @@ document.addEventListener('DOMContentLoaded', () => {
     const btn = document.getElementById("btn-sobre");
     const span = document.querySelector(".modal-close");
 
-    // Lógica simples do Modal
+    // Abrir/Fechar Modal Sobre
     if(btn && modal) {
-        btn.onclick = () => { modal.style.display = "block"; };
+        btn.onclick = function() { modal.style.display = "block"; };
     }
     if(span && modal) {
-        span.onclick = () => { modal.style.display = "none"; };
+        span.onclick = function() { modal.style.display = "none"; };
     }
-    window.onclick = (event) => {
+    window.onclick = function(event) {
         if (event.target == modal) { modal.style.display = "none"; }
     };
     
     // Lógica do Botão Documentos
-    const btnDocumentos = document.getElementById("btn-documentos");
-    const fichaTecnica = document.getElementById("ficha-tecnica");
+    const btnDocs = document.getElementById("btn-documentos");
+    const painelLateral = document.getElementById("ficha-tecnica");
 
-    if (btnDocumentos && fichaTecnica) {
-        btnDocumentos.onclick = async () => {
-            // 1. Limpa a lateral e coloca o título
-            fichaTecnica.innerHTML = `<div class="vitrine-topo">DOCUMENTOS GERAIS</div>`;
+    if (btnDocs && painelLateral) {
+        btnDocs.onclick = async function() {
+            // 1. Título do painel
+            painelLateral.innerHTML = '<div class="vitrine-topo">DOCUMENTOS GERAIS</div>';
             
-            // 2. Busca dados se a variável global estiver vazia
+            // 2. Busca dados se a lista estiver vazia
             if (DADOS_DOCUMENTOS.length === 0) {
-                fichaTecnica.innerHTML += `<p style="padding:20px; color:#666; font-size:0.7rem;">Buscando documentos na planilha...</p>`;
+                painelLateral.innerHTML += '<p style="padding:20px; color:#666; font-size:0.7rem;">Carregando...</p>';
                 
-                const SHEET_ID = "15V194P2JPGCCPpCTKJsib8sJuCZPgtbNb-rtgNaLS7E";
-                const GID_DOCS = "122737037"; 
-                const URL_DOCS = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID_DOCS}&v=${new Date().getTime()}`;
+                const ID_PLANILHA = "15V194P2JPGCCPpCTKJsib8sJuCZPgtbNb-rtgNaLS7E";
+                const GID_ABA = "122737037"; 
+                const URL_FINAL = "https://docs.google.com/spreadsheets/d/" + ID_PLANILHA + "/export?format=csv&gid=" + GID_ABA + "&v=" + new Date().getTime();
 
                 try {
-                    const resp = await fetch(URL_DOCS);
-                    const csv = await resp.text();
+                    const resposta = await fetch(URL_FINAL);
+                    const textoCSV = await resposta.text();
                     
-                    // Converte o CSV em Array, remove linhas vazias e pula o título "Documentos" na A1
-                    DADOS_DOCUMENTOS = csv.split(/\r?\n/)
-                                          .filter(linha => linha.trim() !== "")
-                                          .slice(1);
-                } catch (err) {
-                    console.error("Erro ao carregar:", err);
-                    fichaTecnica.innerHTML = "<p style='padding:20px; color:red;'>Erro de conexão com a aba de documentos.</p>";
+                    // Separa linhas e pula o cabeçalho (A1)
+                    DADOS_DOCUMENTOS = textoCSV.split(/\r?\n/).filter(l => l.trim() !== "").slice(1);
+                } catch (erro) {
+                    painelLateral.innerHTML = '<p style="padding:20px; color:red;">Erro ao acessar planilha.</p>';
                     return;
                 }
             }
 
-            // 3. Renderiza os botões
-            fichaTecnica.innerHTML = `<div class="vitrine-topo">DOCUMENTOS GERAIS</div>`;
-            let htmlDocs = `<div style="margin-top: 10px; padding: 0 5px;">`;
+            // 3. Renderiza os cards
+            painelLateral.innerHTML = '<div class="vitrine-topo">DOCUMENTOS GERAIS</div>';
+            let conteudo = '<div style="margin-top: 10px; padding: 0 5px;">';
             
-            DADOS_DOCUMENTOS.forEach(linha => {
-                // Limpa as aspas do CSV
+            DADOS_DOCUMENTOS.forEach(function(linha) {
+                // Limpa aspas e separa por vírgula
                 let linhaLimpa = linha.replace(/"/g, "").trim();
-                
-                // Divide no primeiro encontro da vírgula
                 let partes = linhaLimpa.split(",");
                 
                 if (partes.length >= 2) {
-                    let titulo = partes[0].trim();
-                    // Junta o resto caso o link contenha vírgulas por erro
-                    let link = partes.slice(1).join(",").trim();
+                    let nomeDoc = partes[0].trim();
+                    let linkDoc = partes.slice(1).join(",").trim();
                     
-                    if (titulo && link.startsWith("http")) {
-                        // Reutiliza sua função de cards do Bloco 07
-                        htmlDocs += criarCardMaterial(titulo, link, '📄');
+                    if (linkDoc.includes("http")) {
+                        // Usa a sua função que já existe no Bloco 07
+                        conteudo += criarCardMaterial(nomeDoc, linkDoc, '📄');
                     }
                 }
             });
 
-            if (DADOS_DOCUMENTOS.length === 0) {
-                htmlDocs += `<p style="padding:20px; font-size:0.7rem; color:#999;">Nenhum documento encontrado.</p>`;
-            }
-
-            htmlDocs += `</div>`;
-            fichaTecnica.innerHTML += htmlDocs;
+            conteudo += '</div>';
+            painelLateral.innerHTML += conteudo;
         };
     }
 });
