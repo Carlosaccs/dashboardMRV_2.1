@@ -467,7 +467,7 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
 
 
 /* ==========================================================================
-   BLOCO 08: GESTÃO DE DOCUMENTOS - VERSÃO FINAL
+   BLOCO 08: GESTÃO DE DOCUMENTOS - VERSÃO FINAL E SEGURA
    ========================================================================== */
 document.addEventListener('DOMContentLoaded', () => {
     const btnDocumentos = document.getElementById("btn-documentos");
@@ -475,7 +475,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (btnDocumentos) {
         btnDocumentos.onclick = async () => {
-            // 1. Limpa e prepara o painel
+            // 1. Limpa o painel e prepara o carregamento
             fichaTecnica.innerHTML = '<div class="vitrine-topo">DOCUMENTOS GERAIS</div>';
             fichaTecnica.innerHTML += '<p style="padding:20px; color:#666; font-size:0.7rem;">Carregando arquivos...</p>';
             
@@ -483,12 +483,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
             try {
                 const resp = await fetch(URL_DOCS);
+                if (!resp.ok) throw new Error("Erro na conexão");
                 const csv = await resp.text();
                 
-                // Limpa para desenhar
+                // Limpa para desenhar os cards
                 fichaTecnica.innerHTML = '<div class="vitrine-topo">DOCUMENTOS GERAIS</div>';
                 
-                // Container que evita a faixa preta no fundo
+                // Container que evita a faixa preta e usa seu padrão cinza
                 let htmlFinal = '<div id="container-docs-gerais" style="margin-top: 15px; padding: 0 5px; min-height: 100vh; background-color: var(--cinza-claro);">';
 
                 const linhas = csv.split(/\r?\n/).filter(l => l.trim().length > 10).slice(1);
@@ -507,7 +508,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div style="display: flex; align-items: center; gap: 10px; flex: 1; overflow: visible;">
                                 <span style="
                                     position: absolute; 
-                                    top: -10px; 
+                                    top: -12px; 
                                     left: 8px; 
                                     z-index: 999; 
                                     background: white; 
@@ -516,6 +517,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     border: 1px solid #ccc; 
                                     font-size: 1.1rem;
                                     line-height: 1;
+                                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
                                 ">📄</span>
                                 <span style="font-size: 0.72rem; font-weight: 600; color: #333; margin-left: 30px;">${titulo || "Documento"}</span>
                             </div>
@@ -531,14 +533,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 fichaTecnica.innerHTML += htmlFinal;
 
             } catch (err) {
-                fichaTecnica.innerHTML = `<div style="padding:20px; color:red;">Erro ao carregar: ${err.message}</div>`;
+                fichaTecnica.innerHTML = `<div style="padding:20px; color:red;">Erro ao carregar documentos.</div>`;
                 console.error("Erro no Bloco 08:", err);
             }
         };
     }
 });
 
-// Lógica do Modal Sobre (Garante que não trava o carregamento)
+// Lógica do Modal Sobre (Mantida separada para segurança)
 document.addEventListener('DOMContentLoaded', () => {
     const modal = document.getElementById("modal-sobre");
     const btn = document.getElementById("btn-sobre");
