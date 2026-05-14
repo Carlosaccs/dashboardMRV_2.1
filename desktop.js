@@ -467,16 +467,18 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
 
 
 /* ==========================================================================
-   BLOCO 08: LÓGICA DE DOCUMENTOS (VERSÃO FINAL - MINIATURA POR CIMA)
+   BLOCO 08: LÓGICA DE DOCUMENTOS (RESOLUÇÃO DEFINITIVA DE SOBREPOSIÇÃO)
    ========================================================================== */
 document.addEventListener('click', async function(event) {
+    // Detecta clique no botão ou no texto do botão
     if (event.target.id === 'btn-documentos' || event.target.innerText === 'DOCUMENTOS') {
         
         const painel = document.getElementById("ficha-tecnica");
         if (!painel) return;
 
+        // 1. Limpa o painel e prepara o carregamento
         painel.innerHTML = '<div class="vitrine-topo">DOCUMENTOS GERAIS</div>';
-        painel.innerHTML += '<p style="padding:20px; color:#666; font-size:0.7rem;">Organizando arquivos...</p>';
+        painel.innerHTML += '<p style="padding:20px; color:#666; font-size:0.7rem;">Buscando arquivos...</p>';
 
         const URL_DOCS = "https://docs.google.com/spreadsheets/d/15V194P2JPGCCPpCTKJsib8sJuCZPgtbNb-rtgNaLS7E/export?format=csv&gid=122737037&v=" + new Date().getTime();
 
@@ -486,8 +488,8 @@ document.addEventListener('click', async function(event) {
             
             painel.innerHTML = '<div class="vitrine-topo">DOCUMENTOS GERAIS</div>';
             
-            // Fundo que preenche a tela para tirar a faixa preta
-            let htmlFinal = '<div id="container-docs-gerais" style="margin-top: 10px; padding: 0 5px; min-height: 100vh; background-color: #f4f4f4; position: relative;">';
+            // Container com min-height para evitar o fundo preto e cor de fundo do seu reset
+            let htmlFinal = '<div id="container-docs-gerais" style="margin-top: 10px; padding: 0 5px; min-height: 100vh; background-color: var(--cinza-claro); position: relative;">';
 
             const linhas = csv.split(/\r?\n/).filter(l => l.trim().length > 10).slice(1);
 
@@ -498,37 +500,38 @@ document.addEventListener('click', async function(event) {
                 if (posHttp !== -1) {
                     let link = textoLimpo.substring(posHttp).trim();
                     let titulo = textoLimpo.substring(0, posHttp).replace(/,$/, "").trim();
-                    htmlFinal += criarCardMaterial(titulo || "Documento", link, '📄');
+                    htmlFinal += criarCardMaterial(titulo || "Documento de Apoio", link, '📄');
                 }
             });
 
             htmlFinal += '</div>';
             painel.innerHTML += htmlFinal;
 
-            // --- AJUSTE DE "CAMADAS" (Z-INDEX) ---
-            // Esperamos um milissegundo para o navegador renderizar e então forçamos a sobreposição
+            // --- AJUSTE VISUAL "TOP LEVEL" ---
+            // Aplicamos estilos diretamente nas classes que você definiu no desktop.css
             setTimeout(() => {
-                const cards = painel.querySelectorAll('div[style*="position: relative"]'); // Pega os cards pela estrutura comum
+                // 1. Garante que o card permita elementos saírem dele
+                const cards = painel.querySelectorAll('.card-material-item');
                 cards.forEach(card => {
-                    // 1. Remove o corte do card para o ícone aparecer fora
-                    card.style.overflow = 'visible'; 
-                    
-                    // 2. Procura o ícone (geralmente o primeiro span ou div com o emoji)
-                    const icone = card.querySelector('span') || card.firstChild;
-                    if (icone && icone.nodeType === 1) {
-                        icone.style.position = 'absolute'; // Muda para absolute para flutuar
-                        icone.style.zIndex = '9999';       // Camada máxima
-                        icone.style.pointerEvents = 'none'; // Não atrapalha o clique no botão
-                    }
+                    card.style.setProperty('overflow', 'visible', 'important');
+                    card.style.setProperty('position', 'relative', 'important');
+                });
 
-                    // 3. Garante que a faixa verde (se houver) fique abaixo
-                    const elementosInternos = card.children;
-                    for (let el of elementosInternos) {
-                        if (el !== icone) {
-                            el.style.position = 'relative';
-                            el.style.zIndex = '1';
-                        }
-                    }
+                // 2. Localiza o ícone (card-icon) e joga para cima
+                const icones = painel.querySelectorAll('.card-icon');
+                icones.forEach(icon => {
+                    icon.style.setProperty('position', 'relative', 'important');
+                    icon.style.setProperty('z-index', '999', 'important');
+                    // Pequeno ajuste para ele "subir" um pouco na faixa
+                    icon.style.setProperty('margin-top', '-5px', 'important');
+                    icon.style.setProperty('transform', 'scale(1.2)', 'important');
+                });
+
+                // 3. Garante que o container da esquerda não abaixe o ícone
+                const leftWrappers = painel.querySelectorAll('.card-material-left');
+                leftWrappers.forEach(div => {
+                    div.style.setProperty('overflow', 'visible', 'important');
+                    div.style.setProperty('z-index', '998', 'important');
                 });
             }, 50);
 
@@ -538,11 +541,19 @@ document.addEventListener('click', async function(event) {
     }
 });
 
-// Modal Sobre
+// Lógica do Modal Sobre (Padronizada)
 document.addEventListener('DOMContentLoaded', () => {
     const modal = document.getElementById("modal-sobre");
     const btn = document.getElementById("btn-sobre");
     const span = document.querySelector(".modal-close");
-    if(btn && modal) btn.onclick = () => { modal.style.display = "block"; };
-    if(span && modal) span.onclick = () => { modal.style.display = "none"; };
+    
+    if(btn && modal) {
+        btn.onclick = () => { modal.style.display = "block"; };
+    }
+    if(span && modal) {
+        span.onclick = () => { modal.style.display = "none"; };
+    }
+    window.onclick = (event) => {
+        if (event.target == modal) { modal.style.display = "none"; }
+    };
 });
