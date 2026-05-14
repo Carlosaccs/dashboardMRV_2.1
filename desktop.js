@@ -467,7 +467,7 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
 
 
 /* ==========================================================================
-   BLOCO 08: LÓGICA DO MODAL (SOBRE) E DOCUMENTOS GERAIS (TESTE LINK PURO)
+   BLOCO 08: LÓGICA DO MODAL (SOBRE) E DOCUMENTOS GERAIS
    ========================================================================== */
 document.addEventListener('DOMContentLoaded', () => {
     const modal = document.getElementById("modal-sobre");
@@ -480,9 +480,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if(span && modal) {
         span.onclick = () => { modal.style.display = "none"; };
     }
-    window.onclick = (event) => {
-        if (event.target == modal) { modal.style.display = "none"; }
-    };
     
     const btnDocumentos = document.getElementById("btn-documentos");
     const fichaTecnica = document.getElementById("ficha-tecnica");
@@ -492,7 +489,7 @@ document.addEventListener('DOMContentLoaded', () => {
             fichaTecnica.innerHTML = `<div class="vitrine-topo">DOCUMENTOS GERAIS</div>`;
             
             if (DADOS_DOCUMENTOS.length === 0) {
-                fichaTecnica.innerHTML += `<p style="padding:20px; color:#666; font-size:0.7rem;">Carregando links...</p>`;
+                fichaTecnica.innerHTML += `<p style="padding:20px; color:#666; font-size:0.7rem;">Carregando...</p>`;
                 
                 const SHEET_ID = "15V194P2JPGCCPpCTKJsib8sJuCZPgtbNb-rtgNaLS7E";
                 const GID_DOCS = "122737037"; 
@@ -501,12 +498,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     const resp = await fetch(URL_DOCS);
                     const csv = await resp.text();
-                    
-                    // Pega as linhas e ignora a primeira (cabeçalho "Documentos")
-                    DADOS_DOCUMENTOS = csv.split(/\r?\n/).filter(l => l.trim().includes("http")).slice(1);
-                    
+                    // Pega as linhas e remove o cabeçalho
+                    DADOS_DOCUMENTOS = csv.split(/\r?\n/).filter(l => l.trim() !== "");
                 } catch (err) {
-                    fichaTecnica.innerHTML = "<p style='padding:20px; color:red;'>Erro ao baixar planilha.</p>";
+                    fichaTecnica.innerHTML = "<p style='padding:20px; color:red;'>Erro de conexão.</p>";
                     return;
                 }
             }
@@ -514,24 +509,28 @@ document.addEventListener('DOMContentLoaded', () => {
             fichaTecnica.innerHTML = `<div class="vitrine-topo">DOCUMENTOS GERAIS</div>`;
             let htmlDocs = `<div style="margin-top: 10px; padding: 0 5px;">`;
             
-            DADOS_DOCUMENTOS.forEach((linha, index) => {
-                // Limpeza total: remove aspas e pega apenas a parte que começa com http
-                let linkPuro = linha.replace(/"/g, "").trim();
-                const posHttp = linkPuro.indexOf("http");
+            // Pulamos a primeira linha (cabeçalho)
+            const linhasDados = DADOS_DOCUMENTOS.slice(1);
+
+            linhasDados.forEach((linha, index) => {
+                // LIMPEZA AGRESSIVA: Remove aspas e espaços extras
+                let textoPuro = linha.replace(/[欣"]/g, "").trim();
+                
+                // Tenta achar o link dentro da linha
+                let posHttp = textoPuro.indexOf("http");
                 
                 if (posHttp !== -1) {
-                    linkPuro = linkPuro.substring(posHttp).trim();
-                    
-                    // Título genérico para o teste
-                    let tituloTeste = `Documento Auxiliar ${index + 1}`;
-                    
-                    // Reutiliza sua função de card
-                    htmlDocs += criarCardMaterial(tituloTeste, linkPuro, '📄');
+                    let linkFinal = textoPuro.substring(posHttp).trim();
+                    // O que vem antes do http é o título (se houver)
+                    let tituloPotencial = textoPuro.substring(0, posHttp).replace(/,/g, "").trim();
+                    let tituloFinal = tituloPotencial || `Documento ${index + 1}`;
+
+                    htmlDocs += criarCardMaterial(tituloFinal, linkFinal, '📄');
                 }
             });
 
-            if (DADOS_DOCUMENTOS.length === 0) {
-                htmlDocs += `<p style="padding:10px; font-size:0.7rem; color: #999;">Nenhum link encontrado na aba.</p>`;
+            if (htmlDocs === `<div style="margin-top: 10px; padding: 0 5px;">`) {
+                htmlDocs += `<p style="text-align:center; font-size:0.7rem; color:#999;">Nenhum link válido encontrado.</p>`;
             }
 
             htmlDocs += `</div>`;
@@ -539,5 +538,3 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 });
-
-window.onload = iniciarApp;
