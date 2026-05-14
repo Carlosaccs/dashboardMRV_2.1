@@ -467,44 +467,67 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
 
 
 /* ==========================================================================
-   BLOCO 08: TESTE DE FORÇA BRUTA - DOCUMENTOS
+   BLOCO 08: LÓGICA FINAL DE DOCUMENTOS (PÓS-CONEXÃO BEM SUCEDIDA)
    ========================================================================== */
 document.addEventListener('click', async function(event) {
-    // 1. Verifica se o que foi clicado é o botão de documentos
-    // (Pode ser pelo ID ou pelo texto escrito no botão)
+    // Verifica clique pelo ID ou pelo texto do botão
     if (event.target.id === 'btn-documentos' || event.target.innerText === 'DOCUMENTOS') {
         
         const painel = document.getElementById("ficha-tecnica");
-        if (!painel) {
-            alert("Erro: Não encontrei o painel lateral (ficha-tecnica)");
-            return;
-        }
+        if (!painel) return;
 
-        painel.innerHTML = '<div class="vitrine-topo">TESTE DE CARREGAMENTO</div>';
-        painel.innerHTML += '<p style="padding:20px;">Conectando à planilha...</p>';
+        painel.innerHTML = '<div class="vitrine-topo">DOCUMENTOS GERAIS</div>';
+        painel.innerHTML += '<p style="padding:20px; color:#666; font-size:0.7rem;">Processando documentos...</p>';
 
-        const URL_TESTE = "https://docs.google.com/spreadsheets/d/15V194P2JPGCCPpCTKJsib8sJuCZPgtbNb-rtgNaLS7E/export?format=csv&gid=122737037";
+        const URL_DOCS = "https://docs.google.com/spreadsheets/d/15V194P2JPGCCPpCTKJsib8sJuCZPgtbNb-rtgNaLS7E/export?format=csv&gid=122737037&v=" + new Date().getTime();
 
         try {
-            const r = await fetch(URL_TESTE);
-            const dados = await r.text();
+            const r = await fetch(URL_DOCS);
+            const csv = await r.text();
             
-            // Se chegou aqui, a conexão funciona!
-            // Vamos apenas mostrar a primeira linha para confirmar
-            painel.innerHTML = `
-                <div class="vitrine-topo">CONECTADO!</div>
-                <div style="padding:15px; font-size:0.8rem;">
-                    <strong>Dados da Planilha:</strong><br>
-                    <textarea style="width:100%; height:200px;">${dados}</textarea>
-                </div>`;
+            // Limpa o painel para desenhar os botões
+            painel.innerHTML = '<div class="vitrine-topo">DOCUMENTOS GERAIS</div>';
+            let htmlFinal = '<div style="margin-top: 10px; padding: 0 5px;">';
+
+            // Transforma o CSV em linhas e pula a primeira (cabeçalho)
+            const linhas = csv.split(/\r?\n/).filter(l => l.trim() !== "").slice(1);
+
+            linhas.forEach((linha) => {
+                // Remove aspas duplas que o Google Sheets insere
+                let linhaLimpa = linha.replace(/"/g, "").trim();
                 
+                // Encontra o link (http)
+                let posHttp = linhaLimpa.indexOf("http");
+                
+                if (posHttp !== -1) {
+                    let link = linhaLimpa.substring(posHttp).trim();
+                    // O que vem antes do link é o título (remove vírgulas extras)
+                    let titulo = linhaLimpa.substring(0, posHttp).replace(/,/g, "").trim();
+                    
+                    // Se o título estiver vazio ou for apenas "Documento1", etc, tenta limpar
+                    if (!titulo || titulo.toLowerCase().includes("documento")) {
+                        // Tenta pegar o nome real se houver algo antes da vírgula do link
+                        let partes = linhaLimpa.split(",");
+                        if (partes.length >= 2 && partes[1].includes("http")) {
+                            titulo = partes[0].trim();
+                        }
+                    }
+
+                    // Usa sua função padrão de cards
+                    htmlFinal += criarCardMaterial(titulo || "Documento", link, '📄');
+                }
+            });
+
+            htmlFinal += '</div>';
+            painel.innerHTML += htmlFinal;
+
         } catch (e) {
-            painel.innerHTML = '<p style="color:red; padding:20px;">Erro fatal: ' + e.message + '</p>';
+            painel.innerHTML = '<p style="color:red; padding:20px;">Erro ao processar: ' + e.message + '</p>';
         }
     }
 });
 
-// Mantém o modal "Sobre" funcionando separadamente
+// Modal Sobre (Mantido)
 document.addEventListener('DOMContentLoaded', () => {
     const modal = document.getElementById("modal-sobre");
     const btn = document.getElementById("btn-sobre");
