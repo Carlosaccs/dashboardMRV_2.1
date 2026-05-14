@@ -467,29 +467,29 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
 
 
 /* ==========================================================================
-   BLOCO 08: LÓGICA DE DOCUMENTOS (RESOLUÇÃO DEFINITIVA DE SOBREPOSIÇÃO)
+   BLOCO 08: LÓGICA DE DOCUMENTOS (RESOLUÇÃO DE CARREGAMENTO E VISUAL)
    ========================================================================== */
 document.addEventListener('click', async function(event) {
-    // Detecta clique no botão ou no texto do botão
     if (event.target.id === 'btn-documentos' || event.target.innerText === 'DOCUMENTOS') {
         
         const painel = document.getElementById("ficha-tecnica");
         if (!painel) return;
 
-        // 1. Limpa o painel e prepara o carregamento
+        // Reset visual para garantir carregamento limpo
         painel.innerHTML = '<div class="vitrine-topo">DOCUMENTOS GERAIS</div>';
-        painel.innerHTML += '<p style="padding:20px; color:#666; font-size:0.7rem;">Buscando arquivos...</p>';
+        painel.innerHTML += '<p id="loading-docs" style="padding:20px; color:#666; font-size:0.7rem;">Acessando base de dados...</p>';
 
         const URL_DOCS = "https://docs.google.com/spreadsheets/d/15V194P2JPGCCPpCTKJsib8sJuCZPgtbNb-rtgNaLS7E/export?format=csv&gid=122737037&v=" + new Date().getTime();
 
         try {
             const r = await fetch(URL_DOCS);
+            if (!r.ok) throw new Error("Erro na rede");
             const csv = await r.text();
             
             painel.innerHTML = '<div class="vitrine-topo">DOCUMENTOS GERAIS</div>';
             
-            // Container com min-height para evitar o fundo preto e cor de fundo do seu reset
-            let htmlFinal = '<div id="container-docs-gerais" style="margin-top: 10px; padding: 0 5px; min-height: 100vh; background-color: var(--cinza-claro); position: relative;">';
+            // Usando a cor de fundo do seu CSS: var(--cinza-claro)
+            let htmlFinal = '<div id="container-docs-gerais" style="margin-top: 10px; padding: 0 5px; min-height: 100vh; background-color: #f4f4f4; position: relative; overflow: visible;">';
 
             const linhas = csv.split(/\r?\n/).filter(l => l.trim().length > 10).slice(1);
 
@@ -500,60 +500,56 @@ document.addEventListener('click', async function(event) {
                 if (posHttp !== -1) {
                     let link = textoLimpo.substring(posHttp).trim();
                     let titulo = textoLimpo.substring(0, posHttp).replace(/,$/, "").trim();
-                    htmlFinal += criarCardMaterial(titulo || "Documento de Apoio", link, '📄');
+                    
+                    // Inserção do Card chamando sua função do desktop.js
+                    htmlFinal += criarCardMaterial(titulo || "Documento", link, '📄');
                 }
             });
 
             htmlFinal += '</div>';
             painel.innerHTML += htmlFinal;
 
-            // --- AJUSTE VISUAL "TOP LEVEL" ---
-            // Aplicamos estilos diretamente nas classes que você definiu no desktop.css
+            // --- CORREÇÃO DA MINIATURA (FORÇA BRUTA) ---
             setTimeout(() => {
-                // 1. Garante que o card permita elementos saírem dele
-                const cards = painel.querySelectorAll('.card-material-item');
-                cards.forEach(card => {
-                    card.style.setProperty('overflow', 'visible', 'important');
-                    card.style.setProperty('position', 'relative', 'important');
-                });
-
-                // 2. Localiza o ícone (card-icon) e joga para cima
                 const icones = painel.querySelectorAll('.card-icon');
                 icones.forEach(icon => {
-                    icon.style.setProperty('position', 'relative', 'important');
-                    icon.style.setProperty('z-index', '999', 'important');
-                    // Pequeno ajuste para ele "subir" um pouco na faixa
-                    icon.style.setProperty('margin-top', '-5px', 'important');
-                    icon.style.setProperty('transform', 'scale(1.2)', 'important');
+                    // Estilos para fazer o ícone saltar sobre a faixa verde
+                    icon.style.setProperty('position', 'absolute', 'important');
+                    icon.style.setProperty('z-index', '9999', 'important');
+                    icon.style.setProperty('top', '-8px', 'important'); // Sobe para cima da faixa
+                    icon.style.setProperty('left', '10px', 'important');
+                    icon.style.setProperty('background', 'white', 'important');
+                    icon.style.setProperty('border-radius', '4px', 'important');
+                    icon.style.setProperty('padding', '2px', 'important');
+                    icon.style.setProperty('box-shadow', '0 2px 4px rgba(0,0,0,0.2)', 'important');
                 });
 
-                // 3. Garante que o container da esquerda não abaixe o ícone
-                const leftWrappers = painel.querySelectorAll('.card-material-left');
-                leftWrappers.forEach(div => {
-                    div.style.setProperty('overflow', 'visible', 'important');
-                    div.style.setProperty('z-index', '998', 'important');
+                // Garante que o container pai não corte o ícone
+                const cards = painel.querySelectorAll('.card-material-item');
+                cards.forEach(c => {
+                    c.style.setProperty('overflow', 'visible', 'important');
+                    c.style.setProperty('position', 'relative', 'important');
                 });
-            }, 50);
+            }, 100);
 
         } catch (e) {
-            painel.innerHTML = '<p style="color:red; padding:20px;">Erro ao processar: ' + e.message + '</p>';
+            console.error("Erro Bloco 08:", e);
+            painel.innerHTML = '<p style="color:red; padding:20px;">Erro ao carregar: ' + e.message + '</p>';
         }
     }
 });
 
-// Lógica do Modal Sobre (Padronizada)
-document.addEventListener('DOMContentLoaded', () => {
+// Modal Sobre (Ajustado para não interferir no carregamento)
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initModal);
+} else {
+    initModal();
+}
+
+function initModal() {
     const modal = document.getElementById("modal-sobre");
     const btn = document.getElementById("btn-sobre");
     const span = document.querySelector(".modal-close");
-    
-    if(btn && modal) {
-        btn.onclick = () => { modal.style.display = "block"; };
-    }
-    if(span && modal) {
-        span.onclick = () => { modal.style.display = "none"; };
-    }
-    window.onclick = (event) => {
-        if (event.target == modal) { modal.style.display = "none"; }
-    };
-});
+    if(btn && modal) btn.onclick = () => { modal.style.display = "block"; };
+    if(span && modal) span.onclick = () => { modal.style.display = "none"; };
+}
