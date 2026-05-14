@@ -5,6 +5,7 @@ let DADOS_PLANILHA = [];
 let pathAtivo = null;  
 let imovelAtivo = null;  
 let mapaAtivo = 'GSP'; 
+let DADOS_DOCUMENTOS = [];
 
 const COL = {
     ID: 0, CATEGORIA: 1, ORDEM: 2, 
@@ -466,7 +467,7 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
 
 
 /* ==========================================================================
-   BLOCO 08: LÓGICA DO MODAL (SOBRE)
+   BLOCO 08: LÓGICA DO MODAL (SOBRE) E DOCUMENTOS GERAIS
    ========================================================================== */
 document.addEventListener('DOMContentLoaded', () => {
     const modal = document.getElementById("modal-sobre");
@@ -482,6 +483,64 @@ document.addEventListener('DOMContentLoaded', () => {
     window.onclick = (event) => {
         if (event.target == modal) { modal.style.display = "none"; }
     };
+    
+    const btnDocumentos = document.getElementById("btn-documentos");
+    const fichaTecnica = document.getElementById("ficha-tecnica");
+
+    if (btnDocumentos) {
+        btnDocumentos.onclick = async () => {
+            // 1. Prepara o visual inicial
+            fichaTecnica.innerHTML = `<div class="vitrine-topo">DOCUMENTOS GERAIS</div>`;
+            
+            // 2. Busca os dados se ainda não estiverem carregados
+            if (DADOS_DOCUMENTOS.length === 0) {
+                fichaTecnica.innerHTML += `<p style="padding:20px; color:#666; font-size:0.7rem;">Acessando base de documentos...</p>`;
+                
+                const SHEET_ID = "15V194P2JPGCCPpCTKJsib8sJuCZPgtbNb-rtgNaLS7E";
+                const GID_DOCS = "122737037"; 
+                const URL_DOCS = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID_DOCS}&v=${new Date().getTime()}`;
+
+                try {
+                    const resp = await fetch(URL_DOCS);
+                    const csv = await resp.text();
+                    
+                    // .slice(1) pula o cabeçalho "Documentos" que você colocou na A1
+                    DADOS_DOCUMENTOS = csv.split(/\r?\n/)
+                                          .filter(linha => linha.trim() !== "")
+                                          .slice(1); 
+                } catch (err) {
+                    console.error("Erro:", err);
+                    fichaTecnica.innerHTML = "<p style='padding:20px; color:red;'>Erro ao conectar com a base de dados.</p>";
+                    return;
+                }
+            }
+
+            // 3. Renderiza os cards
+            fichaTecnica.innerHTML = `<div class="vitrine-topo">DOCUMENTOS GERAIS</div>`;
+            let htmlDocs = `<div style="margin-top: 10px; padding: 0 5px;">`;
+            
+            DADOS_DOCUMENTOS.forEach(linha => {
+                // Limpa as aspas que o CSV do Google costuma inserir
+                const linhaLimpa = linha.replace(/"/g, "");
+                
+                // Encontra a posição da primeira vírgula para separar Título de Link
+                const indexVirgula = linhaLimpa.indexOf(',');
+                
+                if (indexVirgula !== -1) {
+                    const titulo = linhaLimpa.substring(0, indexVirgula).trim();
+                    const link = linhaLimpa.substring(indexVirgula + 1).trim();
+                    
+                    if (titulo && link) {
+                        // Reutiliza sua função do Bloco 07 para manter o padrão visual
+                        htmlDocs += criarCardMaterial(titulo, link, '📄');
+                    }
+                }
+            });
+
+            htmlDocs += `</div>`;
+            fichaTecnica.innerHTML += htmlDocs;
+        };
+    }
 });
 
 window.onload = iniciarApp;
