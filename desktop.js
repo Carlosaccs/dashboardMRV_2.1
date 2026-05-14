@@ -467,25 +467,29 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
 
 
 /* ==========================================================================
-   BLOCO 08: LÓGICA DE DOCUMENTOS (VERSÃO SEGURA E ALINHADA)
+   BLOCO 08: LÓGICA DE DOCUMENTOS (RESOLUÇÃO DEFINITIVA DE SOBREPOSIÇÃO)
    ========================================================================== */
 document.addEventListener('click', async function(event) {
+    // Detecta clique no botão ou no texto do botão
     if (event.target.id === 'btn-documentos' || event.target.innerText === 'DOCUMENTOS') {
         
         const painel = document.getElementById("ficha-tecnica");
         if (!painel) return;
 
-        // Limpa o painel e coloca o título
+        // 1. Limpa o painel e prepara o carregamento
         painel.innerHTML = '<div class="vitrine-topo">DOCUMENTOS GERAIS</div>';
-        
+        painel.innerHTML += '<p style="padding:20px; color:#666; font-size:0.7rem;">Buscando arquivos...</p>';
+
         const URL_DOCS = "https://docs.google.com/spreadsheets/d/15V194P2JPGCCPpCTKJsib8sJuCZPgtbNb-rtgNaLS7E/export?format=csv&gid=122737037&v=" + new Date().getTime();
 
         try {
             const r = await fetch(URL_DOCS);
             const csv = await r.text();
             
-            // Container principal com a cor do seu CSS
-            let htmlFinal = '<div id="container-docs-gerais" style="margin-top: 10px; padding: 0 5px; min-height: 100vh; background-color: var(--cinza-claro);">';
+            painel.innerHTML = '<div class="vitrine-topo">DOCUMENTOS GERAIS</div>';
+            
+            // Container com min-height para evitar o fundo preto e cor de fundo do seu reset
+            let htmlFinal = '<div id="container-docs-gerais" style="margin-top: 10px; padding: 0 5px; min-height: 100vh; background-color: var(--cinza-claro); position: relative;">';
 
             const linhas = csv.split(/\r?\n/).filter(l => l.trim().length > 10).slice(1);
 
@@ -496,47 +500,60 @@ document.addEventListener('click', async function(event) {
                 if (posHttp !== -1) {
                     let link = textoLimpo.substring(posHttp).trim();
                     let titulo = textoLimpo.substring(0, posHttp).replace(/,$/, "").trim();
-                    
-                    // GERAMOS O HTML DO CARD DIRETAMENTE PARA EVITAR O DESALINHAMENTO
-                    htmlFinal += `
-                    <div class="card-material-item" style="position: relative; overflow: visible; margin-bottom: 10px;">
-                        <div class="card-material-left" style="display: flex; align-items: center; gap: 10px;">
-                            <span class="card-icon" style="
-                                position: absolute; 
-                                top: -10px; 
-                                left: 5px; 
-                                z-index: 10; 
-                                background: white; 
-                                border-radius: 3px; 
-                                padding: 2px; 
-                                border: 1px solid #ddd;
-                                font-size: 1.1rem;
-                            ">📄</span>
-                            <span class="card-text" style="margin-left: 35px; font-size: 0.75rem;">${titulo || "Documento"}</span>
-                        </div>
-                        <div class="card-material-right">
-                            <a href="${link}" target="_blank" class="card-btn-abrir">Abrir</a>
-                            <button onclick="navigator.clipboard.writeText('${link}')" class="card-btn-copiar">Copiar</button>
-                        </div>
-                    </div>`;
+                    htmlFinal += criarCardMaterial(titulo || "Documento de Apoio", link, '📄');
                 }
             });
 
             htmlFinal += '</div>';
             painel.innerHTML += htmlFinal;
 
+            // --- AJUSTE VISUAL "TOP LEVEL" ---
+            // Aplicamos estilos diretamente nas classes que você definiu no desktop.css
+            setTimeout(() => {
+                // 1. Garante que o card permita elementos saírem dele
+                const cards = painel.querySelectorAll('.card-material-item');
+                cards.forEach(card => {
+                    card.style.setProperty('overflow', 'visible', 'important');
+                    card.style.setProperty('position', 'relative', 'important');
+                });
+
+                // 2. Localiza o ícone (card-icon) e joga para cima
+                const icones = painel.querySelectorAll('.card-icon');
+                icones.forEach(icon => {
+                    icon.style.setProperty('position', 'relative', 'important');
+                    icon.style.setProperty('z-index', '999', 'important');
+                    // Pequeno ajuste para ele "subir" um pouco na faixa
+                    icon.style.setProperty('margin-top', '-5px', 'important');
+                    icon.style.setProperty('transform', 'scale(1.2)', 'important');
+                });
+
+                // 3. Garante que o container da esquerda não abaixe o ícone
+                const leftWrappers = painel.querySelectorAll('.card-material-left');
+                leftWrappers.forEach(div => {
+                    div.style.setProperty('overflow', 'visible', 'important');
+                    div.style.setProperty('z-index', '998', 'important');
+                });
+            }, 50);
+
         } catch (e) {
-            console.error("Erro no Bloco 08:", e);
-            painel.innerHTML += '<p style="color:red; padding:20px;">Erro ao carregar documentos.</p>';
+            painel.innerHTML = '<p style="color:red; padding:20px;">Erro ao processar: ' + e.message + '</p>';
         }
     }
 });
 
-// Modal Sobre (Versão simples para não travar o carregamento)
+// Lógica do Modal Sobre (Padronizada)
 document.addEventListener('DOMContentLoaded', () => {
     const modal = document.getElementById("modal-sobre");
     const btn = document.getElementById("btn-sobre");
     const span = document.querySelector(".modal-close");
-    if(btn && modal) btn.onclick = () => { modal.style.display = "block"; };
-    if(span && modal) span.onclick = () => { modal.style.display = "none"; };
+    
+    if(btn && modal) {
+        btn.onclick = () => { modal.style.display = "block"; };
+    }
+    if(span && modal) {
+        span.onclick = () => { modal.style.display = "none"; };
+    }
+    window.onclick = (event) => {
+        if (event.target == modal) { modal.style.display = "none"; }
+    };
 });
