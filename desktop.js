@@ -467,14 +467,13 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
 
 
 /* ==========================================================================
-   BLOCO 08: LÓGICA DO MODAL (SOBRE) E DOCUMENTOS GERAIS
+   BLOCO 08: LÓGICA DO MODAL (SOBRE) E DOCUMENTOS GERAIS (TESTE LINK PURO)
    ========================================================================== */
 document.addEventListener('DOMContentLoaded', () => {
     const modal = document.getElementById("modal-sobre");
     const btn = document.getElementById("btn-sobre");
     const span = document.querySelector(".modal-close");
 
-    // Controle do Modal Sobre
     if(btn && modal) {
         btn.onclick = () => { modal.style.display = "block"; };
     }
@@ -485,18 +484,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (event.target == modal) { modal.style.display = "none"; }
     };
     
-    // Controle do Botão Documentos
     const btnDocumentos = document.getElementById("btn-documentos");
     const fichaTecnica = document.getElementById("ficha-tecnica");
 
     if (btnDocumentos) {
         btnDocumentos.onclick = async () => {
-            // 1. Limpa o painel lateral e coloca o título
             fichaTecnica.innerHTML = `<div class="vitrine-topo">DOCUMENTOS GERAIS</div>`;
             
-            // 2. Carrega os dados se a lista estiver vazia
             if (DADOS_DOCUMENTOS.length === 0) {
-                fichaTecnica.innerHTML += `<p style="padding:20px; color:#666; font-size:0.7rem;">Acessando base de documentos...</p>`;
+                fichaTecnica.innerHTML += `<p style="padding:20px; color:#666; font-size:0.7rem;">Carregando links...</p>`;
                 
                 const SHEET_ID = "15V194P2JPGCCPpCTKJsib8sJuCZPgtbNb-rtgNaLS7E";
                 const GID_DOCS = "122737037"; 
@@ -506,37 +502,37 @@ document.addEventListener('DOMContentLoaded', () => {
                     const resp = await fetch(URL_DOCS);
                     const csv = await resp.text();
                     
-                    // Converte em array, remove linhas vazias e pula o cabeçalho "Documentos"
-                    DADOS_DOCUMENTOS = csv.split(/\r?\n/)
-                                          .filter(linha => linha.trim().length > 10)
-                                          .slice(1); 
+                    // Pega as linhas e ignora a primeira (cabeçalho "Documentos")
+                    DADOS_DOCUMENTOS = csv.split(/\r?\n/).filter(l => l.trim().includes("http")).slice(1);
+                    
                 } catch (err) {
-                    fichaTecnica.innerHTML = "<p style='padding:20px; color:red;'>Erro ao carregar documentos da planilha.</p>";
+                    fichaTecnica.innerHTML = "<p style='padding:20px; color:red;'>Erro ao baixar planilha.</p>";
                     return;
                 }
             }
 
-            // 3. Renderização final dos botões
             fichaTecnica.innerHTML = `<div class="vitrine-topo">DOCUMENTOS GERAIS</div>`;
             let htmlDocs = `<div style="margin-top: 10px; padding: 0 5px;">`;
             
-            DADOS_DOCUMENTOS.forEach(linha => {
-                // Remove aspas que o Google Sheets as vezes insere
-                const linhaLimpa = linha.replace(/"/g, "");
+            DADOS_DOCUMENTOS.forEach((linha, index) => {
+                // Limpeza total: remove aspas e pega apenas a parte que começa com http
+                let linkPuro = linha.replace(/"/g, "").trim();
+                const posHttp = linkPuro.indexOf("http");
                 
-                // Separa o título do link usando a última vírgula como referência (mais seguro)
-                const ultimaVirgula = linhaLimpa.lastIndexOf(',');
-                
-                if (ultimaVirgula !== -1) {
-                    const titulo = linhaLimpa.substring(0, ultimaVirgula).trim();
-                    const link = linhaLimpa.substring(ultimaVirgula + 1).trim();
+                if (posHttp !== -1) {
+                    linkPuro = linkPuro.substring(posHttp).trim();
                     
-                    if (titulo && link.startsWith('http')) {
-                        // Utiliza sua função criarCardMaterial para manter o visual padrão
-                        htmlDocs += criarCardMaterial(titulo, link, '📄');
-                    }
+                    // Título genérico para o teste
+                    let tituloTeste = `Documento Auxiliar ${index + 1}`;
+                    
+                    // Reutiliza sua função de card
+                    htmlDocs += criarCardMaterial(tituloTeste, linkPuro, '📄');
                 }
             });
+
+            if (DADOS_DOCUMENTOS.length === 0) {
+                htmlDocs += `<p style="padding:10px; font-size:0.7rem; color: #999;">Nenhum link encontrado na aba.</p>`;
+            }
 
             htmlDocs += `</div>`;
             fichaTecnica.innerHTML += htmlDocs;
