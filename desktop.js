@@ -469,73 +469,56 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
 /* ==========================================================================
    BLOCO 08: LÓGICA DO MODAL (SOBRE) E DOCUMENTOS GERAIS
    ========================================================================== */
-document.addEventListener('DOMContentLoaded', () => {
-    const modal = document.getElementById("modal-sobre");
-    const btn = document.getElementById("btn-sobre");
-    const span = document.querySelector(".modal-close");
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. Modal Sobre
+    var modal = document.getElementById("modal-sobre");
+    var btnSobre = document.getElementById("btn-sobre");
+    var spanFechar = document.querySelector(".modal-close");
 
-    // Abrir/Fechar Modal Sobre
-    if(btn && modal) {
-        btn.onclick = function() { modal.style.display = "block"; };
+    if (btnSobre && modal) {
+        btnSobre.onclick = function() { modal.style.display = "block"; };
     }
-    if(span && modal) {
-        span.onclick = function() { modal.style.display = "none"; };
+    if (spanFechar) {
+        spanFechar.onclick = function() { modal.style.display = "none"; };
     }
-    window.onclick = function(event) {
-        if (event.target == modal) { modal.style.display = "none"; }
-    };
-    
-    // Lógica do Botão Documentos
-    const btnDocs = document.getElementById("btn-documentos");
-    const painelLateral = document.getElementById("ficha-tecnica");
 
-    if (btnDocs && painelLateral) {
-        btnDocs.onclick = async function() {
-            // 1. Título do painel
-            painelLateral.innerHTML = '<div class="vitrine-topo">DOCUMENTOS GERAIS</div>';
-            
-            // 2. Busca dados se a lista estiver vazia
-            if (DADOS_DOCUMENTOS.length === 0) {
-                painelLateral.innerHTML += '<p style="padding:20px; color:#666; font-size:0.7rem;">Carregando...</p>';
-                
-                const ID_PLANILHA = "15V194P2JPGCCPpCTKJsib8sJuCZPgtbNb-rtgNaLS7E";
-                const GID_ABA = "122737037"; 
-                const URL_FINAL = "https://docs.google.com/spreadsheets/d/" + ID_PLANILHA + "/export?format=csv&gid=" + GID_ABA + "&v=" + new Date().getTime();
+    // 2. Botão Documentos
+    var btnDocs = document.getElementById("btn-documentos");
+    var ficha = document.getElementById("ficha-tecnica");
 
-                try {
-                    const resposta = await fetch(URL_FINAL);
-                    const textoCSV = await resposta.text();
+    if (btnDocs && ficha) {
+        btnDocs.onclick = function() {
+            ficha.innerHTML = '<div class="vitrine-topo">DOCUMENTOS GERAIS</div>';
+            ficha.innerHTML += '<p style="padding:20px; color:#666; font-size:0.7rem;">Carregando base de dados...</p>';
+
+            var SHEET_ID = "15V194P2JPGCCPpCTKJsib8sJuCZPgtbNb-rtgNaLS7E";
+            var GID_DOCS = "122737037";
+            var URL_DOCS = "https://docs.google.com/spreadsheets/d/" + SHEET_ID + "/export?format=csv&gid=" + GID_DOCS + "&v=" + new Date().getTime();
+
+            fetch(URL_DOCS)
+                .then(function(res) { return res.text(); })
+                .then(function(csv) {
+                    var linhas = csv.split(/\r?\n/).filter(function(l) { return l.trim().length > 5; });
+                    var html = '<div class="vitrine-topo">DOCUMENTOS GERAIS</div><div style="margin-top: 10px; padding: 0 5px;">';
                     
-                    // Separa linhas e pula o cabeçalho (A1)
-                    DADOS_DOCUMENTOS = textoCSV.split(/\r?\n/).filter(l => l.trim() !== "").slice(1);
-                } catch (erro) {
-                    painelLateral.innerHTML = '<p style="padding:20px; color:red;">Erro ao acessar planilha.</p>';
-                    return;
-                }
-            }
-
-            // 3. Renderiza os cards
-            painelLateral.innerHTML = '<div class="vitrine-topo">DOCUMENTOS GERAIS</div>';
-            let conteudo = '<div style="margin-top: 10px; padding: 0 5px;">';
-            
-            DADOS_DOCUMENTOS.forEach(function(linha) {
-                // Limpa aspas e separa por vírgula
-                let linhaLimpa = linha.replace(/"/g, "").trim();
-                let partes = linhaLimpa.split(",");
-                
-                if (partes.length >= 2) {
-                    let nomeDoc = partes[0].trim();
-                    let linkDoc = partes.slice(1).join(",").trim();
-                    
-                    if (linkDoc.includes("http")) {
-                        // Usa a sua função que já existe no Bloco 07
-                        conteudo += criarCardMaterial(nomeDoc, linkDoc, '📄');
+                    // Começa da segunda linha (pula o título "Documentos")
+                    for (var i = 1; i < linhas.length; i++) {
+                        var colunas = linhas[i].replace(/"/g, "").split(",");
+                        if (colunas.length >= 2) {
+                            var titulo = colunas[0].trim();
+                            var link = colunas[1].trim();
+                            if (link.indexOf("http") !== -1) {
+                                // Usa a função criarCardMaterial que já existe no seu Bloco 07
+                                html += criarCardMaterial(titulo, link, '📄');
+                            }
+                        }
                     }
-                }
-            });
-
-            conteudo += '</div>';
-            painelLateral.innerHTML += conteudo;
+                    html += '</div>';
+                    ficha.innerHTML = html;
+                })
+                .catch(function(err) {
+                    ficha.innerHTML = '<p style="padding:20px; color:red;">Erro ao carregar documentos.</p>';
+                });
         };
     }
 });
