@@ -6,12 +6,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard MRV SP</title>
     <link rel="stylesheet" href="desktop.css">
+    <style>
+        /* CSS Adicional temporário apenas para posicionar os botões perfeitamente alinhados */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header-buttons {
+            display: flex;
+            gap: 10px; /* Mantém um espaço elegante entre os dois botões */
+        }
+    </style>
 </head>
 <body>
 
     <div class="header">
         RESIDENCIAIS MRV EM SÃO PAULO - mai/26
-        <button id="btn-sobre">Sobre</button>
+        <div class="header-buttons">
+            <button id="btn-documentos">Documentos</button>
+            <button id="btn-sobre">Sobre</button>
+        </div>
     </div>
 
     <div class="wrapper">
