@@ -8,20 +8,18 @@
     <link rel="stylesheet" href="desktop.css">
     <style>
         /* ==========================================================================
-           REGULAGEM DE ALTURA E CENTRALIZAÇÃO VERTICAL DOS BOTÕES
+           CONSOLIDAÇÃO DO CABEÇALHO E CENTRALIZAÇÃO DOS BOTÕES
            ========================================================================== */
         
-        /* Ajusta o container do topo para alinhar tudo no centro vertical */
         div.header {
             display: flex !important;
             justify-content: space-between !important;
-            align-items: center !important; /* Impede que os filhos estiquem */
+            align-items: center !important;
             position: relative !important;
             padding: 0 20px !important;
             box-sizing: border-box !important;
         }
 
-        /* Mantém o título principal travado no centro absoluto da faixa verde */
         .titulo-mrv-centro {
             position: absolute !important;
             left: 50% !important;
@@ -38,42 +36,39 @@
             z-index: 1 !important;
         }
 
-        /* Agrupa os botões e garante que eles fiquem centralizados verticalmente */
         .container-botoes-mrv {
             display: flex !important;
             gap: 12px !important;
             margin-left: auto !important;
-            align-items: center !important; /* Força os botões a respeitarem sua própria altura */
-            height: 100% !important;        /* Alinha com base na altura da barra */
+            align-items: center !important;
+            height: 100% !important;
             z-index: 10 !important;
         }
 
-        /* Definição exata da altura e formato dos botões amarelos */
         button#btn-documentos, 
         button#btn-sobre {
             all: unset !important;
             box-sizing: border-box !important;
-            background-color: #febd11 !important; /* Amarelo padrão */
-            color: #004d24 !important;            /* Texto verde escuro */
-            border-radius: 4px !important;         /* Arestas suavizadas */
+            background-color: #febd11 !important;
+            color: #004d24 !important;
+            border-radius: 4px !important;
             
-            /* ALTURA CONTROLADA: Mudamos o padding e travamos a altura para não esticar */
-            height: 34px !important;               /* Altura ideal e elegante para a barra */
-            padding: 0 18px !important;            /* Espaçamento nas laterais do texto */
+            /* Altura calibrada com sucesso */
+            height: 34px !important;
+            padding: 0 18px !important;
             
             font-weight: bold !important;
             font-size: 0.8rem !important;
             text-transform: uppercase !important;
             cursor: pointer !important;
             text-align: center !important;
-            display: inline-flex !important;       /* Alinha o texto interno perfeitamente */
-            align-items: center !important;        /* Centraliza o texto verticalmente no botão */
-            justify-content: center !important;    /* Centraliza o texto horizontalmente no botão */
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
             transition: background-color 0.2s ease !important;
         }
 
-        /* Efeito de hover */
         button#btn-documentos:hover, 
         button#btn-sobre:hover {
             background-color: #e0a60f !important;
