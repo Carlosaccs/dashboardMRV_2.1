@@ -40,7 +40,7 @@
             align-items: center;
             padding: 15px 25px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            z-index: 10;
+            z-index: 1000; /* Garante que o cabeçalho fique por cima de tudo */
             position: relative;
         }
 
@@ -54,7 +54,7 @@
         .nav-buttons {
             display: flex;
             gap: 15px;
-            position: relative;
+            position: relative; /* Contexto de posicionamento para o menu flutuante */
         }
 
         .btn-nav {
@@ -69,44 +69,57 @@
             transition: background 0.2s, transform 0.1s;
         }
 
-        .btn-nav:hover { background-color: #e0a60f; }
+        .btn-nav:hover {
+            background-color: #e0a60f;
+        }
 
         /* --- MENU FLUTUANTE DE DOCUMENTOS --- */
+        /* Protegido com z-index alto e largura controlada para nunca quebrar ou sumir */
         .dropdown-menu {
             position: absolute;
-            top: 105%;
+            top: 110%; /* Abre logo abaixo do botão */
             right: 0;
             background-color: var(--dark-green);
             color: var(--white);
             border-radius: 8px;
             padding: 15px;
-            width: 320px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.25);
-            display: none;
-            z-index: 999;
+            width: 280px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+            display: none; /* Escondido por padrão */
+            z-index: 9999; /* Máxima prioridade visual */
         }
 
-        .dropdown-menu.active { display: block; }
-        .dropdown-menu ul { list-style: none; }
+        /* Classe que ativa a exibição do menu */
+        .dropdown-menu.active {
+            display: block;
+        }
+
+        .dropdown-menu ul {
+            list-style: none;
+        }
+
         .dropdown-menu li {
             font-size: 0.85rem;
             font-weight: bold;
             font-style: italic;
-            padding: 8px 0;
+            padding: 10px 8px;
             border-bottom: 1px solid rgba(255,255,255,0.1);
             text-transform: uppercase;
-            display: flex;
-            align-items: center;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-radius: 4px;
         }
-        .dropdown-menu li::before {
-            content: "•";
-            color: var(--secondary-yellow);
-            margin-right: 8px;
-            font-size: 1.2rem;
-        }
-        .dropdown-menu li:last-child { border-bottom: none; }
 
-        /* --- CONTAINER PRINCIPAL --- */
+        .dropdown-menu li:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--secondary-yellow);
+        }
+
+        .dropdown-menu li:last-child {
+            border-bottom: none;
+        }
+
+        /* --- CONTAINER PRINCIPAL DO DASHBOARD ORIGINAL --- */
         .main-container {
             display: flex;
             flex: 1;
@@ -114,9 +127,9 @@
             position: relative;
         }
 
-        /* --- COLUNA ESQUERDA (RESIDENCIAIS) --- */
+        /* COLUNA ESQUERDA (RESIDENCIAIS) */
         .sidebar-left {
-            width: 22%;
+            width: 25%;
             background-color: var(--white);
             border-right: 1px solid #ddd;
             padding: 15px;
@@ -126,15 +139,6 @@
             gap: 10px;
         }
 
-        .status-loading {
-            color: #777;
-            font-style: italic;
-            font-size: 0.9rem;
-            text-align: center;
-            padding-top: 20px;
-        }
-
-        /* Itens Dinâmicos */
         .project-item {
             padding: 12px;
             background-color: var(--white);
@@ -147,18 +151,21 @@
             transition: all 0.2s;
             text-align: left;
         }
+
         .project-item:hover {
             background-color: #f9f9f9;
             border-color: var(--primary-green);
         }
+
+        /* Regra de destaque: borda verde e fundo cinza claro ao clicar */
         .project-item.selected {
             border: 2px solid var(--primary-green) !important;
             background-color: #f0f0f0 !important;
         }
 
-        /* --- CENTRO (MAPA SVG) --- */
+        /* CENTRO (ÁREA DO MAPA) */
         .map-content {
-            width: 48%;
+            width: 75%; /* Ocupa o restante da tela de forma limpa */
             background-color: var(--white);
             display: flex;
             flex-direction: column;
@@ -187,208 +194,82 @@
             align-items: center;
             padding: 20px;
         }
-        .map-wrapper svg {
-            width: 100%;
-            height: 100%;
-            max-height: 520px;
-        }
-
-        /* --- COLUNA DIREITA (DOCUMENTOS GERAIS) --- */
-        .sidebar-right {
-            width: 30%;
-            background-color: var(--white);
-            border-left: 1px solid #ddd;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .section-title {
-            background-color: var(--primary-green);
-            color: var(--white);
-            padding: 12px;
-            text-align: center;
-            font-weight: bold;
-            text-transform: uppercase;
-            font-size: 0.95rem;
-            letter-spacing: 0.5px;
-        }
-
-        .doc-list {
-            padding: 15px;
-            overflow-y: auto;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .doc-card {
-            background: var(--white);
-            border-radius: 8px;
-            padding: 12px 15px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.08);
-            border: 1px solid #e8e8e8;
-        }
-
-        .doc-info { display: flex; align-items: center; gap: 10px; flex: 1; }
-        .doc-name { font-size: 0.85rem; font-weight: 600; color: #444; }
-        .doc-actions { display: flex; gap: 8px; }
-
-        .btn-action {
-            border: none;
-            padding: 8px 14px;
-            font-weight: bold;
-            color: var(--white);
-            cursor: pointer;
-            border-radius: 4px;
-            font-size: 0.8rem;
-        }
-        .btn-open { background-color: var(--primary-green); }
-        .btn-copy { background-color: var(--orange-action); }
 
         .placeholder-text {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
             color: #999;
-            gap: 10px;
             font-size: 0.9rem;
+            text-align: center;
         }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>Residenciais MRV em São Paulo - mai/26</h1>
+        <h1>Residenciais MRV em São Paulo</h1>
         <div class="nav-buttons">
             <button class="btn-nav" id="btn-documentos">Documentos</button>
             <button class="btn-nav" id="btn-sobre">Sobre</button>
             
             <div class="dropdown-menu" id="menu-documentos">
-                <ul id="menu-documentos-lista">
-                    <li>Carteira de Trabalho Digital</li>
-                    <li>Extrato do FGTS</li>
-                    <li>Certidão Estado Civil</li>
-                    <li>Certidão Dependente</li>
+                <ul>
+                    <li onclick="abrirDocumento('https://www.google.com')">Carteira de Trabalho Digital</li>
+                    <li onclick="abrirDocumento('https://www.google.com')">Extrato do FGTS</li>
+                    <li onclick="abrirDocumento('https://www.google.com')">Certidão Estado Civil</li>
+                    <li onclick="abrirDocumento('https://www.google.com')">Certidão Dependente</li>
                 </ul>
             </div>
         </div>
     </header>
 
     <div class="main-container">
+        
         <div class="sidebar-left" id="sidebar-residenciais">
-            <div class="status-loading" id="residenciais-loading">Acessando banco de dados...</div>
+            <button class="project-item" onclick="selecionarProjeto(this, 'Residencial Nascente Do Jequitibá')">Residencial Nascente Do Jequitibá</button>
+            <button class="project-item" onclick="selecionarProjeto(this, 'Residencial Parque das Flores')">Residencial Parque das Flores</button>
+            <button class="project-item" onclick="selecionarProjeto(this, 'Residencial Vila Verde')">Residencial Vila Verde</button>
         </div>
 
         <div class="map-content">
-            <div class="map-header" id="map-header-title">Selecione uma região ou residencial</div>
+            <div class="map-header" id="map-header-title">Selecione um residencial</div>
             <div class="map-wrapper" id="map-container">
-                <div class="placeholder-text" id="map-placeholder">
-                    <svg viewBox="0 0 24 24" width="60" height="60" fill="#ccc"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-                    <span>O mapa ou indicador regional será carregado nesta área.</span>
-                </div>
+                <div class="placeholder-text">[Área reservada para o seu Mapa SVG original]</div>
             </div>
+        }
         </div>
 
-        <div class="sidebar-right">
-            <div class="section-title">Documentos Gerais</div>
-            <div class="doc-list" id="sidebar-documentos">
-                <div class="status-loading" id="documentos-loading">Acessando base de documentos...</div>
-            </div>
-        </div>
     </div>
 
     <script>
-        // COLE AQUI A SUA URL DA NOVA IMPLANTAÇÃO DO WEB APP
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwqoW_pLhR8O8r4_SgZ2n_e1gP723M8H4-yG-K3L36v_jH4oY5V_X6z087ZJ62B7m8/exec"; 
-
-        // Menu Dropdown
         const btnDocumentos = document.getElementById('btn-documentos');
         const menuDocumentos = document.getElementById('menu-documentos');
-        btnDocumentos.addEventListener('click', (e) => { e.stopPropagation(); menuDocumentos.classList.toggle('active'); });
-        document.addEventListener('click', (e) => { if (!menuDocumentos.contains(e.target) && e.target !== btnDocumentos) menuDocumentos.classList.remove('active'); });
 
-        window.addEventListener('DOMContentLoaded', () => {
-            if (WEB_APP_URL.includes("SUA_URL") || !WEB_APP_URL) {
-                document.getElementById('residenciais-loading').innerText = "Erro: Configure a URL.";
-            } else {
-                obterDadosDoServidor();
+        // Abre e fecha o menu ao clicar no botão "Documentos"
+        btnDocumentos.addEventListener('click', (e) => {
+            e.stopPropagation(); // Evita que o clique feche o menu imediatamente
+            menuDocumentos.classList.toggle('active');
+        });
+
+        // Se o usuário clicar em qualquer outro lugar da tela, fecha o menu com segurança
+        document.addEventListener('click', (e) => {
+            if (!menuDocumentos.contains(e.target) && e.target !== btnDocumentos) {
+                menuDocumentos.classList.remove('active');
             }
         });
 
-        async function obterDadosDoServidor() {
-            try {
-                // Adicionado modo 'cors' para forçar a permissão no GitHub Pages
-                const response = await fetch(WEB_APP_URL, { method: "GET", mode: "cors" });
-                if (!response.ok) throw new Error("Erro na resposta da rede.");
-                
-                const dadosConectados = await response.json();
-                
-                construirListaResidenciais(dadosConectados.residenciais);
-                construirListaDocumentos(dadosConectados.documentos);
-                renderizarMapaEstrategico(dadosConectados.svgMapa);
-
-            } catch (erro) {
-                console.error("Erro na requisição:", erro);
-                document.getElementById('residenciais-loading').innerText = "Falha ao conectar ao banco.";
-                document.getElementById('documentos-loading').innerText = "Falha ao conectar à base.";
-            }
+        // Função para os cliques nos botões da esquerda (Mantendo seu padrão visual)
+        function selecionarProjeto(elemento, nomeProjeto) {
+            // Remove o destaque dos outros botões
+            document.querySelectorAll('.project-item').forEach(btn => btn.classList.remove('selected'));
+            // Aplica a borda verde e fundo cinza claro no selecionado
+            elemento.classList.add('selected');
+            
+            // Atualiza o cabeçalho interno
+            document.getElementById('map-header-title').innerText = nomeProjeto;
         }
 
-        function construirListaResidenciais(lista) {
-            const container = document.getElementById('sidebar-residenciais');
-            container.innerHTML = ""; 
-            if (!lista || lista.length === 0) {
-                container.innerHTML = "<div class='status-loading'>Nenhum residencial cadastrado.</div>";
-                return;
-            }
-            lista.forEach(item => {
-                const botao = document.createElement('button');
-                botao.className = 'project-item';
-                botao.innerText = item.nome;
-                botao.addEventListener('click', () => {
-                    document.querySelectorAll('.project-item').forEach(b => b.classList.remove('selected'));
-                    botao.classList.add('selected');
-                    document.getElementById('map-header-title').innerText = item.nome;
-                });
-                container.appendChild(botao);
-            });
-        }
-
-        function construirListaDocumentos(documentos) {
-            const container = document.getElementById('sidebar-documentos');
-            container.innerHTML = "";
-            if (!documentos || documentos.length === 0) {
-                container.innerHTML = "<div class='status-loading'>Nenhum documento encontrado.</div>";
-                return;
-            }
-            documentos.forEach(doc => {
-                const card = document.createElement('div');
-                card.className = 'doc-card';
-                card.innerHTML = `
-                    <div class="doc-info"><span class="doc-name">${doc.nome}</span></div>
-                    <div class="doc-actions">
-                        <button class="btn-action btn-open" onclick="abrirLinkDireto('${doc.linkUrl}')">Abrir</button>
-                        <button class="btn-action btn-copy" onclick="copiarTextoParaArea('${doc.linkUrl}')">Copiar</button>
-                    </div>`;
-                container.appendChild(card);
-            });
-        }
-
-        function renderizarMapaEstrategico(svgConteudo) {
-            if (!svgConteudo) return;
-            document.getElementById('map-container').innerHTML = svgConteudo;
-        }
-
-        function abrirLinkDireto(url) { if(url) window.open(url, '_blank'); else alert("Link indisponível."); }
-        function copiarTextoParaArea(url) { 
-            if(!url) return;
-            navigator.clipboard.writeText(url).then(() => alert("Copiado!") );
+        // Função de clique para os itens do menu de documentos
+        function abrirDocumento(url) {
+            window.open(url, '_blank');
         }
     </script>
 </body>
