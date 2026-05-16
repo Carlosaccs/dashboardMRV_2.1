@@ -89,7 +89,7 @@ async function carregarPlanilha() {
                 id_path: idPath,
                 tipo: cat.includes('COMPLEXO') ? 'N' : 'R',
                 ordem: ordem,
-                zona: colunas[COL.ZONA] || "", // Capturando a coluna D
+                zona: colunas[COL.ZONA] || "", 
                 nome: nomeImovel,
                 nomeFull: colunas[COL.NOME_FULL] || nomeImovel,
                 estoque: colunas[COL.ESTOQUE],
@@ -185,7 +185,7 @@ function atualizarTituloSuperior(texto) {
 }
 
 /* ==========================================================================
-   BLCO 05: RENDERIZAÇÃO DOS MAPAS (SVG)
+   BLOCO 05: RENDERIZAÇÃO DOS MAPAS (SVG)
    ========================================================================== */
 function renderizarNoContainer(id, dados, interativo) {
     const container = document.getElementById(id);
@@ -223,7 +223,7 @@ function renderizarNoContainer(id, dados, interativo) {
         </svg>`;
 }
 
-function desenharMapas() {
+function dessinharMapas() {
     renderizarNoContainer('caixa-a', (mapaAtivo === 'GSP') ? MAPA_GSP : MAPA_INTERIOR, true);
     renderizarNoContainer('caixa-b', (mapaAtivo === 'GSP') ? MAPA_INTERIOR : MAPA_GSP, false);
     document.getElementById('caixa-b').onclick = () => trocarMapas(true);
@@ -255,25 +255,20 @@ function gerarListaLateral() {
 }
 
 /* ==========================================================================
-   BLOCO 07: CONSTRUÇÃO DA VITRINE (FICHA TÉCNICA)
+   BLOCO 07: CONSTRUÇÃO DA VITRINE (FICHA TÉCNICA) COM ABA DE DOCUMENTOS
    ========================================================================== */
 const criarCardMaterial = (titulo, url, icone) => {
     if (!url || url === "" || url === "---") return "";
     const linkSeguro = formatarLinkSeguro(url);
     return `
-    <div class="card-material-item">
-        <div class="card-material-left">
+    <div class="card-material-item" style="display: flex; justify-content: space-between; align-items: center; background: #fff; border: 1px solid #ddd; padding: 8px; margin-bottom: 6px; border-radius: 4px;">
+        <div class="card-material-left" style="display: flex; align-items: center; gap: 8px;">
             <span class="card-icon">${icone}</span>
-            <span class="card-text">${titulo}</span>
+            <span class="card-text" style="font-size: 0.72rem; font-weight: bold; color: #444;">${titulo}</span>
         </div>
-        <div class="card-material-right">
-            <div class="btn-com-preview">
-                <a href="${linkSeguro}" target="_blank" class="card-btn-abrir">Abrir</a>
-                <div class="preview-container">
-                    <iframe src="${linkSeguro}"></iframe>
-                </div>
-            </div>
-            <button onclick="copiarLink('${url}')" class="card-btn-copiar">Copiar</button>
+        <div class="card-material-right" style="display: flex; gap: 4px;">
+            <a href="${linkSeguro}" target="_blank" style="background: var(--mrv-verde, #00733d); color: white; text-decoration: none; padding: 4px 8px; font-size: 0.65rem; border-radius: 3px; font-weight: bold;">Abrir</a>
+            <button onclick="copiarLink('${url}')" style="background: #f37021; color: white; border: none; padding: 4px 8px; font-size: 0.65rem; border-radius: 3px; cursor: pointer; font-weight: bold;">Copiar</button>
         </div>
     </div>`;
 };
@@ -289,10 +284,34 @@ const extrairLinks = (campo, icone) => {
     return htmlTemp;
 };
 
+// Nova função global criada para alternar as abas dinamicamente
+function alternarAbaVitrine(aba) {
+    const btnFicha = document.getElementById('btn-aba-ficha');
+    const btnDocs = document.getElementById('btn-aba-docs');
+    const boxFicha = document.getElementById('box-conteudo-ficha');
+    const boxDocs = document.getElementById('box-conteudo-docs');
+
+    if (aba === 'docs') {
+        boxFicha.style.display = 'none';
+        boxDocs.style.display = 'block';
+        btnFicha.style.background = '#eee';
+        btnFicha.style.color = '#666';
+        btnDocs.style.background = 'var(--mrv-verde, #00733d)';
+        btnDocs.style.color = 'white';
+    } else {
+        boxFicha.style.display = 'block';
+        boxDocs.style.display = 'none';
+        btnFicha.style.background = 'var(--mrv-verde, #00733d)';
+        btnFicha.style.color = 'white';
+        btnDocs.style.background = '#eee';
+        btnDocs.style.color = '#666';
+    }
+}
+
 function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
     const painel = document.getElementById('ficha-tecnica');
     const outros = listaDaCidade.filter(i => i.nome !== selecionado.nome);
-    const urlMapsResidencial = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selecionado.endereco)}`;
+    const urlMapsResidencial = `https://maps.google.com/?q=${encodeURIComponent(selecionado.endereco)}`;
     
     let html = `<div class="vitrine-topo">MRV EM ${nomeRegiao}</div>`;
     
@@ -304,8 +323,17 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
             </button>`}).join('')}</div><hr style="border:0; border-top:1px solid #eee; margin:6px 0;">`;
     }
 
+    // INTERFACE DE BOTÕES DE ALTERNÂNCIA (ABAS)
+    html += `
+    <div style="display: flex; gap: 4px; margin-bottom: 8px;">
+        <button id="btn-aba-ficha" onclick="alternarAbaVitrine('ficha')" style="flex: 1; padding: 6px; font-size: 0.7rem; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; background: var(--mrv-verde, #00733d); color: white; transition: 0.2s;">📋 FICHA TÉCNICA</button>
+        <button id="btn-aba-docs" onclick="alternarAbaVitrine('docs')" style="flex: 1; padding: 6px; font-size: 0.7rem; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; background: #eee; color: #666; transition: 0.2s;">📂 DOCUMENTOS</button>
+    </div>`;
+
+    // ================= CONTAINER DA FICHA TÉCNICA =================
+    html += `<div id="box-conteudo-ficha" style="display: block;">`;
+
     if (selecionado.tipo === 'R') {
-        // TÍTULO DO RESIDENCIAL (LARANJA PADRONIZADO)
         html += `<div class="titulo-vitrine-faixa" style="background-color: var(--mrv-laranja); color: white; padding: 6px; font-weight: bold; text-align: center; margin-bottom: 5px; border-radius: 4px; font-size: 0.75rem;">RES. ${selecionado.nome.toUpperCase()} — ${selecionado.regiao}</div>`;
         
         html += `
@@ -366,7 +394,7 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
                     </div>
                     <div class="tabela-corpo">
                         ${dados.map(linhaStr => {
-                            const cols = linhaStr.split(',').map(c => c.trim());
+                            const cols = inlineStr = linhaStr.split(',').map(c => c.trim());
                             if(cols.length <= 1) return "";
                             return `<div class="tabela-row">
                                 ${cols.map((v, idx) => {
@@ -382,7 +410,7 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
 
         html += `<div style="border-radius: 4px; overflow: hidden; border: 1px solid #ddd; margin-top: 6px;">`;
         if(selecionado.estande && selecionado.estande !== "---" && selecionado.estande !== "") {
-            const urlMapsEstande = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selecionado.estande)}`;
+            const urlMapsEstande = `https://maps.google.com/?q=${encodeURIComponent(selecionado.estande)}`;
             html += `
             <div style="background: #e8f5e9; border-left: 6px solid #2e7d32; padding: 6px 10px; border-bottom: 1px solid #ddd;">
                 <label style="display:block; font-size:0.55rem; font-weight:bold; color:#2e7d32; text-transform:uppercase; margin-bottom:1px;">📍 Estande de Vendas</label>
@@ -396,45 +424,29 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
             </div>`;
         }
 
-        const criarBoxDiferencial = (label, texto, corFundo, corBorda, temBorda) => {
+        const boxDif = (label, texto, fundo, borda, temB) => {
             if(!texto || texto === "---" || texto === "") return "";
             return `
-            <div style="background: ${corFundo}; border-left: 6px solid ${corBorda}; padding: 6px 10px; ${temBorda ? 'border-bottom: 1px solid #ddd;' : ''}">
-                <label style="display:block; font-size:0.55rem; font-weight:bold; color:${corBorda}; text-transform:uppercase; margin-bottom:1px;">${label}</label>
+            <div style="background: ${fundo}; border-left: 6px solid ${borda}; padding: 6px 10px; ${temB ? 'border-bottom: 1px solid #ddd;' : ''}">
+                <label style="display:block; font-size:0.55rem; font-weight:bold; color:${borda}; text-transform:uppercase; margin-bottom:1px;">${label}</label>
                 <p style="margin:0; font-size:0.68rem; color:#444; line-height:1.3;">${texto}</p>
             </div>`;
         };
-        html += criarBoxDiferencial('💡 Observação Importante', selecionado.observacoes, '#fff9c4', '#fbc02d', true);
-        html += criarBoxDiferencial('📍 Localização', selecionado.localizacao, '#fdf2e9', '#f37021', true);
-        html += criarBoxDiferencial('🚍 Mobilidade', selecionado.mobilidade, '#f1f8e9', '#2e7d32', true);
-        html += criarBoxDiferencial('🎭 Cultura e Lazer', selecionado.lazer, '#e3f2fd', '#1565c0', true);
-        html += criarBoxDiferencial('🛒 Comércio', selecionado.comercio, '#ffebee', '#c62828', true);
-        html += criarBoxDiferencial('🏥 Saúde e Educação', selecionado.saude, '#f3e5f5', '#6a1b9a', false);
+        html += boxDif('💡 Observação Importante', selecionado.observacoes, '#fff9c4', '#fbc02d', true);
+        html += boxDif('📍 Localização', selecionado.localizacao, '#fdf2e9', '#f37021', true);
+        html += boxDif('🚍 Mobilidade', selecionado.mobilidade, '#f1f8e9', '#2e7d32', true);
+        html += boxDif('🎭 Cultura e Lazer', selecionado.lazer, '#e3f2fd', '#1565c0', true);
+        html += boxDif('🛒 Comércio', selecionado.comercio, '#ffebee', '#c62828', true);
+        html += boxDif('🏥 Saúde e Educação', selecionado.saude, '#f3e5f5', '#6a1b9a', false);
         html += `</div>`;
 
-        let materiaisHtml = "";
-        materiaisHtml += criarCardMaterial('Book Cliente', selecionado.linkCliente, '📄');
-        materiaisHtml += criarCardMaterial('Book Corretor', selecionado.linkCorretor, '💼');
-        materiaisHtml += extrairLinks(selecionado.linksVideos, '🎬');
-        materiaisHtml += extrairLinks(selecionado.linksPlantas, '📐');
-        materiaisHtml += extrairLinks(selecionado.linksImplant, '📍');
-        materiaisHtml += extrairLinks(selecionado.linksDiversos, '✨');
-        
-        if (materiaisHtml !== "") {
-            html += `<div style="margin-top: 10px;">
-                <label style="display:block; font-size:0.6rem; font-weight:bold; color:#888; text-transform:uppercase; margin-bottom:4px; border-bottom:1px solid #eee;">MATERIAIS DE APOIO</label>
-                ${materiaisHtml}
-            </div>`;
-        }
-} else {
-        // Cores de Título que combinam com os novos botões de complexo
+    } else {
         let corComplexo = "#333";
-        if (selecionado.zona === 'ZO') corComplexo = "#ff9d42"; // O novo laranja claro
+        if (selecionado.zona === 'ZO') corComplexo = "#ff9d42"; 
         else if (selecionado.zona === 'ZL') corComplexo = "#003399";
         else if (selecionado.zona === 'ZN') corComplexo = "#ffd700";
         else if (selecionado.zona === 'ZS') corComplexo = "#ff33aa";
 
-        // Cor do texto do título (preto para amarelo, branco para os outros)
         let corTexto = (selecionado.zona === 'ZN') ? "#333" : "white";
 
         html += `<div class="titulo-vitrine-faixa" style="background-color: ${corComplexo}; color: ${corTexto}; padding: 8px; font-weight: bold; text-align: center; margin-bottom: 5px; border-radius: 4px; font-size: 0.8rem;">
@@ -451,19 +463,36 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
                     </p>
                     <div style="font-size:0.75rem; color:#444; line-height:1.5; text-align:justify;">${selecionado.descLonga}</div>
                  </div>`;
-                 
-        let materiaisComplexo = extrairLinks(selecionado.linksImplant, '📍');
-        if (materiaisComplexo !== "") {
-            html += `<div style="margin-top: 10px; padding: 0 5px;">
-                <label style="display:block; font-size:0.6rem; font-weight:bold; color:#888; text-transform:uppercase; margin-bottom:4px; border-bottom:1px solid #eee;">MATERIAIS DO COMPLEXO</label>
-                ${materiaisComplexo}
-            </div>`;
-        }
     }
+    html += `</div>`; // FIM DO CONTAINER DA FICHA TÉCNICA
+
+    // ================= CONTAINER DOS DOCUMENTOS (ABA OCULTA) =================
+    html += `<div id="box-conteudo-docs" style="display: none; padding-top: 5px;">`;
+    
+    let materiaisHtml = "";
+    if (selecionado.tipo === 'R') {
+        materiaisHtml += criarCardMaterial('Book Cliente', selecionado.linkCliente, '📄');
+        materiaisHtml += criarCardMaterial('Book Corretor', selecionado.linkCorretor, '💼');
+        materiaisHtml += extrairLinks(selecionado.linksVideos, '🎬');
+        materiaisHtml += extrairLinks(selecionado.linksPlantas, '📐');
+        materiaisHtml += extrairLinks(selecionado.linksImplant, '📍');
+        materiaisHtml += extrairLinks(selecionado.linksDiversos, '✨');
+    } else {
+        materiaisHtml += extrairLinks(selecionado.linksImplant, '📍');
+    }
+    
+    if (materiaisHtml !== "") {
+        html += `
+        <label style="display:block; font-size:0.6rem; font-weight:bold; color:#888; text-transform:uppercase; margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom: 2px;">DOCUMENTOS DISPONÍVEIS</label>
+        ${materiaisHtml}`;
+    } else {
+        html += `<div style="text-align: center; color: #999; font-size: 0.72rem; margin-top: 30px;">Nenhum documento ou link cadastrado para este residencial.</div>`;
+    }
+    
+    html += `</div>`; // FIM DO CONTAINER DOS DOCUMENTOS
+
     painel.innerHTML = html;
 }
-
-
 
 /* ==========================================================================
    BLOCO 08: LÓGICA DO MODAL (SOBRE)
