@@ -467,7 +467,7 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
 
 
 /* ==========================================================================
-   BLOCO 08: LÓGICA DE DOCUMENTOS (VERSÃO INTEGRADA, SEGURA E ALINHADA)
+   BLOCO 08: GESTÃO DE DOCUMENTOS (RESOLUÇÃO COMPLETA - SEM CONFLITOS)
    ========================================================================== */
 document.addEventListener('DOMContentLoaded', () => {
     const btnDocumentos = document.getElementById("btn-documentos");
@@ -475,89 +475,72 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (btnDocumentos && fichaTecnica) {
         btnDocumentos.onclick = async () => {
-            // 1. Limpa o painel e exibe a mensagem de carregamento
-            fichaTecnica.innerHTML = '<div class="vitrine-topo">DOCUMENTOS GERAIS</div>';
-            fichaTecnica.innerHTML += '<p style="padding:20px; color:#666; font-size:0.7rem;">Buscando arquivos...</p>';
-
+            // 1. Limpa o painel e coloca a mensagem de carregamento padrão
+            fichaTecnica.innerHTML = '<div class="vitrine-topo">DOCUMENTOS GERAIS</div>' + 
+                                   '<p style="padding:20px; color:#666; font-size:0.7rem;">Buscando arquivos...</p>';
+            
             const SHEET_ID = "15V194P2JPGCCPpCTKJsib8sJuCZPgtbNb-rtgNaLS7E";
             const GID_DOCS = "122737037"; 
             const URL_DOCS = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID_DOCS}&v=${new Date().getTime()}`;
 
             try {
-                const r = await fetch(URL_DOCS);
-                if (!r.ok) throw new Error("Falha na resposta do servidor");
-                const csv = await r.text();
+                const resp = await fetch(URL_DOCS);
+                if (!resp.ok) throw new Error("Erro ao conectar com a planilha");
+                const csv = await resp.text();
                 
-                // Reinicia o topo do painel
+                // Limpa para desenhar a lista de cards
                 fichaTecnica.innerHTML = '<div class="vitrine-topo">DOCUMENTOS GERAIS</div>';
                 
-                // Container principal utilizando a variável de cor cinza do seu desktop.css
-                let htmlFinal = '<div id="container-docs-gerais" style="margin-top: 10px; padding: 0 5px; min-height: 100vh; background-color: var(--cinza-claro); position: relative;">';
+                // Container usando a cor padrão do seu CSS (var(--cinza-claro))
+                let htmlFinal = '<div id="container-docs-gerais" style="margin-top:15px; padding:0 5px; min-height:100vh; background-color:var(--cinza-claro);">';
 
                 const linhas = csv.split(/\r?\n/).filter(l => l.trim().length > 10).slice(1);
 
                 linhas.forEach((linha) => {
-                    let textoLimpo = linha.replace(/"/g, "").trim();
+                    let textoLimpo = linea = linha.replace(/"/g, "").trim();
                     let posHttp = textoLimpo.indexOf("http");
                     
                     if (posHttp !== -1) {
                         let link = textoLimpo.substring(posHttp).trim();
                         let titulo = textoLimpo.substring(0, posHttp).replace(/,$/, "").trim();
-                        
-                        // Executa a sua função original que mantém o alinhamento perfeito do card
-                        htmlFinal += criarCardMaterial(titulo || "Documento de Apoio", link, '📄');
+                        if (!titulo) titulo = "Documento de Apoio";
+
+                        // Construção direta e isolada usando suas classes do desktop.css
+                        // O ícone nasce com posição absoluta flutuando e o texto recebe margem para alinhar
+                        htmlFinal += `
+                        <div class="card-material-item" style="position: relative !important; overflow: visible !important; margin-bottom: 12px;">
+                            <div class="card-material-left" style="position: relative !important; overflow: visible !important;">
+                                <span class="card-icon" style="
+                                    position: absolute !important; 
+                                    top: -15px !important; 
+                                    left: 2px !important; 
+                                    z-index: 999 !important; 
+                                    background: white !important; 
+                                    border: 1px solid #ccc !important; 
+                                    border-radius: 4px !important; 
+                                    padding: 2px 4px !important; 
+                                    font-size: 1.1rem !important;
+                                    line-height: 1 !important;
+                                    box-shadow: 0 2px 4px rgba(0,0,0,0.15) !important;
+                                ">📄</span>
+                                <span class="card-text" style="margin-left: 32px !important;">${titulo}</span>
+                            </div>
+                            <div class="card-material-right">
+                                <a href="${link}" target="_blank" class="card-btn-abrir">Abrir</a>
+                                <button onclick="navigator.clipboard.writeText('${link}')" class="card-btn-copiar">Copiar</button>
+                            </div>
+                        </div>`;
                     }
                 });
 
                 htmlFinal += '</div>';
                 fichaTecnica.innerHTML += htmlFinal;
 
-                // --- AJUSTE VISUAL (Mantém o alinhamento e força a miniatura por cima) ---
-                setTimeout(() => {
-                    // Garante que os itens do card permitam a flutuação externa do ícone
-                    const cards = fichaTecnica.querySelectorAll('.card-material-item');
-                    cards.forEach(card => {
-                        card.style.setProperty('overflow', 'visible', 'important');
-                        card.style.setProperty('position', 'relative', 'important');
-                    });
-
-                    // Força o ícone (card-icon) para a camada superior com leve ajuste na altura
-                    const icones = fichaTecnica.querySelectorAll('.card-icon');
-                    icones.forEach(icon => {
-                        icon.style.setProperty('position', 'relative', 'important');
-                        icon.style.setProperty('z-index', '999', 'important');
-                        icon.style.setProperty('margin-top', '-5px', 'important');
-                        icon.style.setProperty('transform', 'scale(1.2)', 'important');
-                    });
-
-                    // Certifica que o wrapper de conteúdo respeite a nova camada do ícone
-                    const leftWrappers = fichaTecnica.querySelectorAll('.card-material-left');
-                    leftWrappers.forEach(div => {
-                        div.style.setProperty('overflow', 'visible', 'important');
-                        div.style.setProperty('z-index', '998', 'important');
-                    });
-                }, 50);
-
-            } catch (e) {
-                console.error("Erro no Bloco 08:", e);
-                fichaTecnica.innerHTML = '<div class="vitrine-topo">DOCUMENTOS GERAIS</div>';
-                fichaTecnica.innerHTML += '<p style="color:red; padding:20px;">Erro ao processar: ' + e.message + '</p>';
+            } catch (err) {
+                console.error("Erro no processamento do Bloco 08:", err);
+                fichaTecnica.innerHTML = '<div class="vitrine-topo">DOCUMENTOS GERAIS</div>' + 
+                                       `<p style="color:red; padding:20px; font-size:0.7rem;">Erro: ${err.message}</p>`;
             }
         };
     }
-
-    // Lógica do Modal Sobre (Unificada internamente para total segurança de inicialização)
-    const modal = document.getElementById("modal-sobre");
-    const btnSobre = document.getElementById("btn-sobre");
-    const spanClose = document.querySelector(".modal-close");
-    
-    if (btnSobre && modal) {
-        btnSobre.onclick = () => { modal.style.display = "block"; };
-    }
-    if (spanClose && modal) {
-        spanClose.onclick = () => { modal.style.display = "none"; };
-    }
-    window.onclick = (event) => {
-        if (event.target == modal) { modal.style.display = "none"; }
-    };
 });
