@@ -27,7 +27,37 @@ const COL = {
    BLOCO 02: INICIALIZAÇÃO E UTILITÁRIOS
    ========================================================================== */
 async function iniciarApp() {
-    try { await carregarPlanilha(); } catch (err) { console.error(err); }
+    try { 
+        await carregarPlanilha(); 
+        configurarBotaoDocumentos(); // Ativa a escuta do clique assim que o app inicia
+    } catch (err) { 
+        console.error(err); 
+    }
+}
+
+// AÇÃO CIRÚRGICA: Limpa a caixa da direita quando clica em Documentos
+function configurarBotaoDocumentos() {
+    const btnDocs = document.getElementById('btn-documentos');
+    if (btnDocs) {
+        btnDocs.addEventListener('click', () => {
+            // Remove os destaques visuais ativos da lista lateral e do mapa
+            imovelAtivo = null;
+            pathAtivo = null;
+            document.querySelectorAll('path').forEach(el => el.classList.remove('ativo'));
+            gerarListaLateral();
+            
+            // Limpa a ficha técnica da direita e avisa o usuário
+            const painel = document.getElementById('ficha-tecnica');
+            if (painel) {
+                painel.innerHTML = `
+                    <div style="text-align:center; color:#ccc; margin-top:100px;">
+                        <p style="font-size: 30px;">📂</p>
+                        <p style="color: #666; font-weight: bold; margin-bottom: 5px;">DOCUMENTOS GERAIS</p>
+                        <p style="font-size: 0.8rem; padding: 0 10px;">Aba de arquivos gerais ativada.</p>
+                    </div>`;
+            }
+        });
+    }
 }
 
 function formatarLinkSeguro(url) {
@@ -176,6 +206,7 @@ function comandoSelecao(idPath, nomePath, fonte) {
 
 function atualizarTituloSuperior(texto) {
     const titulo = document.getElementById('cidade-titulo');
+    if (!titulo) return;
     if (texto) { titulo.innerText = `MRV EM ${texto.toUpperCase()}`; } 
     else if (pathAtivo) {
         const todosPaths = MAPA_GSP.paths.concat(MAPA_INTERIOR.paths);
@@ -185,10 +216,11 @@ function atualizarTituloSuperior(texto) {
 }
 
 /* ==========================================================================
-   BLCO 05: RENDERIZAÇÃO DOS MAPAS (SVG)
+   BLOCO 05: RENDERIZAÇÃO DOS MAPAS (SVG)
    ========================================================================== */
 function renderizarNoContainer(id, dados, interativo) {
     const container = document.getElementById(id);
+    if (!container) return;
     container.style.display = "flex"; 
     container.style.alignItems = "center";
     container.style.justifyContent = "center"; 
@@ -226,15 +258,18 @@ function renderizarNoContainer(id, dados, interativo) {
 function desenharMapas() {
     renderizarNoContainer('caixa-a', (mapaAtivo === 'GSP') ? MAPA_GSP : MAPA_INTERIOR, true);
     renderizarNoContainer('caixa-b', (mapaAtivo === 'GSP') ? MAPA_INTERIOR : MAPA_GSP, false);
-    document.getElementById('caixa-b').onclick = () => trocarMapas(true);
+    const cb = document.getElementById('caixa-b');
+    if (cb) cb.onclick = () => trocarMapas(true);
 }
 
 function trocarMapas(completo) { 
     mapaAtivo = (mapaAtivo === 'GSP') ? 'INTERIOR' : 'GSP'; 
     if (completo) { 
         pathAtivo = null; imovelAtivo = null; 
-        document.getElementById('ficha-tecnica').innerHTML = `<div style="text-align:center; color:#ccc; margin-top:80px;"><p style="font-size:30px;">📍</p><p>Clique no mapa ou na lista</p></div>`;
-        document.getElementById('cidade-titulo').innerText = "SELECIONE UMA REGIÃO NO MAPA";
+        const ft = document.getElementById('ficha-tecnica');
+        if (ft) ft.innerHTML = `<div style="text-align:center; color:#ccc; margin-top:80px;"><p style="font-size:30px;">📍</p><p>Clique no mapa ou na lista</p></div>`;
+        const ct = document.getElementById('cidade-titulo');
+        if (ct) ct.innerText = "SELECIONE UMA REGIÃO NO MAPA";
     }
     desenharMapas(); gerarListaLateral(); 
 }
@@ -244,6 +279,7 @@ function trocarMapas(completo) {
    ========================================================================== */
 function gerarListaLateral() {
     const container = document.getElementById('lista-imoveis');
+    if (!container) return;
     container.innerHTML = DADOS_PLANILHA.map(item => {
         const ativo = item.nome === imovelAtivo ? 'ativo' : '';
         const classeZona = detectarClasseZona(item.zona); 
@@ -291,6 +327,7 @@ const extrairLinks = (campo, icone) => {
 
 function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
     const painel = document.getElementById('ficha-tecnica');
+    if (!painel) return;
     const outros = listaDaCidade.filter(i => i.nome !== selecionado.nome);
     const urlMapsResidencial = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selecionado.endereco)}`;
     
@@ -298,14 +335,13 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
     
     if(outros.length > 0) {
         html += `<div style="margin-bottom:6px;">${outros.map(i => {
-            const classeZ = detectarClasseZona(i.zona);
+            const classeZ = birdseye = detectarClasseZona(i.zona);
             return `<button class="${i.tipo === 'N' ? 'separador-complexo-btn' : 'btRes'} ${classeZ}" style="width:100%;" onclick="navegarVitrine('${i.nome}')">
                 <strong>${i.nome}</strong> ${obterHtmlZona(i.zona, i.tipo)}
             </button>`}).join('')}</div><hr style="border:0; border-top:1px solid #eee; margin:6px 0;">`;
     }
 
     if (selecionado.tipo === 'R') {
-        // TÍTULO DO RESIDENCIAL (LARANJA PADRONIZADO)
         html += `<div class="titulo-vitrine-faixa" style="background-color: var(--mrv-laranja); color: white; padding: 6px; font-weight: bold; text-align: center; margin-bottom: 5px; border-radius: 4px; font-size: 0.75rem;">RES. ${selecionado.nome.toUpperCase()} — ${selecionado.regiao}</div>`;
         
         html += `
@@ -354,7 +390,7 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
         if(selecionado.tipologiasH) {
             const linhas = selecionado.tipologiasH.split(';').map(l => l.trim()).filter(l => l !== "");
             if(linhas.length > 0) {
-                const titulos = linhas[0].split(',').map(t => t.trim());
+                const titulos = Birdseye = linhas[0].split(',').map(t => t.trim());
                 const dados = linhas.slice(1);
                 html += `
                 <div class="tabela-precos-container">
@@ -426,15 +462,13 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
                 ${materiaisHtml}
             </div>`;
         }
-} else {
-        // Cores de Título que combinam com os novos botões de complexo
+    } else {
         let corComplexo = "#333";
-        if (selecionado.zona === 'ZO') corComplexo = "#ff9d42"; // O novo laranja claro
+        if (selecionado.zona === 'ZO') corComplexo = "#ff9d42"; 
         else if (selecionado.zona === 'ZL') corComplexo = "#003399";
         else if (selecionado.zona === 'ZN') corComplexo = "#ffd700";
         else if (selecionado.zona === 'ZS') corComplexo = "#ff33aa";
 
-        // Cor do texto do título (preto para amarelo, branco para os outros)
         let corTexto = (selecionado.zona === 'ZN') ? "#333" : "white";
 
         html += `<div class="titulo-vitrine-faixa" style="background-color: ${corComplexo}; color: ${corTexto}; padding: 8px; font-weight: bold; text-align: center; margin-bottom: 5px; border-radius: 4px; font-size: 0.8rem;">
@@ -462,8 +496,6 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
     }
     painel.innerHTML = html;
 }
-
-
 
 /* ==========================================================================
    BLOCO 08: LÓGICA DO MODAL (SOBRE)
