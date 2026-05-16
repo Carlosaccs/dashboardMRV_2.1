@@ -146,7 +146,7 @@
             padding-top: 20px;
         }
 
-        /* Estilização dos botões de residenciais carregados dinamicamente */
+        /* Itens de Residenciais dinâmicos */
         .project-item {
             padding: 12px;
             background-color: var(--white);
@@ -165,7 +165,7 @@
             border-color: var(--primary-green);
         }
 
-        /* Destaque exigido para item clicado/selecionado */
+        /* Highlight para o item clicado/selecionado */
         .project-item.selected {
             border: 2px solid var(--primary-green) !important;
             background-color: #f0f0f0 !important;
@@ -207,23 +207,6 @@
             width: 100%;
             height: 100%;
             max-height: 520px;
-        }
-
-        /* Elementos interativos dentro do SVG Map */
-        .map-path {
-            fill: #e0e0e0;
-            stroke: #ffffff;
-            stroke-width: 1.5;
-            cursor: pointer;
-            transition: fill 0.2s;
-        }
-
-        .map-path:hover {
-            fill: #c8e6c9;
-        }
-
-        .map-path.active-region {
-            fill: #a5d6a7;
         }
 
         /* --- COLUNA DIREITA (DOCUMENTOS GERAIS) --- */
@@ -318,7 +301,7 @@
             <button class="btn-nav" id="btn-sobre">Sobre</button>
             
             <div class="dropdown-menu" id="menu-documentos">
-                <ul>
+                <ul id="menu-documentos-lista">
                     <li>Carteira de Trabalho Digital</li>
                     <li>Extrato do FGTS</li>
                     <li>Certidão Estado Civil</li>
@@ -331,11 +314,11 @@
     <div class="main-container">
         
         <div class="sidebar-left" id="sidebar-residenciais">
-            <div class="status-loading" id="status-loading">Carregando residenciais...</div>
+            <div class="status-loading" id="residenciais-loading">Acessando banco de dados...</div>
         </div>
 
         <div class="map-content">
-            <div class="map-header" id="map-header-title">Selecione uma região no mapa</div>
+            <div class="map-header" id="map-header-title">Selecione uma região ou residencial</div>
             <div class="map-wrapper" id="map-container">
                 <div class="placeholder-text" id="map-placeholder">
                     <svg viewBox="0 0 24 24" width="60" height="60" fill="#ccc"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
@@ -346,45 +329,19 @@
 
         <div class="sidebar-right">
             <div class="section-title">Documentos Gerais</div>
-            <div class="doc-list">
-                <div class="doc-card">
-                    <div class="doc-info">
-                        <span class="doc-name">Solicitação de documentos Renda Formal</span>
-                    </div>
-                    <div class="doc-actions">
-                        <button class="btn-action btn-open" onclick="openDoc('formal')">Abrir</button>
-                        <button class="btn-action btn-copy" onclick="copyLink('formal')">Copiar</button>
-                    </div>
-                </div>
-                <div class="doc-card">
-                    <div class="doc-info">
-                        <span class="doc-name">Solicitação de documentos Renda Informal</span>
-                    </div>
-                    <div class="doc-actions">
-                        <button class="btn-action btn-open" onclick="openDoc('informal')">Abrir</button>
-                        <button class="btn-action btn-copy" onclick="copyLink('informal')">Copiar</button>
-                    </div>
-                </div>
-                <div class="doc-card">
-                    <div class="doc-info">
-                        <span class="doc-name">Autorização de Pesquisa Cadastral</span>
-                    </div>
-                    <div class="doc-actions">
-                        <button class="btn-action btn-open" onclick="openDoc('pesquisa')">Abrir</button>
-                        <button class="btn-action btn-copy" onclick="copyLink('pesquisa')">Copiar</button>
-                    </div>
-                </div>
+            <div class="doc-list" id="sidebar-documentos">
+                <div class="status-loading" id="documentos-loading">Acessando base de documentos...</div>
             </div>
         </div>
 
     </div>
 
     <script>
-        // --- COLOQUE A URL EXECUTÁVEL DO SEU WEB APP DO GOOGLE APPS SCRIPT AQUI ---
-        // Exemplo: https://script.google.com/macros/s/AKfycb...X/exec
-        const CONFIG_API_URL = "SUA_URL_DO_WEB_APP_AQUI"; 
+        // IMPORTANTE: Insira aqui a URL gerada ao publicar o seu script como "Web App" no Google Apps Script
+        // Lembre-se de configurar para que "Qualquer um" (Anyone) possa acessar.
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwqoW_pLhR8O8r4_SgZ2n_e1gP723M8H4-yG-K3L36v_jH4oY5V_X6z087ZJ62B7m8/exec"; 
 
-        // Gerenciamento do Menu Dropdown
+        // Controle do Dropdown de Documentos no Header
         const btnDocumentos = document.getElementById('btn-documentos');
         const menuDocumentos = document.getElementById('menu-documentos');
 
@@ -399,100 +356,136 @@
             }
         });
 
-        // Simulação de ações dos botões fixos da direita
-        function openDoc(type) {
-            alert("Abrindo link do documento cadastrado para: " + type);
-        }
-
-        function copyLink(type) {
-            alert("Link copiado para a área de transferência!");
-        }
-
-        // --- MOTOR DE CARREGAMENTO DO DASHBOARD ---
+        // Inicialização automática assim que a página carrega
         window.addEventListener('DOMContentLoaded', () => {
-            if (CONFIG_API_URL === "SUA_URL_DO_WEB_APP_AQUI") {
-                console.warn("Aviso: Configure a URL do seu Web App para carregar os dados reais da Planilha.");
-                gerarDadosDemonstrativos(); // Carrega mock visual se não configurado
+            if (!WEB_APP_URL || WEB_APP_URL.includes("SUA_URL")) {
+                console.error("Por favor, configure a variável WEB_APP_URL com o link válido do seu Web App.");
+                document.getElementById('residenciais-loading').innerText = "Erro: URL da API não configurada.";
+                document.getElementById('documentos-loading').innerText = "Erro: URL da API não configurada.";
             } else {
-                carregarDadosDoDashboard();
+                obterDadosDoServidor();
             }
         });
 
-        async function carregarDadosDoDashboard() {
+        // Requisição AJAX (Fetch) para buscar os dados consolidados do seu back-end
+        async function obterDadosDoServidor() {
             try {
-                const response = await fetch(CONFIG_API_URL);
-                if (!response.ok) throw new Error("Erro na requisição da API");
+                const response = await fetch(WEB_APP_URL);
+                if (!response.ok) throw new Error("A resposta da rede não foi satisfatória.");
                 
-                const dados = await response.json();
-                renderizarDashboard(dados);
-            } catch (error) {
-                console.error("Falha ao obter dados:", error);
-                document.getElementById('status-loading').innerText = "Erro ao carregar dados.";
+                const dadosConectados = await response.json();
+                
+                // Processa as três frentes do Dashboard de forma limpa
+                construirListaResidenciais(dadosConectados.residenciais);
+                construirListaDocumentos(dadosConectados.documentos);
+                renderizarMapaEstrategico(dadosConectados.svgMapa);
+
+            } catch (erro) {
+                console.error("Erro crítico ao obter dados do banco:", erro);
+                document.getElementById('residenciais-loading').innerText = "Falha ao conectar ao banco.";
+                document.getElementById('documentos-loading').innerText = "Falha ao conectar à base.";
             }
         }
 
-        function renderizarDashboard(dados) {
-            // Oculta indicador de loading
-            document.getElementById('status-loading').style.display = 'none';
-            const sidebar = document.getElementById('sidebar-residenciais');
+        // 1. Constrói dinamicamente a lista completa de residenciais à esquerda
+        function construirListaResidenciais(lista) {
+            const container = document.getElementById('sidebar-residenciais');
+            container.innerHTML = ""; // Limpa o indicador de carregamento
 
-            // Renderiza os botões de residenciais na esquerda
-            dados.residenciais.forEach(proj => {
-                const btn = document.createElement('button');
-                btn.className = 'project-item';
-                btn.innerText = proj.nome;
-                btn.addEventListener('click', () => {
-                    // Remove seleção anterior e destaca o botão atual com borda verde e fundo cinza claro
-                    document.querySelectorAll('.project-item').forEach(i => i.classList.remove('selected'));
-                    btn.classList.add('selected');
+            if (!lista || lista.length === 0) {
+                container.innerHTML = "<div class='status-loading'>Nenhum residencial encontrado.</div>";
+                return;
+            }
+
+            lista.forEach(item => {
+                const botao = document.createElement('button');
+                botao.className = 'project-item';
+                botao.innerText = item.nome;
+                
+                // Evento ao clicar no empreendimento
+                botao.addEventListener('click', () => {
+                    // Mantém destacado o item clicado com borda verde e fundo cinza claro
+                    document.querySelectorAll('.project-item').forEach(b => b.classList.remove('selected'));
+                    botao.classList.add('selected');
+
+                    // Atualiza o título central
+                    document.getElementById('map-header-title').innerText = item.nome;
                     
-                    document.getElementById('map-header-title').innerText = proj.nome;
-                    // Lógica para dar zoom ou focar no SVG se necessário
+                    // Se houver uma função específica para destacar a região no mapa, chame aqui:
+                    if(typeof selecionarRegiaoNoMapa === "function") {
+                        selecionarRegiaoNoMapa(item.regiao || item.id);
+                    }
                 });
-                sidebar.appendChild(btn);
-            });
 
-            // Renderiza o mapa SVG dinamicamente no container central se ele vier na API
-            if (dados.svgMapa) {
-                document.getElementById('map-container').innerHTML = dados.svgMapa;
-                adicionarEventosAoMapa();
+                container.appendChild(botao);
+            });
+        }
+
+        // 2. Constrói dinamicamente a lista completa de documentos à direita
+        function construirListaDocumentos(documentos) {
+            const container = document.getElementById('sidebar-documentos');
+            container.innerHTML = ""; // Limpa o indicador de carregamento
+
+            if (!documentos || documentos.length === 0) {
+                container.innerHTML = "<div class='status-loading'>Nenhum documento disponível.</div>";
+                return;
+            }
+
+            documentos.forEach(doc => {
+                const card = document.createElement('div');
+                card.className = 'doc-card';
+
+                card.innerHTML = `
+                    <div class="doc-info">
+                        <span class="doc-name">${doc.nome}</span>
+                    </div>
+                    <div class="doc-actions">
+                        <button class="btn-action btn-open" onclick="abrirLinkDireto('${doc.linkUrl}')">Abrir</button>
+                        <button class="btn-action btn-copy" onclick="copiarTextoParaArea('${doc.linkUrl}')">Copiar</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // 3. Renderiza o mapa SVG dinamicamente no painel central
+        function renderizarMapaEstrategico(svgConteudo) {
+            if (!svgConteudo) {
+                // Se o banco não retornar o mapa completo ainda, mantém o placeholder estilizado
+                return;
+            }
+            const container = document.getElementById('map-container');
+            container.innerHTML = svgConteudo;
+            
+            // Ativa eventos de clique nas regiões (paths) do mapa se elas possuírem classes associadas
+            const caminhosMapa = container.querySelectorAll('path, g');
+            caminhosMapa.forEach(caminho => {
+                caminho.addEventListener('click', function() {
+                    caminhosMapa.forEach(c => c.removeAttribute('style'));
+                    // Aplica um destaque visual na área do mapa que foi clicada
+                    this.style.fill = "#c8e6c9"; 
+                });
+            });
+        }
+
+        // Funções utilitárias para os botões dos documentos
+        function abrirLinkDireto(url) {
+            if(url) {
+                window.open(url, '_blank');
+            } else {
+                alert("Link não cadastrado para este documento.");
             }
         }
 
-        function adicionarEventosAoMapa() {
-            // Adiciona interatividade aos caminhos/regiões do mapa carregado
-            const caminhos = document.querySelectorAll('.map-path');
-            caminhos.forEach(path => {
-                path.addEventListener('click', function() {
-                    caminhados.forEach(p => p.classList.remove('active-region'));
-                    this.classList.add('active-region');
-                    // Filtra os residenciais baseado na região clicada
-                });
-            });
-        }
-
-        // Gera itens para que a tela não fique vazia enquanto você vincula sua URL
-        function gerarDadosDemonstrativos() {
-            document.getElementById('status-loading').style.display = 'none';
-            const sidebar = document.getElementById('sidebar-residenciais');
-            
-            const listaExemplo = [
-                { nome: "Residencial Nascente Do Jequitibá" },
-                { nome: "Residencial Parque das Flores" },
-                { nome: "Residencial Vila Verde" },
-                { nome: "Residencial Cantos da Cidade" }
-            ];
-
-            listaExemplo.forEach(proj => {
-                const btn = document.createElement('button');
-                btn.className = 'project-item';
-                btn.innerText = proj.nome;
-                btn.addEventListener('click', () => {
-                    document.querySelectorAll('.project-item').forEach(i => i.classList.remove('selected'));
-                    btn.classList.add('selected');
-                    document.getElementById('map-header-title').innerText = proj.nome;
-                });
-                sidebar.appendChild(btn);
+        function copiarTextoParaArea(url) {
+            if(!url) {
+                alert("Não há link disponível para cópia.");
+                return;
+            }
+            navigator.clipboard.writeText(url).then(() => {
+                alert("Link copiado com sucesso para a área de transferência!");
+            }).catch(err => {
+                console.error("Erro ao copiar link: ", err);
             });
         }
     </script>
