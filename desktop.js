@@ -467,17 +467,16 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
 
 
 /* ==========================================================================
-   BLOCO 08: GESTÃO DE DOCUMENTOS (RESOLUÇÃO COMPLETA - SEM CONFLITOS)
+   BLOCO 08: DIAGNÓSTICO DE DOCUMENTOS
    ========================================================================== */
 document.addEventListener('DOMContentLoaded', () => {
     const btnDocumentos = document.getElementById("btn-documentos");
     const fichaTecnica = document.getElementById("ficha-tecnica");
 
-    if (btnDocumentos && fichaTecnica) {
+    if (btnDocumentos) {
         btnDocumentos.onclick = async () => {
-            // 1. Limpa o painel e coloca a mensagem de carregamento padrão
-            fichaTecnica.innerHTML = '<div class="vitrine-topo">DOCUMENTOS GERAIS</div>' + 
-                                   '<p style="padding:20px; color:#666; font-size:0.7rem;">Buscando arquivos...</p>';
+            // 1. Limpa e avisa que iniciou
+            fichaTecnica.innerHTML = `<div style="padding:10px; background:orange; color:black; font-weight:bold;">TESTE DE CONEXÃO INICIADO</div>`;
             
             const SHEET_ID = "15V194P2JPGCCPpCTKJsib8sJuCZPgtbNb-rtgNaLS7E";
             const GID_DOCS = "122737037"; 
@@ -485,61 +484,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
             try {
                 const resp = await fetch(URL_DOCS);
-                if (!resp.ok) throw new Error("Erro ao conectar com a planilha");
                 const csv = await resp.text();
                 
-                // Limpa para desenhar a lista de cards
-                fichaTecnica.innerHTML = '<div class="vitrine-topo">DOCUMENTOS GERAIS</div>';
+                // 2. Mostra exatamente o que veio da planilha (Bruto)
+                fichaTecnica.innerHTML = `
+                    <div class="vitrine-topo">RESULTADO DO TESTE</div>
+                    <div style="padding:10px; font-size:0.8rem; color:blue;">
+                        <strong>Status:</strong> Conectado com sucesso!<br><br>
+                        <strong>Conteúdo Bruto recebido:</strong><br>
+                        <pre style="background:#eee; padding:5px; white-space: pre-wrap;">${csv}</pre>
+                    </div>
+                `;
                 
-                // Container usando a cor padrão do seu CSS (var(--cinza-claro))
-                let htmlFinal = '<div id="container-docs-gerais" style="margin-top:15px; padding:0 5px; min-height:100vh; background-color:var(--cinza-claro);">';
-
-                const linhas = csv.split(/\r?\n/).filter(l => l.trim().length > 10).slice(1);
-
-                linhas.forEach((linha) => {
-                    let textoLimpo = linea = linha.replace(/"/g, "").trim();
-                    let posHttp = textoLimpo.indexOf("http");
-                    
-                    if (posHttp !== -1) {
-                        let link = textoLimpo.substring(posHttp).trim();
-                        let titulo = textoLimpo.substring(0, posHttp).replace(/,$/, "").trim();
-                        if (!titulo) titulo = "Documento de Apoio";
-
-                        // Construção direta e isolada usando suas classes do desktop.css
-                        // O ícone nasce com posição absoluta flutuando e o texto recebe margem para alinhar
-                        htmlFinal += `
-                        <div class="card-material-item" style="position: relative !important; overflow: visible !important; margin-bottom: 12px;">
-                            <div class="card-material-left" style="position: relative !important; overflow: visible !important;">
-                                <span class="card-icon" style="
-                                    position: absolute !important; 
-                                    top: -15px !important; 
-                                    left: 2px !important; 
-                                    z-index: 999 !important; 
-                                    background: white !important; 
-                                    border: 1px solid #ccc !important; 
-                                    border-radius: 4px !important; 
-                                    padding: 2px 4px !important; 
-                                    font-size: 1.1rem !important;
-                                    line-height: 1 !important;
-                                    box-shadow: 0 2px 4px rgba(0,0,0,0.15) !important;
-                                ">📄</span>
-                                <span class="card-text" style="margin-left: 32px !important;">${titulo}</span>
-                            </div>
-                            <div class="card-material-right">
-                                <a href="${link}" target="_blank" class="card-btn-abrir">Abrir</a>
-                                <button onclick="navigator.clipboard.writeText('${link}')" class="card-btn-copiar">Copiar</button>
-                            </div>
-                        </div>`;
-                    }
-                });
-
-                htmlFinal += '</div>';
-                fichaTecnica.innerHTML += htmlFinal;
+                console.log("Dados recebidos da planilha:", csv);
 
             } catch (err) {
-                console.error("Erro no processamento do Bloco 08:", err);
-                fichaTecnica.innerHTML = '<div class="vitrine-topo">DOCUMENTOS GERAIS</div>' + 
-                                       `<p style="color:red; padding:20px; font-size:0.7rem;">Erro: ${err.message}</p>`;
+                // 3. Se der erro na conexão, mostra aqui
+                fichaTecnica.innerHTML = `
+                    <div style="padding:10px; background:red; color:white;">
+                        <strong>ERRO DE CONEXÃO:</strong><br>
+                        ${err.message}
+                    </div>
+                `;
+                console.error("Erro no fetch:", err);
             }
         };
     }
