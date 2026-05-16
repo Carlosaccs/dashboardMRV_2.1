@@ -2,13 +2,14 @@
    BLOCO 01: CONFIGURAÇÕES E VARIÁVEIS GLOBAIS
    ========================================================================== */
 let DADOS_PLANILHA = [];
+let DOCUMENTOS_GERAIS = []; // Armazenará os documentos da nova aba
 let pathAtivo = null;  
 let imovelAtivo = null;  
 let mapaAtivo = 'GSP'; 
 
 const COL = {
     ID: 0, CATEGORIA: 1, ORDEM: 2, 
-    ZONA: 3, // Coluna D da Planilha
+    ZONA: 3, 
     NOME: 4, NOME_FULL: 5,  
     ESTOQUE: 6, END: 7, TIPOLOGIAS: 8, ENTREGA: 9, 
     P_DE: 10, P_ATE: 11, OBRA: 12, LIMITADOR: 13, 
@@ -28,33 +29,51 @@ const COL = {
    ========================================================================== */
 async function iniciarApp() {
     try { 
-        await carregarPlanilha(); 
-        configurarBotaoDocumentos(); // Ativa a escuta do clique assim que o app inicia
+        // Dispara o carregamento das duas abas em paralelo para dar velocidade
+        await Promise.all([carregarPlanilha(), carregarAbaDocumentos()]);
+        configurarBotaoDocumentos(); 
     } catch (err) { 
         console.error(err); 
     }
 }
 
-// AÇÃO CIRÚRGICA: Limpa a caixa da direita quando clica em Documentos
+// AÇÃO EVOLUÍDA: Limpa a lateral e renderiza a lista de documentos da planilha
 function configurarBotaoDocumentos() {
     const btnDocs = document.getElementById('btn-documentos');
     if (btnDocs) {
         btnDocs.addEventListener('click', () => {
-            // Remove os destaques visuais ativos da lista lateral e do mapa
+            // Remove os destaques ativos do mapa e da lista lateral
             imovelAtivo = null;
             pathAtivo = null;
             document.querySelectorAll('path').forEach(el => el.classList.remove('ativo'));
             gerarListaLateral();
             
-            // Limpa a ficha técnica da direita e avisa o usuário
+            // Atualiza o título superior
+            const ct = document.getElementById('cidade-titulo');
+            if (ct) ct.innerText = "DOCUMENTOS GERAIS CORPORATIVOS";
+
+            // Monta a lista de documentos na ficha técnica (área da direita)
             const painel = document.getElementById('ficha-tecnica');
             if (painel) {
-                painel.innerHTML = `
-                    <div style="text-align:center; color:#ccc; margin-top:100px;">
-                        <p style="font-size: 30px;">📂</p>
-                        <p style="color: #666; font-weight: bold; margin-bottom: 5px;">DOCUMENTOS GERAIS</p>
-                        <p style="font-size: 0.8rem; padding: 0 10px;">Aba de arquivos gerais ativada.</p>
-                    </div>`;
+                let htmlDocs = `
+                    <div class="vitrine-topo" style="background-color: #dca206; color: #004d24;">📂 ARQUIVOS E MODELOS GERAIS</div>
+                    <div style="padding: 10px 0;">
+                `;
+
+                if (DOCUMENTOS_GERAIS.length === 0) {
+                    htmlDocs += `
+                        <div style="text-align:center; color:#999; margin-top:50px;">
+                            <p>Nenhum documento encontrado na aba.</p>
+                        </div>`;
+                } else {
+                    // Varre a lista carregada da planilha e desenha os cards de forma elegante
+                    DOCUMENTOS_GERAIS.forEach(doc => {
+                        htmlDocs += criarCardMaterial(doc.titulo, doc.url, '📝');
+                    });
+                }
+
+                htmlDocs += `</div>`;
+                painel.innerHTML = htmlDocs;
             }
         });
     }
@@ -89,6 +108,40 @@ function copiarLink(url) {
 /* ==========================================================================
    BLOCO 03: CARREGAMENTO DE DADOS (GOOGLE SHEETS)
    ========================================================================== */
+
+// NOVA FUNÇÃO: Puxa os dados especificamente da aba "Documentos"
+async function carregarAbaDocumentos() {
+    const SHEET_ID = "15V194P2JPGCCPpCTKJsib8sJuCZPgtbNb-rtgNaLS7E";
+    const URL_DOCS = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Documentos&v=${new Date().getTime()}`;
+    
+    try {
+        const response = await fetch(URL_DOCS);
+        let texto = await response.text();
+        const linhasPuras = texto.split(/\r?\n/);
+
+        // Ignora o cabeçalho "Documentos" na linha 0
+        DOCUMENTOS_GERAIS = linhasPuras.slice(1).map(linha => {
+            // Remove aspas extras que o Google Sheets coloca na exportação de texto
+            const linhaLimpa = linha.replace(/^"|"$/g, '').trim();
+            if (!linhaLimpa) return null;
+
+            // Encontra a última vírgula que separa o Título da URL
+            const ultimaVirgula = linhaLimpa.lastIndexOf(',');
+            if (ultimaVirgula === -1) return null;
+
+            const titulo = linhaLimpa.substring(0, ultimaVirgula).trim().replace(/^"|"$/g, '');
+            const url = linhaLimpa.substring(ultimaVirgula + 1).trim().replace(/^"|"$/g, '');
+
+            if (!titulo || !url.startsWith('http')) return null;
+
+            return { titulo, url };
+        }).filter(d => d !== null);
+
+    } catch (e) {
+        console.error("Erro ao carregar aba de documentos: ", e);
+    }
+}
+
 async function carregarPlanilha() {
     const SHEET_ID = "15V194P2JPGCCPpCTKJsib8sJuCZPgtbNb-rtgNaLS7E";
     const URL_CSV = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0&v=${new Date().getTime()}`;
@@ -119,7 +172,7 @@ async function carregarPlanilha() {
                 id_path: idPath,
                 tipo: cat.includes('COMPLEXO') ? 'N' : 'R',
                 ordem: ordem,
-                zona: colunas[COL.ZONA] || "", // Capturando a coluna D
+                zona: colunas[COL.ZONA] || "", 
                 nome: nomeImovel,
                 nomeFull: colunas[COL.NOME_FULL] || nomeImovel,
                 estoque: colunas[COL.ESTOQUE],
@@ -284,7 +337,7 @@ function gerarListaLateral() {
         const ativo = item.nome === imovelAtivo ? 'ativo' : '';
         const classeZona = detectarClasseZona(item.zona); 
         
-        return `<div class="${item.tipo === 'N' ? 'separador-complexo-btn' : 'btRes'} ${ativo} ${classeZona}" onclick="navegarVitrine('${item.nome}')">
+        return `<div class="${item.tipo === 'N' ? 'separador-complexo-btn' : 'btRes'} ${ativo} ${classeZona}" onclick="navegavarVitrine('${item.nome}')">
                     <strong>${item.nome}</strong> ${obterHtmlZona(item.zona, item.tipo)}
                 </div>`;
     }).join('');
@@ -360,8 +413,8 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
             html += `<div style="background: #fff5f5; color: #e31010; font-weight: bold; font-size: 0.7rem; text-align: center; padding: 4px; border-bottom: 1px solid #ddd;">${selecionado.campanha}</div>`;
         }
         
-        const linhaInfo = (l1, v1, l2, v2, borda) => `
-            <div style="display: flex; width: 100%; ${borda ? 'border-bottom: 1px solid #ddd;' : ''}">
+        const linhaInfo = (l1, v1, l2, v2, border) => `
+            <div style="display: flex; width: 100%; ${border ? 'border-bottom: 1px solid #ddd;' : ''}">
                 <div style="flex: 1; padding: 4px 8px; border-right: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center;">
                     <label style="font-size: 0.55rem; font-weight: bold; color: var(--mrv-verde); text-transform: uppercase;">${l1}</label>
                     <strong style="font-size: 0.65rem; color: #333;">${v1}</strong>
