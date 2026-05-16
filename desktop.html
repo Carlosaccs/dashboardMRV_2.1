@@ -1,63 +1,431 @@
 <!DOCTYPE html>
-<html lang="pt-br" class="notranslate">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="google" content="notranslate">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard MRV SP</title>
-    <link rel="stylesheet" href="desktop.css">
+    <style>
+        :root {
+            --primary-green: #007236;
+            --secondary-yellow: #febd11;
+            --dark-green: #004d24;
+            --light-bg: #f4f4f4;
+            --text-dark: #333333;
+            --white: #ffffff;
+            --orange-action: #f06b24;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--light-bg);
+            color: var(--text-dark);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- HEADER --- */
+        header {
+            background-color: var(--primary-green);
+            color: var(--white);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            z-index: 10;
+            position: relative;
+        }
+
+        header h1 {
+            font-size: 1.4rem;
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 15px;
+            position: relative;
+        }
+
+        .btn-nav {
+            background-color: var(--secondary-yellow);
+            color: var(--dark-green);
+            border: none;
+            padding: 10px 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .btn-nav:hover {
+            background-color: #e0a60f;
+        }
+
+        .btn-nav:active {
+            transform: scale(0.98);
+        }
+
+        /* --- MENU FLUTUANTE DE DOCUMENTOS --- */
+        /* Corrigido o z-index e overflow para não cortar o texto interno */
+        .dropdown-menu {
+            position: absolute;
+            top: 105%;
+            right: 0;
+            background-color: var(--dark-green);
+            color: var(--white);
+            border-radius: 8px;
+            padding: 15px;
+            width: 320px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.25);
+            display: none;
+            z-index: 999;
+        }
+
+        .dropdown-menu.active {
+            display: block;
+        }
+
+        .dropdown-menu ul {
+            list-style: none;
+        }
+
+        .dropdown-menu li {
+            font-size: 0.85rem;
+            font-weight: bold;
+            font-style: italic;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+        }
+
+        .dropdown-menu li::before {
+            content: "•";
+            color: var(--secondary-yellow);
+            margin-right: 8px;
+            font-size: 1.2rem;
+        }
+
+        .dropdown-menu li:last-child {
+            border-bottom: none;
+        }
+
+        /* --- CONTAINER PRINCIPAL --- */
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* --- COLUNA ESQUERDA (LISTA/STATUS) --- */
+        .sidebar-left {
+            width: 20%;
+            background-color: var(--white);
+            border-right: 1px solid #ddd;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .status-loading {
+            color: #777;
+            font-style: italic;
+            font-size: 0.9rem;
+        }
+
+        /* --- CENTRO (MAPA SVG) --- */
+        .map-content {
+            width: 50%;
+            background-color: var(--white);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .map-header {
+            width: 100%;
+            background-color: #eaeaea;
+            text-align: center;
+            padding: 10px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            color: #555;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .map-wrapper {
+            flex: 1;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* Placeholder para o seu SVG externo ou renderizado dinamicamente */
+        .map-wrapper svg {
+            width: 100%;
+            height: 100%;
+            max-height: 500px;
+        }
+
+        /* --- COLUNA DIREITA (DOCUMENTOS GERAIS) --- */
+        .sidebar-right {
+            width: 30%;
+            background-color: var(--white);
+            border-left: 1px solid #ddd;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .section-title {
+            background-color: var(--primary-green);
+            color: var(--white);
+            padding: 12px;
+            text-align: center;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.95rem;
+            letter-spacing: 0.5px;
+        }
+
+        .doc-list {
+            padding: 15px;
+            overflow-y: auto;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* Estilização dos Cards de Documento */
+        .doc-card {
+            background: var(--white);
+            border-radius: 8px;
+            padding: 12px 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+            border: 1px solid #e8e8e8;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .doc-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+        }
+
+        .doc-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+            padding-right: 10px;
+        }
+
+        .doc-icon {
+            width: 24px;
+            height: 24px;
+            flex-shrink: 0;
+        }
+
+        .doc-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #444;
+        }
+
+        .doc-actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .btn-action {
+            border: none;
+            padding: 8px 16px;
+            font-weight: bold;
+            color: var(--white);
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            transition: opacity 0.2s;
+        }
+
+        .btn-action:hover {
+            opacity: 0.9;
+        }
+
+        .btn-open {
+            background-color: var(--primary-green);
+        }
+
+        .btn-copy {
+            background-color: var(--orange-action);
+        }
+
+        /* --- ESTADO INTERNO DE SELEÇÃO (DASHBOARD) --- */
+        /* Garantindo a consistência visual para itens selecionados */
+        .project-item.selected {
+            border: 2px solid #007236 !important;
+            background-color: #f0f0f0 !important;
+        }
+
+        /* Centralizador do texto padrão quando nada está carregado */
+        .placeholder-text {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #999;
+            text-align: center;
+            padding: 20px;
+            gap: 15px;
+        }
+
+        .placeholder-text img {
+            width: 40px;
+            opacity: 0.5;
+        }
+    </style>
 </head>
 <body>
 
-    <div class="header">
-        RESIDENCIAIS MRV EM SÃO PAULO - mai/26
-        <button id="btn-sobre">Sobre</button>
-    </div>
-
-    <div class="wrapper">
-        <aside class="sidebar-esq" id="lista-imoveis">
-            <div style="padding:20px; color:#666; font-size: 0.8rem;">Carregando residenciais...</div>
-        </aside>
-        
-        <main class="conteudo-centro">
-            <div id="cidade-titulo">Selecione uma região no mapa</div> 
-            <div id="caixa-a"></div> 
-            <div id="caixa-b"></div> 
-        </main>
-
-        <aside class="sidebar-dir" id="ficha-tecnica">
-            <div style="text-align:center; color:#ccc; margin-top:100px;">
-                <p style="font-size: 30px;">📍</p>
-                <p>Clique em algum Residencial ou em alguma região verde do mapa</p>
-            </div>
-        </aside>
-    </div>
-
-    <div id="modal-sobre" class="modal">
-        <div class="modal-content">
-            <span class="modal-close">&times;</span>
-            <h2 style="color: var(--mrv-verde); margin-bottom: 10px;">Sobre o Projeto</h2>
-            <hr style="border: 0; border-top: 1px solid #eee; margin-bottom: 20px;">
+    <header>
+        <h1>Residenciais MRV em São Paulo - mai/26</h1>
+        <div class="nav-buttons">
+            <button class="btn-nav" id="btn-documentos">Documentos</button>
+            <button class="btn-nav" id="btn-sobre">Sobre</button>
             
-            <div class="modal-body" style="text-align: center;">
-                <p style="margin-bottom: 20px; color: #333; line-height: 1.5;">
-                    Esse dashboard foi feito para acessarmos de forma rápida informações básicas dos residenciais MRV durante atendimento a leads.
-                </p>
-                
-                <div style="background: #fff9c4; padding: 15px; border-radius: 8px; border-left: 5px solid #fbc02d; margin-bottom: 25px; text-align: left;">
-                    <p style="font-size: 0.9rem; color: #444; line-height: 1.6;">
-                        As informações podem estar desatualizadas e até erradas, então caso encontre algum erro ou se você tiver algum material que esta faltando nele como books ou vídeos, por favor, envie pra mim pelo whatsapp através do botão abaixo:
-                    </p>
-                </div>
-
-                <a href="https://wa.me/5511999999999?text=Olá%20Carlos,%20encontrei%20um%20erro/material%20para%20o%20Dashboard" target="_blank" id="btn-whatsapp-feedback">
-                    <span style="margin-right: 10px;">📱</span> Carlos Custódio - Enviar Feedback
-                </a>
+            <div class="dropdown-menu" id="menu-documentos">
+                <ul>
+                    <li>Carteira de Trabalho Digital</li>
+                    <li>Extrato do FGTS</li>
+                    <li>Certidão Estado Civil</li>
+                    <li>Certidão Dependente</li>
+                </ul>
             </div>
         </div>
+    </header>
+
+    <div class="main-container">
+        
+        <div class="sidebar-left" id="sidebar-residenciais">
+            <div class="status-loading" id="status-loading">Carregando residenciais...</div>
+            </div>
+
+        <div class="map-content">
+            <div class="map-header">Selecione uma região no mapa</div>
+            <div class="map-wrapper" id="map-container">
+                <div class="placeholder-text">
+                    <svg viewBox="0 0 24 24" width="48" height="48" fill="#ccc"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                    <span>O mapa ou indicador regional será carregado nesta área.</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar-right">
+            <div class="section-title">Documentos Gerais</div>
+            <div class="doc-list" id="documentos-lista">
+                
+                <div class="doc-card">
+                    <div class="doc-info">
+                        <svg class="doc-icon" viewBox="0 0 24 24" fill="#666"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+                        <span class="doc-name">Solicitação de documentos Renda Formal</span>
+                    </div>
+                    <div class="doc-actions">
+                        <button class="btn-action btn-open" onclick="openDoc('formal')">Abrir</button>
+                        <button class="btn-action btn-copy" onclick="copyLink('formal')">Copiar</button>
+                    </div>
+                </div>
+
+                <div class="doc-card">
+                    <div class="doc-info">
+                        <svg class="doc-icon" viewBox="0 0 24 24" fill="#666"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+                        <span class="doc-name">Solicitação de documentos Renda Informal</span>
+                    </div>
+                    <div class="doc-actions">
+                        <button class="btn-action btn-open" onclick="openDoc('informal')">Abrir</button>
+                        <button class="btn-action btn-copy" onclick="copyLink('informal')">Copiar</button>
+                    </div>
+                </div>
+
+                <div class="doc-card">
+                    <div class="doc-info">
+                        <svg class="doc-icon" viewBox="0 0 24 24" fill="#666"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+                        <span class="doc-name">Autorização de Pesquisa Cadastral</span>
+                    </div>
+                    <div class="doc-actions">
+                        <button class="btn-action btn-open" onclick="openDoc('pesquisa')">Abrir</button>
+                        <button class="btn-action btn-copy" onclick="copyLink('pesquisa')">Copiar</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
     </div>
 
-    <script src="mapa-SP.js"></script>
-    <script src="desktop.js"></script>
+    <script>
+        // Lógica de abertura e fechamento do Menu Documentos (Flutuante)
+        const btnDocumentos = document.getElementById('btn-documentos');
+        const menuDocumentos = document.getElementById('menu-documentos');
+
+        btnDocumentos.addEventListener('click', (e) => {
+            e.stopPropagation();
+            menuDocumentos.classList.toggle('active');
+        });
+
+        // Fecha o menu flutuante se clicar fora dele
+        document.addEventListener('click', (e) => {
+            if (!menuDocumentos.contains(e.target) && e.target !== btnDocumentos) {
+                menuDocumentos.classList.remove('active');
+            }
+        });
+
+        // Funções Dummy para os botões da barra lateral direita
+        function openDoc(type) {
+            console.log("Abrindo documento do tipo: " + type);
+            // Insira aqui o link correspondente para o Google Drive ou arquivo
+        }
+
+        function copyLink(type) {
+            console.log("Link copiado para o tipo: " + type);
+            // Insira aqui a lógica de Clipboard API para copiar o link correspondente
+            alert("Link copiado com sucesso!");
+        }
+
+        // --- DICA PARA O CARREGAMENTO DOS DADOS (Google Apps Script / API) ---
+        // Se você usa o google.script.run para buscar os dados da planilha,
+        // certifique-se de que a chamada está ativa e populando o 'sidebar-residenciais'.
+        // Exemplo:
+        /*
+        window.addEventListener('load', () => {
+            google.script.run.withSuccessHandler(showResidenciais).getPlanilhaDados();
+        });
+        function showResidenciais(dados) {
+            document.getElementById('status-loading').style.display = 'none';
+            // lógica para renderizar...
+        }
+        */
+    </script>
 </body>
 </html>
