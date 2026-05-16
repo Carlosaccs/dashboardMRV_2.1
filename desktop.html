@@ -69,9 +69,7 @@
             transition: background 0.2s, transform 0.1s;
         }
 
-        .btn-nav:hover {
-            background-color: #e0a60f;
-        }
+        .btn-nav:hover { background-color: #e0a60f; }
 
         /* --- MENU FLUTUANTE DE DOCUMENTOS --- */
         .dropdown-menu {
@@ -88,14 +86,8 @@
             z-index: 999;
         }
 
-        .dropdown-menu.active {
-            display: block;
-        }
-
-        .dropdown-menu ul {
-            list-style: none;
-        }
-
+        .dropdown-menu.active { display: block; }
+        .dropdown-menu ul { list-style: none; }
         .dropdown-menu li {
             font-size: 0.85rem;
             font-weight: bold;
@@ -106,17 +98,13 @@
             display: flex;
             align-items: center;
         }
-
         .dropdown-menu li::before {
             content: "•";
             color: var(--secondary-yellow);
             margin-right: 8px;
             font-size: 1.2rem;
         }
-
-        .dropdown-menu li:last-child {
-            border-bottom: none;
-        }
+        .dropdown-menu li:last-child { border-bottom: none; }
 
         /* --- CONTAINER PRINCIPAL --- */
         .main-container {
@@ -146,7 +134,7 @@
             padding-top: 20px;
         }
 
-        /* Itens de Residenciais dinâmicos */
+        /* Itens Dinâmicos */
         .project-item {
             padding: 12px;
             background-color: var(--white);
@@ -159,13 +147,10 @@
             transition: all 0.2s;
             text-align: left;
         }
-
         .project-item:hover {
             background-color: #f9f9f9;
             border-color: var(--primary-green);
         }
-
-        /* Highlight para o item clicado/selecionado */
         .project-item.selected {
             border: 2px solid var(--primary-green) !important;
             background-color: #f0f0f0 !important;
@@ -202,7 +187,6 @@
             align-items: center;
             padding: 20px;
         }
-
         .map-wrapper svg {
             width: 100%;
             height: 100%;
@@ -249,23 +233,9 @@
             border: 1px solid #e8e8e8;
         }
 
-        .doc-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex: 1;
-        }
-
-        .doc-name {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: #444;
-        }
-
-        .doc-actions {
-            display: flex;
-            gap: 8px;
-        }
+        .doc-info { display: flex; align-items: center; gap: 10px; flex: 1; }
+        .doc-name { font-size: 0.85rem; font-weight: 600; color: #444; }
+        .doc-actions { display: flex; gap: 8px; }
 
         .btn-action {
             border: none;
@@ -276,7 +246,6 @@
             border-radius: 4px;
             font-size: 0.8rem;
         }
-
         .btn-open { background-color: var(--primary-green); }
         .btn-copy { background-color: var(--orange-action); }
 
@@ -312,7 +281,6 @@
     </header>
 
     <div class="main-container">
-        
         <div class="sidebar-left" id="sidebar-residenciais">
             <div class="status-loading" id="residenciais-loading">Acessando banco de dados...</div>
         </div>
@@ -333,160 +301,94 @@
                 <div class="status-loading" id="documentos-loading">Acessando base de documentos...</div>
             </div>
         </div>
-
     </div>
 
     <script>
-        // IMPORTANTE: Insira aqui a URL gerada ao publicar o seu script como "Web App" no Google Apps Script
-        // Lembre-se de configurar para que "Qualquer um" (Anyone) possa acessar.
+        // COLE AQUI A SUA URL DA NOVA IMPLANTAÇÃO DO WEB APP
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwqoW_pLhR8O8r4_SgZ2n_e1gP723M8H4-yG-K3L36v_jH4oY5V_X6z087ZJ62B7m8/exec"; 
 
-        // Controle do Dropdown de Documentos no Header
+        // Menu Dropdown
         const btnDocumentos = document.getElementById('btn-documentos');
         const menuDocumentos = document.getElementById('menu-documentos');
+        btnDocumentos.addEventListener('click', (e) => { e.stopPropagation(); menuDocumentos.classList.toggle('active'); });
+        document.addEventListener('click', (e) => { if (!menuDocumentos.contains(e.target) && e.target !== btnDocumentos) menuDocumentos.classList.remove('active'); });
 
-        btnDocumentos.addEventListener('click', (e) => {
-            e.stopPropagation();
-            menuDocumentos.classList.toggle('active');
-        });
-
-        document.addEventListener('click', (e) => {
-            if (!menuDocumentos.contains(e.target) && e.target !== btnDocumentos) {
-                menuDocumentos.classList.remove('active');
-            }
-        });
-
-        // Inicialização automática assim que a página carrega
         window.addEventListener('DOMContentLoaded', () => {
-            if (!WEB_APP_URL || WEB_APP_URL.includes("SUA_URL")) {
-                console.error("Por favor, configure a variável WEB_APP_URL com o link válido do seu Web App.");
-                document.getElementById('residenciais-loading').innerText = "Erro: URL da API não configurada.";
-                document.getElementById('documentos-loading').innerText = "Erro: URL da API não configurada.";
+            if (WEB_APP_URL.includes("SUA_URL") || !WEB_APP_URL) {
+                document.getElementById('residenciais-loading').innerText = "Erro: Configure a URL.";
             } else {
                 obterDadosDoServidor();
             }
         });
 
-        // Requisição AJAX (Fetch) para buscar os dados consolidados do seu back-end
         async function obterDadosDoServidor() {
             try {
-                const response = await fetch(WEB_APP_URL);
-                if (!response.ok) throw new Error("A resposta da rede não foi satisfatória.");
+                // Adicionado modo 'cors' para forçar a permissão no GitHub Pages
+                const response = await fetch(WEB_APP_URL, { method: "GET", mode: "cors" });
+                if (!response.ok) throw new Error("Erro na resposta da rede.");
                 
                 const dadosConectados = await response.json();
                 
-                // Processa as três frentes do Dashboard de forma limpa
                 construirListaResidenciais(dadosConectados.residenciais);
                 construirListaDocumentos(dadosConectados.documentos);
                 renderizarMapaEstrategico(dadosConectados.svgMapa);
 
             } catch (erro) {
-                console.error("Erro crítico ao obter dados do banco:", erro);
+                console.error("Erro na requisição:", erro);
                 document.getElementById('residenciais-loading').innerText = "Falha ao conectar ao banco.";
                 document.getElementById('documentos-loading').innerText = "Falha ao conectar à base.";
             }
         }
 
-        // 1. Constrói dinamicamente a lista completa de residenciais à esquerda
         function construirListaResidenciais(lista) {
             const container = document.getElementById('sidebar-residenciais');
-            container.innerHTML = ""; // Limpa o indicador de carregamento
-
+            container.innerHTML = ""; 
             if (!lista || lista.length === 0) {
-                container.innerHTML = "<div class='status-loading'>Nenhum residencial encontrado.</div>";
+                container.innerHTML = "<div class='status-loading'>Nenhum residencial cadastrado.</div>";
                 return;
             }
-
             lista.forEach(item => {
                 const botao = document.createElement('button');
                 botao.className = 'project-item';
                 botao.innerText = item.nome;
-                
-                // Evento ao clicar no empreendimento
                 botao.addEventListener('click', () => {
-                    // Mantém destacado o item clicado com borda verde e fundo cinza claro
                     document.querySelectorAll('.project-item').forEach(b => b.classList.remove('selected'));
                     botao.classList.add('selected');
-
-                    // Atualiza o título central
                     document.getElementById('map-header-title').innerText = item.nome;
-                    
-                    // Se houver uma função específica para destacar a região no mapa, chame aqui:
-                    if(typeof selecionarRegiaoNoMapa === "function") {
-                        selecionarRegiaoNoMapa(item.regiao || item.id);
-                    }
                 });
-
                 container.appendChild(botao);
             });
         }
 
-        // 2. Constrói dinamicamente a lista completa de documentos à direita
         function construirListaDocumentos(documentos) {
             const container = document.getElementById('sidebar-documentos');
-            container.innerHTML = ""; // Limpa o indicador de carregamento
-
+            container.innerHTML = "";
             if (!documentos || documentos.length === 0) {
-                container.innerHTML = "<div class='status-loading'>Nenhum documento disponível.</div>";
+                container.innerHTML = "<div class='status-loading'>Nenhum documento encontrado.</div>";
                 return;
             }
-
             documentos.forEach(doc => {
                 const card = document.createElement('div');
                 card.className = 'doc-card';
-
                 card.innerHTML = `
-                    <div class="doc-info">
-                        <span class="doc-name">${doc.nome}</span>
-                    </div>
+                    <div class="doc-info"><span class="doc-name">${doc.nome}</span></div>
                     <div class="doc-actions">
                         <button class="btn-action btn-open" onclick="abrirLinkDireto('${doc.linkUrl}')">Abrir</button>
                         <button class="btn-action btn-copy" onclick="copiarTextoParaArea('${doc.linkUrl}')">Copiar</button>
-                    </div>
-                `;
+                    </div>`;
                 container.appendChild(card);
             });
         }
 
-        // 3. Renderiza o mapa SVG dinamicamente no painel central
         function renderizarMapaEstrategico(svgConteudo) {
-            if (!svgConteudo) {
-                // Se o banco não retornar o mapa completo ainda, mantém o placeholder estilizado
-                return;
-            }
-            const container = document.getElementById('map-container');
-            container.innerHTML = svgConteudo;
-            
-            // Ativa eventos de clique nas regiões (paths) do mapa se elas possuírem classes associadas
-            const caminhosMapa = container.querySelectorAll('path, g');
-            caminhosMapa.forEach(caminho => {
-                caminho.addEventListener('click', function() {
-                    caminhosMapa.forEach(c => c.removeAttribute('style'));
-                    // Aplica um destaque visual na área do mapa que foi clicada
-                    this.style.fill = "#c8e6c9"; 
-                });
-            });
+            if (!svgConteudo) return;
+            document.getElementById('map-container').innerHTML = svgConteudo;
         }
 
-        // Funções utilitárias para os botões dos documentos
-        function abrirLinkDireto(url) {
-            if(url) {
-                window.open(url, '_blank');
-            } else {
-                alert("Link não cadastrado para este documento.");
-            }
-        }
-
-        function copiarTextoParaArea(url) {
-            if(!url) {
-                alert("Não há link disponível para cópia.");
-                return;
-            }
-            navigator.clipboard.writeText(url).then(() => {
-                alert("Link copiado com sucesso para a área de transferência!");
-            }).catch(err => {
-                console.error("Erro ao copiar link: ", err);
-            });
+        function abrirLinkDireto(url) { if(url) window.open(url, '_blank'); else alert("Link indisponível."); }
+        function copiarTextoParaArea(url) { 
+            if(!url) return;
+            navigator.clipboard.writeText(url).then(() => alert("Copiado!") );
         }
     </script>
 </body>
