@@ -7,23 +7,80 @@
     <title>Dashboard MRV SP</title>
     <link rel="stylesheet" href="desktop.css">
     <style>
-        /* CSS Adicional temporário apenas para posicionar os botões perfeitamente alinhados */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        /* ==========================================================================
+           AJUSTE FINO DO CABEÇALHO E CENTRALIZAÇÃO DOS BOTÕES
+           ========================================================================== */
+        
+        /* Força o container do cabeçalho a alinhar tudo verticalmente no centro */
+        div.header {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            position: relative !important;
+            padding: 0 20px !important;
+            box-sizing: border-box !important;
         }
-        .header-buttons {
-            display: flex;
-            gap: 10px; /* Mantém um espaço elegante entre os dois botões */
+
+        /* Garante que o texto principal fique morto no centro da faixa verde */
+        .titulo-mrv-centro {
+            position: absolute !important;
+            left: 50% !important;
+            top: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            font-weight: bold !important;
+            text-transform: uppercase !important;
+            white-space: nowrap !important;
+            text-align: center !important;
+            font-size: 1.2rem !important;
+            color: #ffffff !important;
+            z-index: 1 !important;
+        }
+
+        /* Agrupa e empurra os botões para a extrema direita */
+        .container-botoes-mrv {
+            display: flex !important;
+            gap: 12px !important;
+            margin-left: auto !important;
+            align-items: center !important;
+            z-index: 10 !important;
+        }
+
+        /* Estilo exato dos botões amarelos retangulares */
+        button#btn-documentos, 
+        button#btn-sobre {
+            all: unset !important;
+            box-sizing: border-box !important;
+            background-color: #febd11 !important; /* Amarelo ouro padrão */
+            color: #004d24 !important;            /* Texto verde escuro */
+            border-radius: 4px !important;         /* Arestas levemente suavizadas */
+            padding: 8px 18px !important;          /* Formato retangular */
+            font-weight: bold !important;
+            font-size: 0.8rem !important;
+            text-transform: uppercase !important;
+            cursor: pointer !important;
+            text-align: center !important;
+            display: inline-block !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+            transition: background-color 0.2s ease !important;
+        }
+
+        /* Efeito de hover discreto */
+        button#btn-documentos:hover, 
+        button#btn-sobre:hover {
+            background-color: #e0a60f !important;
         }
     </style>
 </head>
 <body>
 
     <div class="header">
-        RESIDENCIAIS MRV EM SÃO PAULO - mai/26
-        <div class="header-buttons">
+        <div class="titulo-mrv-centro">
+            RESIDENCIAIS MRV EM SÃO PAULO - MAI/26
+        </div>
+        
+        <div class="container-botoes-mrv">
             <button id="btn-documentos">Documentos</button>
             <button id="btn-sobre">Sobre</button>
         </div>
