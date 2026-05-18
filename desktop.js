@@ -102,6 +102,14 @@ function copiarLink(url) {
     copiarTexto(linkSeguro, "Link seguro copiado!");
 }
 
+// NOVA FUNÇÃO: Executa a abertura direta contornando telas e pop-ups intermediários do navegador
+function abrirDocumentoDireto(url) {
+    const linkSeguro = formatarLinkSeguro(url);
+    if (linkSeguro) {
+        window.open(linkSeguro, '_blank');
+    }
+}
+
 /* ==========================================================================
    BLOCO 03: CARREGAMENTO DE DADOS (GOOGLE SHEETS)
    ========================================================================== */
@@ -285,7 +293,7 @@ function renderizarNoContainer(id, dados, interativo) {
             if (isGSP) { 
                 eventos = `onclick="trocarMapas(true)" onmouseover="atualizarTituloSuperior('GRANDE SÃO PAULO')" onmouseout="atualizarTituloSuperior()"`; 
             } else { 
-                eventos = `onclick="comandoSelecao('${idNorm}')" onmouseover="atualizarTituloSuperior('${p.name}')" onmouseout="atualizarTituloSuperior()"`; 
+                eventos = `onclick="comandoSelecao('${idNorm}')" onmouseover="atualizarTituloSuperior('${p.name}')" onmouseout="mouseout="atualizarTituloSuperior()"`; 
             }
         }
         return `<path id="${id}-${idNorm}" d="${p.d}" class="${(temMRV || isGSP) && interativo ? 'commrv '+ativo : ''}" ${eventos}></path>`;
@@ -341,10 +349,9 @@ function gerarListaLateral() {
 /* ==========================================================================
    BLOCO 07: CONSTRUÇÃO DA VITRINE (FICHA TÉCNICA)
    ========================================================================== */
-// CORREÇÃO: Removido o <iframe> de preview para evitar os downloads fantasmas automáticos ao passar o mouse
+// CORREÇÃO: O botão "Abrir" agora chama a função JavaScript abrirDocumentoDireto() eliminando cliques duplos ou telas intermediárias
 const criarCardMaterial = (titulo, url, icone) => {
     if (!url || url === "" || url === "---") return "";
-    const linkSeguro = formatarLinkSeguro(url);
     return `
     <div class="card-material-item">
         <div class="card-material-left">
@@ -352,7 +359,7 @@ const criarCardMaterial = (titulo, url, icone) => {
             <span class="card-text">${titulo}</span>
         </div>
         <div class="card-material-right">
-            <a href="${linkSeguro}" target="_blank" class="card-btn-abrir">Abrir</a>
+            <button onclick="abrirDocumentoDireto('${url}')" class="card-btn-abrir" style="cursor: pointer; border: none;">Abrir</button>
             <button onclick="copiarLink('${url}')" class="card-btn-copiar">Copiar</button>
         </div>
     </div>`;
@@ -433,10 +440,10 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
         html += `</div>`;
 
         if(selecionado.tipologiasH) {
-            const linhas = selecionado.tipologiasH.split(';').map(l => l.trim()).filter(l => l !== "");
-            if(linhas.length > 0) {
-                const titulos = linhas[0].split(',').map(t => t.trim()); 
-                const dados = linhas.slice(1);
+            const lines = selecionado.tipologiasH.split(';').map(l => l.trim()).filter(l => l !== "");
+            if(lines.length > 0) {
+                const titulos = lines[0].split(',').map(t => t.trim()); 
+                const dados = lines.slice(1);
                 html += `
                 <div class="tabela-precos-container">
                     <div class="tabela-header">
