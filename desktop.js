@@ -73,16 +73,14 @@ function configurarBotaoDocumentos() {
     }
 }
 
+// CORREÇÃO CRÍTICA: Ajustado para usar apenas a estrutura /preview, impedindo o Opera de registrar downloads no histórico do navegador
 function formatarLinkSeguro(url) {
     if (!url || url === "---" || url === "" || typeof url !== 'string') return "";
     let link = url.trim();
     if (link.includes('drive.google.com')) {
         const match = link.match(/\/d\/(.*?)(\/|$|\?)/) || link.match(/id=(.*?)($|&)/);
         if (match && match[1]) {
-            if (link.toLowerCase().includes('.pdf') || link.includes('open?id=') || link.includes('file/d/')) {
-                return `https://drive.google.com/uc?export=view&id=${match[1]}`;
-            }
-            return `https://drive.google.com/file/d/${match[1]}/preview?rm=minimal`;
+            return `https://drive.google.com/file/d/${match[1]}/preview`;
         }
     }
     return link;
@@ -102,7 +100,6 @@ function copiarLink(url) {
     copiarTexto(linkSeguro, "Link seguro copiado!");
 }
 
-// NOVA FUNÇÃO: Executa a abertura direta contornando telas e pop-ups intermediários do navegador
 function abrirDocumentoDireto(url) {
     const linkSeguro = formatarLinkSeguro(url);
     if (linkSeguro) {
@@ -123,7 +120,7 @@ async function carregarAbaDocumentos() {
         const linhasPuras = texto.split(/\r?\n/);
 
         DOCUMENTOS_GERAIS = linhasPuras.slice(1).map(linha => {
-            const linhaLimpa = linha.replace(/^"|"$/g, '').trim();
+            const linhaLimpa = inlineStr = linha.replace(/^"|"$/g, '').trim();
             if (!linhaLimpa) return null;
 
             const ultimaVirgula = linhaLimpa.lastIndexOf(',');
@@ -293,7 +290,7 @@ function renderizarNoContainer(id, dados, interativo) {
             if (isGSP) { 
                 eventos = `onclick="trocarMapas(true)" onmouseover="atualizarTituloSuperior('GRANDE SÃO PAULO')" onmouseout="atualizarTituloSuperior()"`; 
             } else { 
-                eventos = `onclick="comandoSelecao('${idNorm}')" onmouseover="atualizarTituloSuperior('${p.name}')" onmouseout="mouseout="atualizarTituloSuperior()"`; 
+                eventos = `onclick="comandoSelecao('${idNorm}')" onmouseover="atualizarTituloSuperior('${p.name}')" onmouseout="atualizarTituloSuperior()"`; 
             }
         }
         return `<path id="${id}-${idNorm}" d="${p.d}" class="${(temMRV || isGSP) && interativo ? 'commrv '+ativo : ''}" ${eventos}></path>`;
@@ -349,7 +346,6 @@ function gerarListaLateral() {
 /* ==========================================================================
    BLOCO 07: CONSTRUÇÃO DA VITRINE (FICHA TÉCNICA)
    ========================================================================== */
-// CORREÇÃO: O botão "Abrir" agora chama a função JavaScript abrirDocumentoDireto() eliminando cliques duplos ou telas intermediárias
 const criarCardMaterial = (titulo, url, icone) => {
     if (!url || url === "" || url === "---") return "";
     return `
