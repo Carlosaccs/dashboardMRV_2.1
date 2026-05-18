@@ -73,17 +73,18 @@ function configurarBotaoDocumentos() {
     }
 }
 
-// SOLUÇÃO MULTI-NAVEGADOR: Força o Google Drive a abrir no modo viewer neutro externo.
-// Bloqueia as funções de proprietário (mover/editar) em qualquer navegador e preserva os botões de impressão.
+// SOLUÇÃO DEFINITIVA MULTI-NAVEGADOR (ISOLAMENTO TOTAL)
+// O formato /preview com rm=minimal remove completamente a barra do Drive, a árvore de pastas lateral,
+// a opção de renomear e mover, mas preserva os controlos de impressão e download em qualquer navegador.
 function formatarLinkSeguro(url) {
     if (!url || url === "---" || url === "" || typeof url !== 'string') return "";
     let link = url.trim();
     if (link.includes('drive.google.com')) {
         const match = link.match(/\/d\/(.*?)(\/|$|\?)/) || link.match(/id=(.*?)($|&)/);
         if (match && match[1]) {
-            // O parâmetro 'usp=view_handler' força o Drive a tratar o acesso como visitante comum,
-            // limpando os menus de edição e mantendo os controles de impressão ativos em todos os navegadores.
-            return `https://drive.google.com/file/d/${match[1]}/view?usp=view_handler`;
+            // 'rm=minimal' remove toda a interface de navegação e edição estrutural do Drive,
+            // blindando contra alterações e ocultando caminhos de pastas secundárias.
+            return `https://drive.google.com/file/d/${match[1]}/preview?rm=minimal`;
         }
     }
     return link;
@@ -123,14 +124,14 @@ async function carregarAbaDocumentos() {
         const linhasPuras = texto.split(/\r?\n/);
 
         DOCUMENTOS_GERAIS = linhasPuras.slice(1).map(linha => {
-            const inlineStr = linhaLimpa = linha.replace(/^"|"$/g, '').trim();
+            const linhaLimpa = linha.replace(/^"|"$/g, '').trim();
             if (!linhaLimpa) return null;
 
-            const ultimaVirgula = inlineStr.lastIndexOf(',');
+            const ultimaVirgula = linhaLimpa.lastIndexOf(',');
             if (ultimaVirgula === -1) return null;
 
-            const titulo = inlineStr.substring(0, ultimaVirgula).trim().replace(/^"|"$/g, '');
-            const url = inlineStr.substring(ultimaVirgula + 1).trim().replace(/^"|"$/g, '');
+            const titulo = linhaLimpa.substring(0, ultimaVirgula).trim().replace(/^"|"$/g, '');
+            const url = linhaLimpa.substring(ultimaVirgula + 1).trim().replace(/^"|"$/g, '');
 
             if (!titulo || !url.startsWith('http')) return null;
 
