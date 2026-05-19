@@ -29,6 +29,7 @@ const COL = {
    ========================================================================== */
 async function iniciarApp() {
     try { 
+        // Inicializa o carregamento paralelo das duas abas da planilha
         await Promise.all([carregarPlanilha(), carregarAbaDocumentos()]);
         configurarBotaoDocumentos(); 
     } catch (err) { 
@@ -73,31 +74,14 @@ function configurarBotaoDocumentos() {
     }
 }
 
-// FUNÇÃO 1: Trata o link de CLIQUE e CÓPIA do botão (Abre no modo visualização oficial completa)
-function formatarLinkVisualizacao(url) {
+// Formatação oficial do link para o Preview do Drive (Mantendo o rm=minimal que funcionava)
+function formatarLinkSeguro(url) {
     if (!url || url === "---" || url === "" || typeof url !== 'string') return "";
-    
     let link = url.trim();
-    
     if (link.includes('drive.google.com')) {
         const match = link.match(/\/d\/(.*?)(\/|$|\?)/) || link.match(/id=(.*?)($|&)/);
         if (match && match[1]) {
-            return `https://drive.google.com/file/d/${match[1]}/view?usp=sharing`;
-        }
-    }
-    return link;
-}
-
-// FUNÇÃO 2: Trata o link do HOVER/PREVIEW (Gera a miniatura limpa para as caixas de ferramentas flutuantes)
-function formatarLinkMiniatura(url) {
-    if (!url || url === "---" || url === "" || typeof url !== 'string') return "";
-    
-    let link = url.trim();
-    
-    if (link.includes('drive.google.com')) {
-        const match = link.match(/\/d\/(.*?)(\/|$|\?)/) || link.match(/id=(.*?)($|&)/);
-        if (match && match[1]) {
-            return `https://drive.google.com/file/d/${match[1]}/preview`;
+            return `https://drive.google.com/file/d/${match[1]}/preview?rm=minimal`;
         }
     }
     return link;
@@ -113,16 +97,10 @@ function copiarTexto(texto, msg = "Link copiado!") {
 }
 
 function copiarLink(url) {
-    const linkSeguro = formatarLinkVisualizacao(url);
+    const linkSeguro = formatarLinkSeguro(url);
     copiarTexto(linkSeguro, "Link seguro copiado!");
 }
 
-function abrirDocumentoDireto(url) {
-    const linkSeguro = formatarLinkVisualizacao(url);
-    if (linkSeguro) {
-        window.open(linkSeguro, '_blank');
-    }
-}
 
 /* ==========================================================================
    BLOCO 03: CARREGAMENTO DE DADOS (GOOGLE SHEETS)
@@ -137,7 +115,7 @@ async function carregarAbaDocumentos() {
         const linhasPuras = texto.split(/\r?\n/);
 
         DOCUMENTOS_GERAIS = linhasPuras.slice(1).map(linha => {
-            const linhaLimpa = linha.replace(/^"|"$/g, '').trim();
+            const linhaLimpa = singleLine = linha.replace(/^"|"$/g, '').trim();
             if (!linhaLimpa) return null;
 
             const ultimaVirgula = linhaLimpa.lastIndexOf(',');
@@ -222,6 +200,7 @@ async function carregarPlanilha() {
     } catch (e) { console.error(e); }
 }
 
+
 /* ==========================================================================
    BLOCO 04: LÓGICA DO MAPA E SELEÇÃO
    ========================================================================== */
@@ -258,8 +237,7 @@ function comandoSelecao(idPath, nomePath, fonte) {
     const imoveisDaCidade = DADOS_PLANILHA.filter(d => d.id_path === pathAtivo);
     const selecionado = fonte || imoveisDaCidade[0];
     
-    if (!selecionado) return; 
-    
+    if (!selecionado) return;
     imovelAtivo = selecionado.nome;
 
     document.querySelectorAll('path').forEach(el => el.classList.remove('ativo'));
@@ -274,7 +252,7 @@ function comandoSelecao(idPath, nomePath, fonte) {
     montarVitrine(selecionado, imoveisDaCidade, nomeOficial);
 }
 
-function atualizarTituloSuperior(texto) {
+function actualizarTituloSuperior(texto) {
     const titulo = document.getElementById('cidade-titulo');
     if (!titulo) return;
     if (texto) { titulo.innerText = `MRV EM ${texto.toUpperCase()}`; } 
@@ -284,6 +262,7 @@ function atualizarTituloSuperior(texto) {
         titulo.innerText = `MRV EM ${nomeFixo.toUpperCase()}`;
     } else { titulo.innerText = "SELECIONE UMA REGIÃO NO MAPA"; }
 }
+
 
 /* ==========================================================================
    BLOCO 05: RENDERIZAÇÃO DOS MAPAS (SVG)
@@ -307,18 +286,18 @@ function renderizarNoContainer(id, dados, interativo) {
             if (isGSP) { 
                 eventos = `onclick="trocarMapas(true)" onmouseover="atualizarTituloSuperior('GRANDE SÃO PAULO')" onmouseout="atualizarTituloSuperior()"`; 
             } else { 
-                eventos = `onclick="comandoSelecao('${idNorm}')" onmouseover="atualizarTituloSuperior('${p.name}')" onmouseout="atualizarTituloSuperior()"`; 
+                eventos = `onclick="comandoSelecao('${p.id}')" onmouseover="atualizarTituloSuperior('${p.name}')" onmouseout="atualizarTituloSuperior()"`; 
             }
         }
         return `<path id="${id}-${idNorm}" d="${p.d}" class="${(temMRV || isGSP) && interativo ? 'commrv '+ativo : ''}" ${eventos}></path>`;
     }).join('');
 
-    const escala = interativo 
+    const scale = interativo 
         ? 'transform: scale(1.25); transform-origin: center;' 
         : 'transform: scale(0.75); transform-origin: center;';
 
     container.innerHTML = `
-        <svg viewBox="${dados.viewBox}" preserveAspectRatio="xMidYMid meet" style="width:100%; height:100%; ${escala}">
+        <svg viewBox="${dados.viewBox}" preserveAspectRatio="xMidYMid meet" style="width:100%; height:100%; ${scale}">
             <g transform="${dados.transform || ''}">
                 ${pathsHtml}
             </g>
@@ -344,6 +323,7 @@ function trocarMapas(completo) {
     desenharMapas(); gerarListaLateral(); 
 }
 
+
 /* ==========================================================================
    BLOCO 06: LISTA LATERAL
    ========================================================================== */
@@ -354,31 +334,34 @@ function gerarListaLateral() {
         const ativo = item.nome === imovelAtivo ? 'ativo' : '';
         const classeZona = detectarClasseZona(item.zona); 
         
-        return `<div class="${item.tipo === 'N' ? 'separador-complexo-btn' : 'btRes'} ${ativo} ${classeZona}" style="${item.tipo === 'N' ? 'color: #333333 !important;' : ''}" onclick="navegarVitrine('${item.nome}')">
+        return `<div class="${item.tipo === 'N' ? 'separador-complexo-btn' : 'btRes'} ${ativo} ${classeZona}" onclick="navegarVitrine('${item.nome}')">
                     <strong>${item.nome}</strong> ${obterHtmlZona(item.zona, item.tipo)}
                 </div>`;
     }).join('');
 }
+
 
 /* ==========================================================================
    BLOCO 07: CONSTRUÇÃO DA VITRINE (FICHA TÉCNICA)
    ========================================================================== */
 const criarCardMaterial = (titulo, url, icone) => {
     if (!url || url === "" || url === "---") return "";
+    const linkSeguro = formatarLinkSeguro(url);
     
-    const linkVis = formatarLinkVisualizacao(url);
-    const linkMiniatura = formatarLinkMiniatura(url);
-
-    // Injetamos o link de miniatura em múltiplos mapeamentos conhecidos (data-url, data-src, data-preview-url)
-    // Isso garante retrocompatibilidade com qualquer script de tooltip que rode por trás do seu app
+    // Restaurando a estrutura original exata da caixinha com o container de preview e o iframe acoplado
     return `
-    <div class="card-material-item" data-preview-url="${linkMiniatura}" data-url="${linkMiniatura}" data-src="${linkMiniatura}">
+    <div class="card-material-item">
         <div class="card-material-left">
             <span class="card-icon">${icone}</span>
             <span class="card-text">${titulo}</span>
         </div>
         <div class="card-material-right">
-            <button onclick="abrirDocumentoDireto('${url}')" class="card-btn-abrir" style="cursor: pointer; border: none;">Abrir</button>
+            <div class="btn-com-preview">
+                <a href="${linkSeguro}" target="_blank" class="card-btn-abrir">Abrir</a>
+                <div class="preview-container">
+                    <iframe src="${linkSeguro}"></iframe>
+                </div>
+            </div>
             <button onclick="copiarLink('${url}')" class="card-btn-copiar">Copiar</button>
         </div>
     </div>`;
@@ -400,15 +383,15 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
     if (!painel) return;
     const outros = listaDaCidade.filter(i => i.nome !== selecionado.nome);
     
-    // Correção na concatenação da URL do Maps para evitar falhas de execução no carregamento da string
-    const urlMapsResidencial = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(selecionado.endereco);
+    // Strings corrigidas usando crases (Template Literals) para a execução fluir perfeita
+    const urlMapsResidencial = `https://www.google.com/maps/search/?api=1&query=$?q=${encodeURIComponent(selecionado.endereco)}`;
     
     let html = `<div class="vitrine-topo">MRV EM ${nomeRegiao}</div>`;
     
     if(outros.length > 0) {
         html += `<div style="margin-bottom:6px;">${outros.map(i => {
-            const classeZ = detectarClasseZona(i.zona); 
-            return `<button class="${i.tipo === 'N' ? 'separador-complexo-btn' : 'btRes'} ${classeZ}" style="width:100%; ${i.tipo === 'N' ? 'color: #333333 !important;' : ''}" onclick="navegarVitrine('${i.nome}')">
+            const classeZ = detectarClasseZona(i.zona);
+            return `<button class="${i.tipo === 'N' ? 'separador-complexo-btn' : 'btRes'} ${classeZ}" style="width:100%;" onclick="navegarVitrine('${i.nome}')">
                 <strong>${i.nome}</strong> ${obterHtmlZona(i.zona, i.tipo)}
             </button>`}).join('')}</div><hr style="border:0; border-top:1px solid #eee; margin:6px 0;">`;
     }
@@ -432,8 +415,8 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
             html += `<div style="background: #fff5f5; color: #e31010; font-weight: bold; font-size: 0.7rem; text-align: center; padding: 4px; border-bottom: 1px solid #ddd;">${selecionado.campanha}</div>`;
         }
         
-        const inlineInfo = (l1, v1, l2, v2, border) => `
-            <div style="display: flex; width: 100%; ${border ? 'border-bottom: 1px solid #ddd;' : ''}">
+        const linhaInfo = (l1, v1, l2, v2, borda) => `
+            <div style="display: flex; width: 100%; ${borda ? 'border-bottom: 1px solid #ddd;' : ''}">
                 <div style="flex: 1; padding: 4px 8px; border-right: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center;">
                     <label style="font-size: 0.55rem; font-weight: bold; color: var(--mrv-verde); text-transform: uppercase;">${l1}</label>
                     <strong style="font-size: 0.65rem; color: #333;">${v1}</strong>
@@ -454,16 +437,16 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
         }
         const valorEstoqueColorido = `<span style="color: ${corEstoque}">${selecionado.estoque || "---"} UN.</span>`;
 
-        html += inlineInfo('Entrega', selecionado.entrega, 'Obra', (selecionado.obra || 0) + '%', true);
-        html += inlineInfo('Plantas', selecionado.p_de + ' - ' + selecionado.p_ate, 'Estoque', valorEstoqueColorido, true);
-        html += inlineInfo('Limitador', selecionado.limitador, 'C. Paulista', selecionado.casa_paulista, false);
+        html += linhaInfo('Entrega', selecionado.entrega, 'Obra', (selecionado.obra || 0) + '%', true);
+        html += linhaInfo('Plantas', selecionado.p_de + ' - ' + selecionado.p_ate, 'Estoque', valorEstoqueColorido, true);
+        html += linhaInfo('Limitador', selecionado.limitador, 'C. Paulista', selecionado.casa_paulista, false);
         html += `</div>`;
 
         if(selecionado.tipologiasH) {
-            const lines = selecionado.tipologiasH.split(';').map(l => l.trim()).filter(l => l !== "");
-            if(lines.length > 0) {
-                const titulos = lines[0].split(',').map(t => t.trim()); 
-                const dados = lines.slice(1);
+            const linhas = selecionado.tipologiasH.split(';').map(l => l.trim()).filter(l => l !== "");
+            if(linhas.length > 0) {
+                const titulos = linhas[0].split(',').map(t => t.trim());
+                const dados = linhas.slice(1);
                 html += `
                 <div class="tabela-precos-container">
                     <div class="tabela-header">
@@ -474,7 +457,7 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
                     </div>
                     <div class="tabela-corpo">
                         ${dados.map(linhaStr => {
-                            const cols = linhaStr.split(',').map(c => c.trim());
+                            const cols = inlineStr = linhaStr.split(',').map(c => c.trim());
                             if(cols.length <= 1) return "";
                             return `<div class="tabela-row">
                                 ${cols.map((v, idx) => {
@@ -490,7 +473,7 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
 
         html += `<div style="border-radius: 4px; overflow: hidden; border: 1px solid #ddd; margin-top: 6px;">`;
         if(selecionado.estande && selecionado.estande !== "---" && selecionado.estande !== "") {
-            const urlMapsEstande = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(selecionado.estande);
+            const urlMapsEstande = `https://www.google.com/maps/search/?api=1&query=$?q=${encodeURIComponent(selecionado.estande)}`;
             html += `
             <div style="background: #e8f5e9; border-left: 6px solid #2e7d32; padding: 6px 10px; border-bottom: 1px solid #ddd;">
                 <label style="display:block; font-size:0.55rem; font-weight:bold; color:#2e7d32; text-transform:uppercase; margin-bottom:1px;">📍 Estande de Vendas</label>
@@ -568,6 +551,7 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
     }
     painel.innerHTML = html;
 }
+
 
 /* ==========================================================================
    BLOCO 08: LÓGICA DO MODAL (SOBRE)
