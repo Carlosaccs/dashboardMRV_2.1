@@ -77,12 +77,17 @@ function configurarBotaoDocumentos() {
 // Isso faz o Chrome baixar o PDF e abri-lo localmente (file:///), garantindo a interface limpa desejada.
 function formatarLinkSeguro(url) {
     if (!url || url === "---" || url === "" || typeof url !== 'string') return "";
+    
     let link = url.trim();
+    
     if (link.includes('drive.google.com')) {
+        // Captura o ID único do arquivo guardado na tabela
         const match = link.match(/\/d\/(.*?)(\/|$|\?)/) || link.match(/id=(.*?)($|&)/);
+        
         if (match && match[1]) {
-            // Retorna o preview puro do arquivo, que mantém a barra de ferramentas nativa do Drive (impressão/download) mas esconde a árvore de pastas lateral
-            return `https://drive.google.com/file/d/${match[1]}/preview`;
+            // Força a abertura no modo de visualização oficial completa do Google Drive
+            // Isto força o Google a ler o nome atualizado e ativa a barra com todas as opções
+            return `https://drive.google.com/file/d/${match[1]}/view?usp=sharing`;
         }
     }
     return link;
