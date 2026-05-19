@@ -73,16 +73,16 @@ function configurarBotaoDocumentos() {
     }
 }
 
+// CORREÇÃO CRUCIAL: Modificado para forçar o download direto do arquivo.
+// Isso faz o Chrome baixar o PDF e abri-lo localmente (file:///), garantindo a interface limpa desejada.
 function formatarLinkSeguro(url) {
     if (!url || url === "---" || url === "" || typeof url !== 'string') return "";
     let link = url.trim();
     if (link.includes('drive.google.com')) {
         const match = link.match(/\/d\/(.*?)(\/|$|\?)/) || link.match(/id=(.*?)($|&)/);
         if (match && match[1]) {
-            if (link.toLowerCase().includes('.pdf') || link.includes('open?id=') || link.includes('file/d/')) {
-                return `https://drive.google.com/uc?export=view&id=${match[1]}`;
-            }
-            return `https://drive.google.com/file/d/${match[1]}/preview?rm=minimal`;
+            // Monta o link de download direto do arquivo da API do Drive
+            return `https://drive.google.com/uc?export=download&id=${match[1]}`;
         }
     }
     return link;
@@ -102,7 +102,6 @@ function copiarLink(url) {
     copiarTexto(linkSeguro, "Link seguro copiado!");
 }
 
-// NOVA FUNÇÃO: Executa a abertura direta contornando telas e pop-ups intermediários do navegador
 function abrirDocumentoDireto(url) {
     const linkSeguro = formatarLinkSeguro(url);
     if (linkSeguro) {
@@ -293,7 +292,7 @@ function renderizarNoContainer(id, dados, interativo) {
             if (isGSP) { 
                 eventos = `onclick="trocarMapas(true)" onmouseover="atualizarTituloSuperior('GRANDE SÃO PAULO')" onmouseout="atualizarTituloSuperior()"`; 
             } else { 
-                eventos = `onclick="comandoSelecao('${idNorm}')" onmouseover="atualizarTituloSuperior('${p.name}')" onmouseout="mouseout="atualizarTituloSuperior()"`; 
+                eventos = `onclick="comandoSelecao('${idNorm}')" onmouseover="atualizarTituloSuperior('${p.name}')" onmouseout="atualizarTituloSuperior()"`; 
             }
         }
         return `<path id="${id}-${idNorm}" d="${p.d}" class="${(temMRV || isGSP) && interativo ? 'commrv '+ativo : ''}" ${eventos}></path>`;
@@ -349,7 +348,6 @@ function gerarListaLateral() {
 /* ==========================================================================
    BLOCO 07: CONSTRUÇÃO DA VITRINE (FICHA TÉCNICA)
    ========================================================================== */
-// CORREÇÃO: O botão "Abrir" agora chama a função JavaScript abrirDocumentoDireto() eliminando cliques duplos ou telas intermediárias
 const criarCardMaterial = (titulo, url, icone) => {
     if (!url || url === "" || url === "---") return "";
     return `
@@ -454,7 +452,7 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
                     </div>
                     <div class="tabela-corpo">
                         ${dados.map(linhaStr => {
-                            const cols = inlineStr = linhaStr.split(',').map(c => c.trim());
+                            const cols = linhaStr.split(',').map(c => c.trim());
                             if(cols.length <= 1) return "";
                             return `<div class="tabela-row">
                                 ${cols.map((v, idx) => {
