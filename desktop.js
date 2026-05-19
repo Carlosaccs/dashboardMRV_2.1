@@ -137,15 +137,14 @@ async function carregarAbaDocumentos() {
         const linhasPuras = texto.split(/\r?\n/);
 
         DOCUMENTOS_GERAIS = linhasPuras.slice(1).map(linha => {
-            const linhaLimpa = line => line.replace(/^"|"$/g, '').trim();
-            const atual = linhaLimpa(linha);
-            if (!atual) return null;
+            const linhaLimpa = linha.replace(/^"|"$/g, '').trim();
+            if (!linhaLimpa) return null;
 
-            const ultimaVirgula = atual.lastIndexOf(',');
+            const ultimaVirgula = linhaLimpa.lastIndexOf(',');
             if (ultimaVirgula === -1) return null;
 
-            const titulo = atual.substring(0, ultimaVirgula).trim().replace(/^"|"$/g, '');
-            const url = atual.substring(ultimaVirgula + 1).trim().replace(/^"|"$/g, '');
+            const titulo = linhaLimpa.substring(0, ultimaVirgula).trim().replace(/^"|"$/g, '');
+            const url = linhaLimpa.substring(ultimaVirgula + 1).trim().replace(/^"|"$/g, '');
 
             if (!titulo || !url.startsWith('http')) return null;
 
@@ -367,13 +366,13 @@ function gerarListaLateral() {
 const criarCardMaterial = (titulo, url, icone) => {
     if (!url || url === "" || url === "---") return "";
     
-    // Configura o link de visualização para cliques e cópias
     const linkVis = formatarLinkVisualizacao(url);
-    // Configura o link do hover/preview para alimentar a telinha flutuante de miniatura (se necessário via data-attribute no seu HTML/CSS)
     const linkMiniatura = formatarLinkMiniatura(url);
 
+    // Injetamos o link de miniatura em múltiplos mapeamentos conhecidos (data-url, data-src, data-preview-url)
+    // Isso garante retrocompatibilidade com qualquer script de tooltip que rode por trás do seu app
     return `
-    <div class="card-material-item" data-preview-url="${linkMiniatura}">
+    <div class="card-material-item" data-preview-url="${linkMiniatura}" data-url="${linkMiniatura}" data-src="${linkMiniatura}">
         <div class="card-material-left">
             <span class="card-icon">${icone}</span>
             <span class="card-text">${titulo}</span>
@@ -401,7 +400,8 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
     if (!painel) return;
     const outros = listaDaCidade.filter(i => i.nome !== selecionado.nome);
     
-    const urlMapsResidencial = `https://maps.google.com/?q=${encodeURIComponent(selecionado.endereco)}`;
+    // Correção na concatenação da URL do Maps para evitar falhas de execução no carregamento da string
+    const urlMapsResidencial = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(selecionado.endereco);
     
     let html = `<div class="vitrine-topo">MRV EM ${nomeRegiao}</div>`;
     
@@ -490,7 +490,7 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
 
         html += `<div style="border-radius: 4px; overflow: hidden; border: 1px solid #ddd; margin-top: 6px;">`;
         if(selecionado.estande && selecionado.estande !== "---" && selecionado.estande !== "") {
-            const urlMapsEstande = `https://maps.google.com/?q=${encodeURIComponent(selecionado.estande)}`;
+            const urlMapsEstande = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(selecionado.estande);
             html += `
             <div style="background: #e8f5e9; border-left: 6px solid #2e7d32; padding: 6px 10px; border-bottom: 1px solid #ddd;">
                 <label style="display:block; font-size:0.55rem; font-weight:bold; color:#2e7d32; text-transform:uppercase; margin-bottom:1px;">📍 Estande de Vendas</label>
