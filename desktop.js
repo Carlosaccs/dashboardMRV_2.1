@@ -73,21 +73,31 @@ function configurarBotaoDocumentos() {
     }
 }
 
-// CORREÇÃO CRUCIAL: Modificado para forçar o download direto do arquivo.
-// Isso faz o Chrome baixar o PDF e abri-lo localmente (file:///), garantindo a interface limpa desejada.
-function formatarLinkSeguro(url) {
+// FUNÇÃO 1: Trata o link de CLIQUE e CÓPIA do botão (Abre no modo visualização oficial completa)
+function formatarLinkVisualizacao(url) {
     if (!url || url === "---" || url === "" || typeof url !== 'string') return "";
     
     let link = url.trim();
     
     if (link.includes('drive.google.com')) {
-        // Captura o ID único do arquivo guardado na tabela
         const match = link.match(/\/d\/(.*?)(\/|$|\?)/) || link.match(/id=(.*?)($|&)/);
-        
         if (match && match[1]) {
-            // Força a abertura no modo de visualização oficial completa do Google Drive
-            // Isto força o Google a ler o nome atualizado e ativa a barra com todas as opções
             return `https://drive.google.com/file/d/${match[1]}/view?usp=sharing`;
+        }
+    }
+    return link;
+}
+
+// FUNÇÃO 2: Trata o link do HOVER/PREVIEW (Gera a miniatura limpa para as caixas de ferramentas flutuantes)
+function formatarLinkMiniatura(url) {
+    if (!url || url === "---" || url === "" || typeof url !== 'string') return "";
+    
+    let link = url.trim();
+    
+    if (link.includes('drive.google.com')) {
+        const match = link.match(/\/d\/(.*?)(\/|$|\?)/) || link.match(/id=(.*?)($|&)/);
+        if (match && match[1]) {
+            return `https://drive.google.com/file/d/${match[1]}/preview`;
         }
     }
     return link;
@@ -103,12 +113,12 @@ function copiarTexto(texto, msg = "Link copiado!") {
 }
 
 function copiarLink(url) {
-    const linkSeguro = formatarLinkSeguro(url);
+    const linkSeguro = formatarLinkVisualizacao(url);
     copiarTexto(linkSeguro, "Link seguro copiado!");
 }
 
 function abrirDocumentoDireto(url) {
-    const linkSeguro = formatarLinkSeguro(url);
+    const linkSeguro = formatarLinkVisualizacao(url);
     if (linkSeguro) {
         window.open(linkSeguro, '_blank');
     }
@@ -127,14 +137,15 @@ async function carregarAbaDocumentos() {
         const linhasPuras = texto.split(/\r?\n/);
 
         DOCUMENTOS_GERAIS = linhasPuras.slice(1).map(linha => {
-            const linhaLimpa = linha.replace(/^"|"$/g, '').trim();
-            if (!linhaLimpa) return null;
+            const linhaLimpa = line => line.replace(/^"|"$/g, '').trim();
+            const atual = linhaLimpa(linha);
+            if (!atual) return null;
 
-            const ultimaVirgula = linhaLimpa.lastIndexOf(',');
+            const ultimaVirgula = atual.lastIndexOf(',');
             if (ultimaVirgula === -1) return null;
 
-            const titulo = linhaLimpa.substring(0, ultimaVirgula).trim().replace(/^"|"$/g, '');
-            const url = linhaLimpa.substring(ultimaVirgula + 1).trim().replace(/^"|"$/g, '');
+            const titulo = atual.substring(0, ultimaVirgula).trim().replace(/^"|"$/g, '');
+            const url = atual.substring(ultimaVirgula + 1).trim().replace(/^"|"$/g, '');
 
             if (!titulo || !url.startsWith('http')) return null;
 
@@ -355,8 +366,14 @@ function gerarListaLateral() {
    ========================================================================== */
 const criarCardMaterial = (titulo, url, icone) => {
     if (!url || url === "" || url === "---") return "";
+    
+    // Configura o link de visualização para cliques e cópias
+    const linkVis = formatarLinkVisualizacao(url);
+    // Configura o link do hover/preview para alimentar a telinha flutuante de miniatura (se necessário via data-attribute no seu HTML/CSS)
+    const linkMiniatura = formatarLinkMiniatura(url);
+
     return `
-    <div class="card-material-item">
+    <div class="card-material-item" data-preview-url="${linkMiniatura}">
         <div class="card-material-left">
             <span class="card-icon">${icone}</span>
             <span class="card-text">${titulo}</span>
@@ -384,7 +401,7 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
     if (!painel) return;
     const outros = listaDaCidade.filter(i => i.nome !== selecionado.nome);
     
-    const urlMapsResidencial = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selecionado.endereco)}`;
+    const urlMapsResidencial = `https://maps.google.com/?q=${encodeURIComponent(selecionado.endereco)}`;
     
     let html = `<div class="vitrine-topo">MRV EM ${nomeRegiao}</div>`;
     
@@ -473,7 +490,7 @@ function montarVitrine(selecionado, listaDaCidade, nomeRegiao) {
 
         html += `<div style="border-radius: 4px; overflow: hidden; border: 1px solid #ddd; margin-top: 6px;">`;
         if(selecionado.estande && selecionado.estande !== "---" && selecionado.estande !== "") {
-            const urlMapsEstande = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selecionado.estande)}`;
+            const urlMapsEstande = `https://maps.google.com/?q=${encodeURIComponent(selecionado.estande)}`;
             html += `
             <div style="background: #e8f5e9; border-left: 6px solid #2e7d32; padding: 6px 10px; border-bottom: 1px solid #ddd;">
                 <label style="display:block; font-size:0.55rem; font-weight:bold; color:#2e7d32; text-transform:uppercase; margin-bottom:1px;">📍 Estande de Vendas</label>
